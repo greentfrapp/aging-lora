@@ -1,0 +1,10 @@
+# Agent JSONL logs — voluminous, regenerated on re-runs.
+.research/logs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
