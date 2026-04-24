@@ -283,16 +283,19 @@ def build_aida_split(
     rng = np.random.default_rng(seed)
     donor_df["half"] = ""
     for stratum, grp in donor_df.groupby("stratum"):
-        perm = grp.sample(frac=1.0, random_state=rng.integers(0, 2**31)).reset_index(drop=True)
-        half_point = len(perm) // 2
+        # KEEP original donor_df indices — don't reset_index here, or downstream
+        # .loc[i, 'half'] = h writes to the wrong rows.
+        perm = grp.sample(frac=1.0, random_state=rng.integers(0, 2**31))
         if len(perm) == 1:
             # Single-donor stratum — random-assign with a coin flip.
             donor_df.loc[perm.index[0], "half"] = (
                 "ancestry_shift_mae" if rng.integers(0, 2) else "age_axis_alignment"
             )
             continue
+        half_point = len(perm) // 2
         halves = ["ancestry_shift_mae"] * half_point + ["age_axis_alignment"] * (len(perm) - half_point)
         rng.shuffle(halves)
+        # perm.index carries the original donor_df row indices — use those as loc keys.
         for i, h in zip(perm.index, halves):
             donor_df.loc[i, "half"] = h
 
