@@ -445,7 +445,11 @@ def load_terekhova(
     log.info(f"[{cohort_id}] base filters (age + adult) keep "
              f"{int(base_keep.sum()):,} / {len(meta_aligned):,} cells")
 
-    # Build var once (same for every cell type)
+    # Build var once (same for every cell type).
+    # Critical: var.index must match OneK1K/Stephenson's Ensembl-indexed var so
+    # that `ad.concat(join="outer")` aligns genes across cohorts. For Terekhova
+    # symbols that do map, we set the index to the Ensembl ID. Unmapped symbols
+    # keep the symbol as the index (will be a Terekhova-only gene in the union).
     gene_symbols = np.asarray(adata.var_names, dtype=object)
     if symbol_to_ensembl:
         ensembl_ids = np.array(
@@ -454,15 +458,30 @@ def load_terekhova(
         )
         n_mapped = int(sum(1 for s in gene_symbols if s in symbol_to_ensembl))
         log.info(f"[{cohort_id}] mapped {n_mapped:,} / {len(gene_symbols):,} "
-                 f"gene symbols to Ensembl via supplied table")
+                 f"gene symbols to Ensembl via supplied table — "
+                 f"using Ensembl as var.index for mapped rows")
     else:
         ensembl_ids = gene_symbols.copy()
-        log.warning(f"[{cohort_id}] no symbol->ensembl map supplied; var.ensembl_id "
-                    f"falls back to gene symbols")
+        log.warning(f"[{cohort_id}] no symbol->ensembl map supplied; var.index stays as symbols "
+                    f"(cross-cohort gene alignment WILL BE BROKEN)")
+    # Index on Ensembl ID where available, symbol otherwise. This aligns with
+    # OneK1K/Stephenson whose var_names are Ensembl IDs.
     new_var = pd.DataFrame(
         {"gene_symbol": gene_symbols, "ensembl_id": ensembl_ids},
-        index=gene_symbols,
+        index=pd.Index(ensembl_ids, name=None),
     )
+    # Drop any duplicate rows in var that collide after remapping (if two
+    # Terekhova symbols map to the same Ensembl ID). Keep the first.
+    if new_var.index.has_duplicates:
+        dupe_mask = new_var.index.duplicated(keep="first")
+        n_dupes = int(dupe_mask.sum())
+        log.warning(f"[{cohort_id}] {n_dupes} duplicate Ensembl IDs after symbol remap; "
+                    f"keeping first occurrence per Ensembl ID")
+        new_var = new_var.loc[~dupe_mask].copy()
+        # We also need to deduplicate X columns. Track the kept indices.
+        kept_cols = np.nonzero(~dupe_mask)[0]
+    else:
+        kept_cols = None
 
     # Per-cell-type streaming materialization — bound peak memory to the largest
     # cell type (CD4+ T at ~901K cells, ~3-8 GB int64 indices, manageable on 32 GB).
@@ -481,6 +500,10 @@ def load_terekhova(
         if not sparse.issparse(X_sub):
             X_sub = sparse.csr_matrix(X_sub)
         X_sub = X_sub.astype(np.float32).tocsr()
+        # If symbol->ensembl remap produced duplicate Ensembl IDs, keep the
+        # first column per duplicate so X's columns match new_var's rows.
+        if kept_cols is not None:
+            X_sub = X_sub[:, kept_cols]
 
         meta_sub = meta.reindex(sub.obs_names)
         part = ad.AnnData(
