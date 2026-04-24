@@ -506,6 +506,33 @@ def load_terekhova(
             X_sub = X_sub[:, kept_cols]
 
         meta_sub = meta.reindex(sub.obs_names)
+
+        # Reverse log1p(CP10k) -> raw integer counts.
+        # Verified 2026-04-24 that all_pbmcs_rna.h5ad stores log1p(CP10k):
+        # row_sum(expm1(X)) == 10000.0 exactly, and expm1(X) * nCount_RNA / 10000
+        # recovers integer counts to 100% tolerance <0.01. Without this step,
+        # Terekhova's X would be log-normalized while OneK1K/Stephenson are raw
+        # counts, breaking both FM fine-tuning and LASSO CP10k preprocessing.
+        n_counts = meta_sub["nCount_RNA"].astype(np.float64).values
+        if np.isnan(n_counts).any():
+            raise RuntimeError(
+                f"[{cohort_id}] {ct}: {int(np.isnan(n_counts).sum())} cells missing "
+                f"nCount_RNA in metadata; cannot reverse-normalize"
+            )
+        # In-place per-row scaling: for CSR, row i's data is data[indptr[i]:indptr[i+1]].
+        # This avoids building a diag sparse matrix and keeps peak memory to 1x X_sub.
+        X_sub.data = np.expm1(X_sub.data)
+        scale = (n_counts / 10000.0).astype(np.float32)
+        indptr = X_sub.indptr
+        for i in range(X_sub.shape[0]):
+            X_sub.data[indptr[i]:indptr[i+1]] *= scale[i]
+        X_sub.data = np.rint(X_sub.data).astype(np.float32)
+        # Report integer-likeness as a sanity check
+        n_sample = min(X_sub.data.size, 100_000)
+        if n_sample:
+            residual = np.abs(X_sub.data[:n_sample] - np.round(X_sub.data[:n_sample])).max()
+            log.info(f"[{cohort_id}]   {ct}: reverse-normalized to raw counts "
+                     f"(max int-residual in first {n_sample:,} nnz: {residual:.3g})")
         part = ad.AnnData(
             X=X_sub,
             obs=pd.DataFrame(
