@@ -211,58 +211,76 @@ def load_cellxgene_cohort(
     adult_only : drop cells whose age < 18
     backed : pass to anndata.read_h5ad (e.g. 'r' for low-memory loading)
     """
-    log.info(f"[{cohort_id}] reading {h5ad_path}")
+    log.info(f"[{cohort_id}] reading {h5ad_path}  backed={backed!r}")
     adata = ad.read_h5ad(h5ad_path, backed=backed)
     log.info(f"[{cohort_id}] loaded: {adata.n_obs:,} cells x {adata.n_vars:,} genes")
 
-    obs = adata.obs.copy()
+    # -- Compute all filters on obs (cheap, obs is already in memory even under backed='r')
+    obs = adata.obs
+    keep = np.ones(len(obs), dtype=bool)
 
-    # -- disease filter
+    # disease
     if healthy_only and "disease" in obs.columns:
-        is_healthy = obs["disease"].astype(str).str.lower().isin({"normal", "healthy"})
-        n_drop = (~is_healthy).sum()
+        is_healthy = obs["disease"].astype(str).str.lower().isin({"normal", "healthy"}).values
+        n_drop = int((~is_healthy & keep).sum())
+        keep &= is_healthy
         if n_drop:
-            log.info(f"[{cohort_id}] dropping {n_drop:,} cells with non-healthy disease label")
-        adata = adata[is_healthy.values].copy()
-        obs = adata.obs.copy()
+            log.info(f"[{cohort_id}] disease filter drops {n_drop:,} non-healthy cells")
 
-    # -- age parsing
+    # age parsing (feeds age + precision columns)
     age, precision = parse_age(obs)
-    n_missing_age = age.isna().sum()
-    if n_missing_age:
-        log.warning(f"[{cohort_id}] dropping {n_missing_age:,} cells with unparseable age")
-        keep = age.notna().values
+    age_ok = age.notna().values
+    n_drop = int((~age_ok & keep).sum())
+    keep &= age_ok
+    if n_drop:
+        log.warning(f"[{cohort_id}] age filter drops {n_drop:,} cells with unparseable age")
+
+    if adult_only:
+        adult_mask = (age.values >= 18) & age_ok  # NaN ages get filtered by age_ok above
+        n_drop = int((~adult_mask & keep).sum())
+        keep &= adult_mask
+        if n_drop:
+            log.info(f"[{cohort_id}] adult filter drops {n_drop:,} cells from donors under 18")
+
+    # cell-type canonicalization (applied to full obs; the 'Other' rows drop below)
+    ct_col = next((c for c in ("cell_type", "cell_type_ontology_term_id", "celltype")
+                   if c in obs.columns), None)
+    if ct_col is None:
+        raise KeyError(f"[{cohort_id}] no cell_type column in obs; have {list(obs.columns)}")
+    canonical = canonicalize_cell_type(obs[ct_col])
+    canon_keep = canonical.isin(CANONICAL_CELL_TYPES).values
+    n_drop = int((~canon_keep & keep).sum())
+    keep &= canon_keep
+    if n_drop:
+        log.info(f"[{cohort_id}] cell-type filter drops {n_drop:,} cells not in canonical five")
+
+    n_kept = int(keep.sum())
+    log.info(f"[{cohort_id}] combined filters keep {n_kept:,} / {adata.n_obs:,} cells "
+             f"({100 * n_kept / max(adata.n_obs, 1):.1f}%)")
+
+    # Single materialization: only read the kept rows' X from disk.
+    # .to_memory() handles backed -> in-memory correctly; .copy() works on both.
+    if backed is not None:
+        adata = adata[keep].to_memory()
+    else:
         adata = adata[keep].copy()
-        obs = adata.obs.copy()
-        age = age[keep]
-        precision = precision[keep]
-    n_decade = (precision == "decade").sum()
+
+    # Re-bind post-filter views
+    obs = adata.obs
+    age = age[keep]
+    precision = precision[keep]
+    canonical = canonical[keep]
+
+    n_decade = int((precision == "decade").sum())
     if n_decade:
         log.info(f"[{cohort_id}] {n_decade:,} cells carry decade-precision age (midpoint); "
                  f"flagged via obs['age_precision']")
-
-    if adult_only:
-        keep = age.values >= 18
-        n_drop = (~keep).sum()
-        if n_drop:
-            log.info(f"[{cohort_id}] dropping {n_drop:,} cells from donors under 18")
-        adata = adata[keep].copy()
-        obs = adata.obs.copy()
-        age = age[keep]
-        precision = precision[keep]
 
     # -- donor id: prefer donor_id, fall back to donor, then sample_id
     donor_col = next((c for c in ("donor_id", "donor", "sample_id") if c in obs.columns), None)
     if donor_col is None:
         raise KeyError(f"[{cohort_id}] no donor-id column in obs; have {list(obs.columns)}")
     donor = obs[donor_col].astype(str)
-
-    # -- cell type
-    ct_col = next((c for c in ("cell_type", "cell_type_ontology_term_id", "celltype")
-                   if c in obs.columns), None)
-    if ct_col is None:
-        raise KeyError(f"[{cohort_id}] no cell_type column in obs; have {list(obs.columns)}")
-    canonical = canonicalize_cell_type(obs[ct_col])
 
     # -- sex / assay passthrough
     sex = obs["sex"].astype(str) if "sex" in obs.columns else pd.Series("unknown", index=obs.index)
@@ -315,13 +333,8 @@ def load_cellxgene_cohort(
         ),
         var=new_var,
     )
-    # drop 'Other' cells
-    keep = harmonized.obs["cell_type"].isin(CANONICAL_CELL_TYPES).values
-    n_drop = (~keep).sum()
-    if n_drop:
-        log.info(f"[{cohort_id}] dropping {n_drop:,} cells not in canonical five cell types")
-    harmonized = harmonized[keep].copy()
-
+    # Cell-type + healthy/adult/age filters already applied above; harmonized
+    # is fully filtered. Log the final shape.
     log.info(
         f"[{cohort_id}] harmonized: {harmonized.n_obs:,} cells | "
         f"{harmonized.obs['donor_id'].nunique()} donors | "
@@ -368,22 +381,24 @@ def load_terekhova(
 ) -> ad.AnnData:
     """Load the Terekhova 2023 PBMC atlas.
 
-    If the Synapse release is a standard CellxGene-shaped h5ad, this delegates
-    to `load_cellxgene_cohort`. If the schema diverges (custom column names,
-    RDS format, per-cell-type sharding), inspect the file once downloaded and
-    tighten this function — fail loudly until then.
+    Extraction of raw_counts_h5ad.tar.gz produces a ~77 GB uncompressed h5ad
+    substantially larger than OneK1K's 4.2 GB. Loading naively would exceed a
+    32 GB box. We therefore open in backed='r' mode so filters apply without
+    materializing .X, and only `.to_memory()` the final canonical-cell-type
+    subset inside load_cellxgene_cohort.
+
+    Terekhova is healthy-only by paper design, so healthy_only=False skips the
+    disease-column check the schema may not carry a 'disease' column.
+    adult_only=True because the age range is 25-85.
     """
     h5ad_path = _discover_terekhova_h5ad(raw_dir)
-    log.info(f"[terekhova] using {h5ad_path}")
-    # Terekhova is healthy-only by paper design, but the schema may not carry a
-    # 'disease' column — pass healthy_only=False and adult_only=True (age range
-    # is 25-85). The cohort-side adult filter in load_cellxgene_cohort handles
-    # this correctly.
+    log.info(f"[terekhova] using {h5ad_path}; opening in backed mode")
     return load_cellxgene_cohort(
         h5ad_path=h5ad_path,
         cohort_id=cohort_id,
         healthy_only=False,
         adult_only=True,
+        backed="r",
     )
 
 
