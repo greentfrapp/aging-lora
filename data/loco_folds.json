@@ -1,0 +1,232 @@
+{
+  "version": 1,
+  "generated_at": "2026-04-24T08:28:39.511641+00:00",
+  "cohort_donor_counts": {
+    "onek1k": 981,
+    "stephenson": 29,
+    "terekhova": 166
+  },
+  "cohort_chemistry": {
+    "onek1k": "10x 3' v2",
+    "stephenson": "10x 3' transcription profiling",
+    "terekhova": "10x 5' v2"
+  },
+  "donor_threshold": 80,
+  "folds": [
+    {
+      "fold_id": "loco_onek1k",
+      "kind": "leave-one-cohort-out",
+      "holdout_cohort": "onek1k",
+      "holdout_chemistry": "10x 3' v2",
+      "train_cohorts": [
+        "stephenson",
+        "terekhova"
+      ],
+      "n_holdout_donors": 981,
+      "primary": true,
+      "donor_threshold": 80,
+      "primary_per_cell_type": {
+        "CD4+ T": {
+          "n_holdout_donors": 981,
+          "n_required": 132,
+          "primary": true
+        },
+        "CD8+ T": {
+          "n_holdout_donors": 981,
+          "n_required": 180,
+          "primary": true
+        },
+        "Monocyte": {
+          "n_holdout_donors": 978,
+          "n_required": 229,
+          "primary": true
+        },
+        "NK": {
+          "n_holdout_donors": 981,
+          "n_required": 156,
+          "primary": true
+        },
+        "B": {
+          "n_holdout_donors": 981,
+          "n_required": 155,
+          "primary": true
+        }
+      },
+      "notes": "OneK1K (GSE196830) was in the sc-ImmuAging authors' training set. Pre-trained LASSO scoring against the OneK1K LOCO fold reflects training-set recapitulation, not generalization. Phase 2 reports this fold with a `training_set_asymmetry` flag; treat with care."
+    },
+    {
+      "fold_id": "loco_stephenson",
+      "kind": "leave-one-cohort-out",
+      "holdout_cohort": "stephenson",
+      "holdout_chemistry": "10x 3' transcription profiling",
+      "train_cohorts": [
+        "onek1k",
+        "terekhova"
+      ],
+      "n_holdout_donors": 29,
+      "primary": false,
+      "donor_threshold": 80,
+      "primary_per_cell_type": {
+        "CD4+ T": {
+          "n_holdout_donors": 24,
+          "n_required": 132,
+          "primary": false
+        },
+        "CD8+ T": {
+          "n_holdout_donors": 24,
+          "n_required": 180,
+          "primary": false
+        },
+        "Monocyte": {
+          "n_holdout_donors": 23,
+          "n_required": 229,
+          "primary": false
+        },
+        "NK": {
+          "n_holdout_donors": 29,
+          "n_required": 156,
+          "primary": false
+        },
+        "B": {
+          "n_holdout_donors": 29,
+          "n_required": 155,
+          "primary": false
+        }
+      },
+      "notes": "Stephenson 2021 COVID-19 Cell Atlas, healthy controls only (29 donors). Below the 80-donor primary threshold. 18/29 donors carry decade-precision age labels (midpoint + age_precision='decade' obs column)."
+    },
+    {
+      "fold_id": "loco_terekhova",
+      "kind": "leave-one-cohort-out",
+      "holdout_cohort": "terekhova",
+      "holdout_chemistry": "10x 5' v2",
+      "train_cohorts": [
+        "onek1k",
+        "stephenson"
+      ],
+      "n_holdout_donors": 166,
+      "primary": true,
+      "donor_threshold": 80,
+      "primary_per_cell_type": {
+        "CD4+ T": {
+          "n_holdout_donors": 166,
+          "n_required": 132,
+          "primary": true
+        },
+        "CD8+ T": {
+          "n_holdout_donors": 166,
+          "n_required": 180,
+          "primary": false
+        },
+        "Monocyte": {
+          "n_holdout_donors": 166,
+          "n_required": 229,
+          "primary": false
+        },
+        "NK": {
+          "n_holdout_donors": 166,
+          "n_required": 156,
+          "primary": true
+        },
+        "B": {
+          "n_holdout_donors": 166,
+          "n_required": 155,
+          "primary": true
+        }
+      },
+      "notes": "Terekhova 2023 Immunity (166 donors). True holdout \u2014 NOT in sc-ImmuAging training. 10x 5' v2 chemistry vs. training 3'; report naive and chemistry-corrected MAE per Task 1f."
+    },
+    {
+      "fold_id": "chemistry_5prime",
+      "kind": "leave-one-chemistry-out",
+      "holdout_cohorts": [
+        "terekhova"
+      ],
+      "train_cohorts": [
+        "onek1k",
+        "stephenson"
+      ],
+      "n_holdout_donors": 166,
+      "primary": true,
+      "donor_threshold": 80,
+      "notes": "Leave-one-chemistry-out: train on 3', test on 5'. With the current three-cohort setup this is identical to loco_terekhova; kept as a separate fold so that future cohort additions don't silently change meaning. Compare directly against loco_terekhova MAE \u2014 they must match."
+    }
+  ],
+  "per_cell_type_donor_inventory": [
+    {
+      "cohort_id": "onek1k",
+      "cell_type": "B",
+      "n_donors": 981
+    },
+    {
+      "cohort_id": "onek1k",
+      "cell_type": "CD4+ T",
+      "n_donors": 981
+    },
+    {
+      "cohort_id": "onek1k",
+      "cell_type": "CD8+ T",
+      "n_donors": 981
+    },
+    {
+      "cohort_id": "onek1k",
+      "cell_type": "Monocyte",
+      "n_donors": 978
+    },
+    {
+      "cohort_id": "onek1k",
+      "cell_type": "NK",
+      "n_donors": 981
+    },
+    {
+      "cohort_id": "stephenson",
+      "cell_type": "B",
+      "n_donors": 29
+    },
+    {
+      "cohort_id": "stephenson",
+      "cell_type": "CD4+ T",
+      "n_donors": 24
+    },
+    {
+      "cohort_id": "stephenson",
+      "cell_type": "CD8+ T",
+      "n_donors": 24
+    },
+    {
+      "cohort_id": "stephenson",
+      "cell_type": "Monocyte",
+      "n_donors": 23
+    },
+    {
+      "cohort_id": "stephenson",
+      "cell_type": "NK",
+      "n_donors": 29
+    },
+    {
+      "cohort_id": "terekhova",
+      "cell_type": "B",
+      "n_donors": 166
+    },
+    {
+      "cohort_id": "terekhova",
+      "cell_type": "CD4+ T",
+      "n_donors": 166
+    },
+    {
+      "cohort_id": "terekhova",
+      "cell_type": "CD8+ T",
+      "n_donors": 166
+    },
+    {
+      "cohort_id": "terekhova",
+      "cell_type": "Monocyte",
+      "n_donors": 166
+    },
+    {
+      "cohort_id": "terekhova",
+      "cell_type": "NK",
+      "n_donors": 166
+    }
+  ]
+}

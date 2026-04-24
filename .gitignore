@@ -28,8 +28,9 @@ data/scImmuAging/
 #   uv run python scripts/download_foundation_models.py
 save/
 
-# Transient run artefacts (regenerated each run)
-data/cohort_summary.csv
+# Note: data/cohort_summary.csv was previously gitignored as "transient" during
+# the Stephenson-only sanity-run era. Now that 3-cohort harmonization is frozen,
+# we commit it as a small reproducibility artefact alongside loco_folds.json.
 
 # Local audit scratchpad — third-party paper supplementaries and one-off
 # inspection scripts. Reproducible via the URLs documented in

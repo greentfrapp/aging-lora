@@ -1,0 +1,16 @@
+cohort_id,cell_type,n_cells,n_donors,age_min,age_max
+onek1k,B,129579,981,19.0,97.0
+onek1k,CD4+ T,624570,981,19.0,97.0
+onek1k,CD8+ T,230303,981,19.0,97.0
+onek1k,Monocyte,51873,978,19.0,97.0
+onek1k,NK,171939,981,19.0,97.0
+stephenson,B,9379,29,21.0,73.0
+stephenson,CD4+ T,22429,24,21.0,73.0
+stephenson,CD8+ T,20410,24,21.0,73.0
+stephenson,Monocyte,10748,23,21.0,73.0
+stephenson,NK,15884,29,21.0,73.0
+terekhova,B,71614,166,25.0,81.0
+terekhova,CD4+ T,901152,166,25.0,81.0
+terekhova,CD8+ T,313343,166,25.0,81.0
+terekhova,Monocyte,336935,166,25.0,81.0
+terekhova,NK,205469,166,25.0,81.0
