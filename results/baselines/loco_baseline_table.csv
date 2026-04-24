@@ -1,0 +1,16 @@
+baseline,training_cohorts,eval_cohort,eval_chemistry,cell_type,n_donors,median_abs_err_yr,mean_abs_err_yr,pearson_r,pearson_p,mean_bias_yr,leakage_status,chemistry_match_to_baseline_training,detectability_flag,pseudocell_n,pseudocell_size
+scImmuAging-pretrained,original-five,onek1k,10x 3' v2,CD4T,981,9.448,10.086,0.7466,1.8187824501246616e-175,-4.419,clean,match,powered,100,15
+scImmuAging-pretrained,original-five,onek1k,10x 3' v2,CD8T,981,7.56,8.693,0.7659,4.993189619269191e-190,-1.532,clean,match,powered,100,15
+scImmuAging-pretrained,original-five,onek1k,10x 3' v2,MONO,978,7.948,9.551,0.7049,9.931231100846025e-148,-3.11,clean,match,powered,100,15
+scImmuAging-pretrained,original-five,onek1k,10x 3' v2,NK,981,9.637,10.755,0.6292,2.8830343773237965e-109,-2.565,clean,match,powered,100,15
+scImmuAging-pretrained,original-five,onek1k,10x 3' v2,B,981,10.664,11.926,0.5314,1.400781719368076e-72,-3.709,clean,match,powered,100,15
+scImmuAging-pretrained,original-five,stephenson,10x 3',CD4T,24,8.444,8.953,0.7931,3.8032181199746034e-06,-4.507,clean,match,underpowered,100,15
+scImmuAging-pretrained,original-five,stephenson,10x 3',CD8T,24,11.386,12.07,0.7141,8.89623270335928e-05,8.521,clean,match,underpowered,100,15
+scImmuAging-pretrained,original-five,stephenson,10x 3',MONO,23,10.661,12.603,0.2241,0.303884157779554,-0.959,clean,match,underpowered,100,15
+scImmuAging-pretrained,original-five,stephenson,10x 3',NK,29,14.568,16.108,0.1823,0.3438402291832612,9.996,clean,match,underpowered,100,15
+scImmuAging-pretrained,original-five,stephenson,10x 3',B,29,12.14,12.433,0.2616,0.1705179884751095,1.806,clean,match,underpowered,100,15
+scImmuAging-pretrained,original-five,terekhova,10x 5' v2,CD4T,166,9.152,10.76,0.8182,2.821821975253204e-41,-8.846,clean,shifted,powered,100,15
+scImmuAging-pretrained,original-five,terekhova,10x 5' v2,CD8T,166,8.193,9.444,0.7278,1.1718608595476256e-28,1.892,clean,shifted,underpowered,100,15
+scImmuAging-pretrained,original-five,terekhova,10x 5' v2,MONO,166,12.779,13.707,0.2912,0.0001413007235266,1.217,clean,shifted,underpowered,100,15
+scImmuAging-pretrained,original-five,terekhova,10x 5' v2,NK,166,12.478,13.241,0.4397,3.098034795908409e-09,5.571,clean,shifted,powered,100,15
+scImmuAging-pretrained,original-five,terekhova,10x 5' v2,B,166,15.031,15.002,0.0798,0.3070291798677381,-2.499,clean,shifted,powered,100,15
