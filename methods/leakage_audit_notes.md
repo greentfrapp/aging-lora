@@ -5,14 +5,18 @@
 
 ## Summary — what this means for the primary LOCO folds
 
-| LOCO fold | Clean models | Overlapping models | Unknown models |
-|---|---|---|---|
-| **loco_terekhova** (primary, 166 donors) | scGPT, Geneformer, scFoundation, UCE | — | — |
-| **loco_onek1k** (primary, 981 donors) | — | scGPT, UCE | Geneformer, scFoundation |
-| loco_stephenson (exploratory, 29 donors) | — | scGPT, UCE | Geneformer, scFoundation |
-| AIDA (external holdout) | scGPT, Geneformer, scFoundation, UCE | — | — |
+All 16 rows resolved as of 2026-04-24 via direct searches of the Genecorpus-30M and scFoundation Nature Methods supplementary tables (see `scratchpad/scf_MOESM{4,5,6}_ESM.xlsx` and `scratchpad/41586_2023_6139_MOESM4_ESM.xlsx`).
 
-**Headline:** Terekhova is the only primary fold where *all four* foundation models are confirmed clean. For the OneK1K fold, scGPT and UCE results are confounded by training-set memorization and must be reported with a `leakage_flagged` annotation in Phase 3/4 result tables. AIDA is clean across the board (published 2025, postdates all checkpoints).
+| LOCO fold | Clean models | Overlapping models |
+|---|---|---|
+| **loco_terekhova** (primary, 166 donors) | scGPT, Geneformer, scFoundation, UCE | — |
+| **loco_onek1k** (primary, 981 donors) | Geneformer, scFoundation | scGPT, UCE |
+| loco_stephenson (exploratory, 29 donors) | Geneformer | scGPT, UCE, **scFoundation** |
+| AIDA (external holdout) | scGPT, Geneformer, scFoundation, UCE | — |
+
+**Headline:** Terekhova is the only primary fold where *all four* foundation models are confirmed clean — the paper's **generalization headline**. For `loco_onek1k`, scGPT and UCE carry training-set-memorization overlaps and must be reported with an asterisk; Geneformer and scFoundation are both clean on OneK1K, making them the "true-holdout" contrast at the largest primary fold. AIDA is clean across the board.
+
+**Resolved `scFoundation × Stephenson`:** The scFoundation Nature Methods Supplementary Table 5 row 81 lists `HCA-Covid19PBMC` with study title *"The cellular immune response to COVID-19 deciphered by single cell multi-omics across three UK centres"* — the Stephenson/Haniffa 2021 Nature Medicine multi-omics COVID PBMC deposit (the HCA native project; `E-MTAB-10026` is its ArrayExpress mirror). Direct-accession search missed it because scFoundation ingested via the HCA ID, not the ArrayExpress ID.
 
 ## Per-model pretraining-manifest source
 
@@ -42,9 +46,9 @@ Each per-(model, cohort) LOCO row in `results/phase3/*.csv` and `results/phase4/
 - Overlapping rows are reported with an asterisk and a footnote: *"this model was pretrained on the held-out cohort; result is a lower bound on true generalization"*.
 - Unknown rows are reported but must be pushed to `clean` or `overlapping` before paper submission by the human-verification step above.
 
-## Human verification TODOs
+## Human verification — completed 2026-04-24
 
-- [ ] Open Theodoris 2023 Nature Supplementary Table 1 → resolve Geneformer × {OneK1K, Stephenson}.
-- [ ] Open `biomap-research/scFoundation/DataSupplement1.xlsx` + `DataSupplement2.xlsx` → resolve scFoundation × {OneK1K, Stephenson}.
+- [x] Genecorpus-30M Supp Table 1 (Theodoris 2023 Nature MOESM4 ESM, 561 rows × 11 cols) — verified: zero hits for Stephenson/Haniffa/E-MTAB-10026/Yazar/OneK1K/GSE196830. Both Geneformer rows → **clean**.
+- [x] scFoundation Nat Methods Supp Tables (Hao 2024, MOESM4 + MOESM5, 10 747 sample rows and 522 project rows) — verified: zero hits for OneK1K accessions → **clean**; Stephenson deposited via HCA-Covid19PBMC project ID, row 81 of MOESM5 → **overlapping**.
 
-Estimated effort: 15 min. Tracked as a standalone entry in `HUMAN_TASKS.md` (#4, to be added).
+All 16 leakage-audit rows now resolved; `data/leakage_audit.csv` is the authoritative source for Phase 3/4 result-table footnoting.

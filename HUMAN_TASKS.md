@@ -117,19 +117,14 @@ as permanent history — don't delete them.
 
 **Context.** Four of the 16 rows in `data/leakage_audit.csv` are `unknown` because the supporting supplementary tables were not retrievable during the automated audit (Nature 403'd, GitHub blob view not parseable). All four need a one-line check each before Phase 3/4 paper submission.
 
-**Two TODOs**
+**Status: RESOLVED 2026-04-24.** All four `unknown` rows updated in `data/leakage_audit.csv`:
 
-1. **Geneformer × {OneK1K, Stephenson}.** Open Theodoris et al. 2023 *Nature* Supplementary Table 1 (the Genecorpus-30M source list). Search for:
-   - `GSE196830` (OneK1K) — expect NOT present (Apr 2022 postdates V1's June-2021 cutoff).
-   - `E-MTAB-10026` or "Stephenson" (Stephenson COVID-19 PBMC) — could go either way.
-   - Update `data/leakage_audit.csv` rows for `Geneformer × OneK1K` and `Geneformer × Stephenson` to `clean` or `overlapping`.
+- `Geneformer × OneK1K` → **clean** (Genecorpus-30M Supp Table 1 direct-search confirmed; see `scratchpad/41586_2023_6139_MOESM4_ESM.xlsx`).
+- `Geneformer × Stephenson` → **clean** (same supplement, zero hits for Stephenson/Haniffa/E-MTAB-10026/COVID-PBMC citations).
+- `scFoundation × OneK1K` → **clean** (Hao 2024 Nat Methods MOESM4 + MOESM5 direct-search, zero hits).
+- `scFoundation × Stephenson` → **overlapping** (Hao 2024 Nat Methods MOESM5 row 81 `HCA-Covid19PBMC` is the Stephenson/Haniffa 2021 dataset, ingested via its HCA native project ID rather than the ArrayExpress mirror).
 
-2. **scFoundation × {OneK1K, Stephenson}.** Open the two data-supplement spreadsheets in the scFoundation GitHub repo or Figshare record `24049200`:
-   - https://github.com/biomap-research/scFoundation → `DataSupplement1.xlsx`, `DataSupplement2.xlsx`
-   - Search for `GSE196830` and `E-MTAB-10026` (or variants "Yazar", "Stephenson").
-   - Update the two `scFoundation × {OneK1K, Stephenson}` rows in `data/leakage_audit.csv`.
-
-**Estimated human effort:** ~15 min total.
+Scratchpad files retained for audit: `scratchpad/scf_MOESM{4,5,6}_ESM.xlsx` and `scratchpad/41586_2023_6139_MOESM4_ESM.xlsx`.
 
 ---
 
