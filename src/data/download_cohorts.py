@@ -1,12 +1,24 @@
 """
-Download and quality-control all five sc-ImmuAging training cohorts.
+Download and quality-control the three public training cohorts for the immune aging clock.
 
-Cohorts:
-  GSE158055   - COVID-19 PBMC (Ren et al., 2021)
-  GSE214534   - sc-ImmuAging core (Li et al., 2025)
-  GSE155673   - Aging PBMC (Mogilenko et al., 2021)
-  Stephenson  - COVID-19 Cell Portal (Stephenson et al., 2021)
-  OneK1K      - GSE196830 (Yazar et al., 2022)
+Cohorts (Case 1 baseline, revised 2026-04-24 — Barreiro/Randolph dropped, Terekhova
+promoted from Case 3):
+  OneK1K (CellxGene dde06e0f / dataset 3faad104) - Yazar et al. 2022 Science     - 981 donors, 10x 3' v2
+  Stephenson (CellxGene ddfad306)                - Stephenson et al. 2021 COVID   -  29 healthy donors, 10x 3'
+  Terekhova (Synapse syn49637038)                - Terekhova et al. 2023 Immunity - 166 donors, 10x 5' v2
+
+Barreiro/Randolph 2021 (GSE162632) was dropped because: (a) GEO has no donor ages, and
+(b) the release is genotype-multiplexed with no demux files in the archive. Tracked in
+FUTURE_WORK.md; revisit if donor ages and genotype VCFs become accessible.
+
+Chemistry heterogeneity: OneK1K+Stephenson are 10x 3', Terekhova is 10x 5' v2. The
+pre-trained sc-ImmuAging LASSO baseline was trained on 3' only — Terekhova LOCO is
+reported both naive (measures real-world generalization) and chemistry-corrected via
+Harmony/scran (isolates aging-specific signal).
+
+OneK1K source decision (2026-04-24): CellxGene-curated h5ad used instead of GEO RAW.
+The GEO release is 75 multiplexed pools requiring genotype demultiplexing; the CellxGene
+version is pre-demultiplexed with donor_id, age, and cell-type annotations.
 
 Usage:
     uv run python src/data/download_cohorts.py --out-dir data/cohorts
@@ -31,45 +43,36 @@ log = logging.getLogger(__name__)
 # -------------------------------------------------------------------
 COHORTS = [
     {
-        "id": "GSE158055",
-        "name": "COVID-PBMC-Ren2021",
-        "source": "GEO",
-        "n_donors_expected": None,   # set from paper when known
+        "id": "onek1k_cellxgene",
+        "name": "OneK1K",
+        "source": "CellPortal",
+        "url": "https://cellxgene.cziscience.com/collections/dde06e0f-ab3b-46be-96a2-a8082383c4a1",
+        "download_url": "https://datasets.cellxgene.cziscience.com/a3f5651f-cd1a-4d26-8165-74964b79b4f2.h5ad",
+        "dataset_id": "3faad104-2ab8-4434-816d-474d8d2641db",
+        "n_donors_expected": 981,
+        "n_cells_expected": 1248980,
         "cell_types": ["CD4+ T", "CD8+ T", "Monocyte", "NK", "B"],
-        "notes": "Ren et al. 2021 COVID PBMC; large cohort used in sc-ImmuAging training.",
-    },
-    {
-        "id": "GSE214534",
-        "name": "scImmuAging-core",
-        "source": "GEO",
-        "n_donors_expected": None,
-        "cell_types": ["CD4+ T", "CD8+ T", "Monocyte", "NK", "B"],
-        "notes": "Primary sc-ImmuAging cohort (Li et al. 2025).",
-    },
-    {
-        "id": "GSE155673",
-        "name": "Aging-PBMC-Mogilenko2021",
-        "source": "GEO",
-        "n_donors_expected": None,
-        "cell_types": ["CD4+ T", "CD8+ T", "Monocyte", "NK", "B"],
-        "notes": "Mogilenko et al. 2021 aged human PBMC.",
+        "notes": "Yazar et al. 2022 Science. OneK1K eQTL dataset. 981 healthy donors, 1.25M cells. CellxGene-curated (pre-demultiplexed); superseded GEO GSE196830 RAW path.",
     },
     {
         "id": "stephenson_covid_portal",
         "name": "Stephenson-COVID-CellPortal",
         "source": "CellPortal",
-        "url": "https://cellxgene.cziscience.com/collections/b9fc3d70-5a72-4479-a046-c2cc1ab19efc",
-        "n_donors_expected": None,
+        "url": "https://cellxgene.cziscience.com/collections/ddfad306-714d-4cc0-9985-d9072820c530",
+        "download_url": "https://datasets.cellxgene.cziscience.com/c17079d3-204f-487e-bc54-d63bb947a5a2.h5ad",
+        "n_donors_expected": 130,
         "cell_types": ["CD4+ T", "CD8+ T", "Monocyte", "NK", "B"],
-        "notes": "Stephenson et al. 2021 COVID CellxGene portal.",
+        "notes": "Stephenson et al. 2021 Nature Medicine COVID PBMC (doi:10.1038/s41591-021-01329-2). 647k cells, 130 donors. ArrayExpress: E-MTAB-10026.",
     },
     {
-        "id": "GSE196830",
-        "name": "OneK1K",
-        "source": "GEO",
-        "n_donors_expected": 1000,
+        "id": "terekhova",
+        "name": "Terekhova-2023",
+        "source": "Synapse",
+        "url": "https://www.synapse.org/Synapse:syn49637038",
+        "synapse_id": "syn49637038",
+        "n_donors_expected": 166,
         "cell_types": ["CD4+ T", "CD8+ T", "Monocyte", "NK", "B"],
-        "notes": "Yazar et al. 2022 OneK1K eQTL dataset.",
+        "notes": "Terekhova et al. 2023 Immunity. Healthy PBMC across 25-85 yr. 10x 5' v2. Requires free Synapse account + DUC acceptance; see HUMAN_TASKS.md #2.",
     },
 ]
 
@@ -199,30 +202,6 @@ def build_cohort_summary(summaries: dict, out_path: Path) -> pd.DataFrame:
     return df
 
 
-def run_scimmuaging_pipeline(repo_dir: Path, raw_data_dir: Path, out_dir: Path) -> None:
-    """
-    Execute the sc-ImmuAging integration pipeline.
-
-    The pipeline expects raw per-cohort count matrices in `raw_data_dir`
-    organised as: raw_data_dir/<cohort_id>/<matrix files>.
-    Outputs a harmonised Seurat object + h5ad file per cell type.
-    """
-    script = repo_dir / "scripts" / "integration.R"
-    if not script.exists():
-        raise FileNotFoundError(
-            f"Integration script not found: {script}. "
-            "Verify the cloned repo structure matches the expected layout."
-        )
-    cmd = [
-        "Rscript",
-        str(script),
-        "--data-dir", str(raw_data_dir),
-        "--out-dir", str(out_dir),
-    ]
-    log.info(f"Running scImmuAging integration: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
-
-
 def main():
     parser = argparse.ArgumentParser(description="Download and QC sc-ImmuAging cohorts")
     parser.add_argument("--out-dir", default="data/cohorts", help="Output directory root")
@@ -255,9 +234,10 @@ def main():
                     f"Download manually from: {cohort.get('url', 'see LANDSCAPE.md')}"
                 )
 
-    # Step 3: Run integration pipeline
-    if not args.summary_only:
-        run_scimmuaging_pipeline(repo_dir, out_dir / "raw", out_dir / "integrated")
+    # Step 3: Harmonization pipeline — see src/data/harmonize_cohorts.py (written
+    # separately). The scImmuAging R repo is an inference-only package and does
+    # not provide an integration script; harmonization is implemented in scanpy
+    # from scratch against the three confirmed cohort sources.
 
     # Step 4: Build cohort summary from integrated h5ads
     import anndata as ad
