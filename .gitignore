@@ -1,5 +1,14 @@
 # Agent JSONL logs — voluminous, regenerated on re-runs.
 .research/logs/
+# Research-agent internal state — ephemeral, regenerated on each run.
+.research/state.json
+.research/lock
+
+# Claude Code per-user session state (scheduled tasks, local settings).
+.claude/
+
+# Top-level run logs (e.g. harmonize_v3.log) — reproducible from scripts.
+logs/
 
 # Python
 __pycache__/
