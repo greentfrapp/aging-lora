@@ -435,44 +435,17 @@ def load_terekhova(
         )
     meta_aligned = meta.reindex(adata.obs_names)
 
-    # Compute filters on the obs-side dataframe
-    keep = np.ones(len(meta_aligned), dtype=bool)
+    # Compute base filters (age + adult). Cell-type filter applied per-iteration
+    # below so the backed subset materialization never needs to hold all 1.83M
+    # rows' CSR indices at once — that blew past 17 GiB and OOM'd earlier.
     age = meta_aligned["Age"].astype(float)
     age_ok = age.notna().values
-    n_drop = int((~age_ok & keep).sum())
-    keep &= age_ok
-    if n_drop:
-        log.warning(f"[{cohort_id}] dropped {n_drop:,} cells with NaN age")
+    base_keep = age_ok & (age.values >= 18)
+    canonical_series = meta_aligned["Cluster_names"].astype(str).map(_TEREKHOVA_CELLTYPE_MAP).fillna("Other")
+    log.info(f"[{cohort_id}] base filters (age + adult) keep "
+             f"{int(base_keep.sum()):,} / {len(meta_aligned):,} cells")
 
-    # Adult-only: Terekhova is 25-81 by paper design, but enforce anyway.
-    adult_mask = (age.values >= 18) & age_ok
-    keep &= adult_mask
-
-    # Canonical cell-type remap via the Terekhova-specific map + CANONICAL_CELL_TYPES filter.
-    canonical = meta_aligned["Cluster_names"].astype(str).map(_TEREKHOVA_CELLTYPE_MAP).fillna("Other")
-    canon_keep = canonical.isin(CANONICAL_CELL_TYPES).values
-    n_drop = int((~canon_keep & keep).sum())
-    keep &= canon_keep
-    if n_drop:
-        log.info(f"[{cohort_id}] cell-type filter drops {n_drop:,} cells not in canonical five "
-                 f"(gd/MAIT/Progenitor/DN T)")
-
-    n_kept = int(keep.sum())
-    log.info(f"[{cohort_id}] combined filters keep {n_kept:,} / {adata.n_obs:,} cells "
-             f"({100 * n_kept / max(adata.n_obs, 1):.1f}%)")
-
-    # Single materialization of the kept rows, then re-align metadata to the
-    # surviving obs_names (post-filter order matches adata.obs_names).
-    adata = adata[keep].to_memory()
-    meta_kept = meta.reindex(adata.obs_names)
-
-    # Ensure X is sparse CSR float32 (Terekhova all_pbmcs stores raw int counts)
-    X = adata.X
-    if not sparse.issparse(X):
-        X = sparse.csr_matrix(X)
-    X = X.astype(np.float32).tocsr()
-
-    # Build var: gene_symbol = var.index (already symbols); ensembl_id via map or self
+    # Build var once (same for every cell type)
     gene_symbols = np.asarray(adata.var_names, dtype=object)
     if symbol_to_ensembl:
         ensembl_ids = np.array(
@@ -491,28 +464,59 @@ def load_terekhova(
         index=gene_symbols,
     )
 
-    harmonized = ad.AnnData(
-        X=X,
-        obs=pd.DataFrame(
-            {
-                "cohort_id": cohort_id,
-                "donor_id": (cohort_id + ":" + meta_kept["Donor_id"].astype(str)).values,
-                "age": meta_kept["Age"].astype(float).values,
-                "age_precision": "exact",
-                "sex": meta_kept["Sex"].astype(str).values,
-                "assay": "10x 5' v2",
-                "cell_type": meta_kept["Cluster_names"].astype(str).map(_TEREKHOVA_CELLTYPE_MAP).values,
-                "batch": meta_kept["Batch"].astype(str).values,
-            },
-            index=adata.obs_names,
-        ),
-        var=new_var,
-    )
+    # Per-cell-type streaming materialization — bound peak memory to the largest
+    # cell type (CD4+ T at ~901K cells, ~3-8 GB int64 indices, manageable on 32 GB).
+    import gc
+    canonical_values = canonical_series.values
+    parts: list[ad.AnnData] = []
+    for ct in CANONICAL_CELL_TYPES:
+        ct_mask = (canonical_values == ct) & base_keep
+        n_ct = int(ct_mask.sum())
+        if n_ct == 0:
+            log.warning(f"[{cohort_id}] no cells mapped to {ct}; skipping")
+            continue
+        log.info(f"[{cohort_id}]   {ct}: materializing {n_ct:,} cells")
+        sub = adata[ct_mask].to_memory()
+        X_sub = sub.X
+        if not sparse.issparse(X_sub):
+            X_sub = sparse.csr_matrix(X_sub)
+        X_sub = X_sub.astype(np.float32).tocsr()
+
+        meta_sub = meta.reindex(sub.obs_names)
+        part = ad.AnnData(
+            X=X_sub,
+            obs=pd.DataFrame(
+                {
+                    "cohort_id": cohort_id,
+                    "donor_id": (cohort_id + ":" + meta_sub["Donor_id"].astype(str)).values,
+                    "age": meta_sub["Age"].astype(float).values,
+                    "age_precision": "exact",
+                    "sex": meta_sub["Sex"].astype(str).values,
+                    "assay": "10x 5' v2",
+                    "cell_type": ct,
+                    "batch": meta_sub["Batch"].astype(str).values,
+                },
+                index=sub.obs_names,
+            ),
+            var=new_var,
+        )
+        parts.append(part)
+        del sub, X_sub, meta_sub
+        gc.collect()
+        log.info(f"[{cohort_id}]   {ct}: done ({part.n_obs:,} cells)")
+
+    if not parts:
+        raise RuntimeError(f"[{cohort_id}] no per-cell-type shards produced")
+
+    harmonized = ad.concat(parts, axis=0, join="outer", merge="first")
     log.info(
         f"[{cohort_id}] harmonized: {harmonized.n_obs:,} cells | "
         f"{harmonized.obs['donor_id'].nunique()} donors | "
         f"ages {harmonized.obs['age'].min():.0f}-{harmonized.obs['age'].max():.0f}"
     )
+    # Free the per-type parts now that they're stacked in `harmonized`.
+    parts.clear()
+    gc.collect()
     return harmonized
 
 
