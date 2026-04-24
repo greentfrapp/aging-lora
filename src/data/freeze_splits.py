@@ -57,8 +57,10 @@ LOCO_OUT = Path("data/loco_folds.json")
 
 AIDA_DIR = Path("data/cohorts/raw/aida")
 AIDA_SPLIT_OUT = Path("data/aida_split.json")
+DETECT_FLOOR = Path("data/detectability_floor.json")
 
-DONOR_THRESHOLD = 80     # primary fold must hold out at least this many donors
+DONOR_THRESHOLD = 80     # minimum for *any* primary claim, regardless of power
+DETECT_RHO_ASSUMED = 0.8  # paired-error correlation we plan around; sensitivity in detectability_floor.json
 
 # Known cohort -> chemistry mapping (populated during harmonization; we replicate here).
 COHORT_CHEMISTRY = {
@@ -105,6 +107,21 @@ def _load_donor_inventory(integrated_dir: Path) -> pd.DataFrame:
     return inventory
 
 
+def _load_detectability_floor(path: Path = DETECT_FLOOR) -> dict:
+    """Return {cell_type: n_required} at the planned pairing_rho, if available."""
+    if not path.exists():
+        log.warning(f"{path} not found — run src.data.detectability_floor first. "
+                    "Fold 'primary_per_cell_type' flags will fall back to the 80-donor heuristic.")
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        d = json.load(f)
+    key = f"rho={DETECT_RHO_ASSUMED:.1f}"
+    if key in d.get("sensitivity_pairing_rho", {}):
+        return d["sensitivity_pairing_rho"][key]
+    # fall back to the default rho in per_cell_type
+    return {ct: v["n_required_wilcoxon"] for ct, v in d.get("per_cell_type", {}).items()}
+
+
 def build_loco_folds(integrated_dir: Path = INTEGRATED_DIR) -> dict:
     """Enumerate LOCO folds across all training cohorts and the chemistry fold."""
     if not integrated_dir.exists():
@@ -117,15 +134,36 @@ def build_loco_folds(integrated_dir: Path = INTEGRATED_DIR) -> dict:
     donors_per_cohort = (
         inventory.groupby("cohort_id")["donor_id"].nunique().to_dict()
     )
+    # Per-cohort per-cell-type donor counts, used for per-cell-type primary flags.
+    per_cohort_ct_donors = (
+        inventory.groupby(["cohort_id", "cell_type"])["donor_id"]
+                 .nunique().unstack(fill_value=0).to_dict(orient="index")
+    )
 
     cohorts = sorted(donors_per_cohort.keys())
     log.info(f"cohorts found: {cohorts} with donor counts {donors_per_cohort}")
+
+    # Pull the detectability floor (may be empty if not yet computed)
+    floor = _load_detectability_floor()
+    # Map canonical names to scImmuAging-style codes used by detectability_floor.
+    ct_to_code = {"CD4+ T": "CD4T", "CD8+ T": "CD8T", "Monocyte": "MONO", "NK": "NK", "B": "B"}
 
     folds = []
     for holdout in cohorts:
         train = [c for c in cohorts if c != holdout]
         n_holdout = int(donors_per_cohort[holdout])
         is_primary = n_holdout >= DONOR_THRESHOLD
+        # Per-cell-type primary flag: the held-out cell-type-level donor count
+        # must meet both the 80-donor heuristic AND the statistical power floor.
+        primary_per_ct = {}
+        for canonical_ct, code in ct_to_code.items():
+            n_holdout_ct = int(per_cohort_ct_donors.get(holdout, {}).get(canonical_ct, 0))
+            required = floor.get(code, DONOR_THRESHOLD)
+            primary_per_ct[canonical_ct] = {
+                "n_holdout_donors": n_holdout_ct,
+                "n_required": int(required),
+                "primary": bool(n_holdout_ct >= DONOR_THRESHOLD and n_holdout_ct >= required),
+            }
         fold = {
             "fold_id": f"loco_{holdout}",
             "kind": "leave-one-cohort-out",
@@ -135,6 +173,7 @@ def build_loco_folds(integrated_dir: Path = INTEGRATED_DIR) -> dict:
             "n_holdout_donors": n_holdout,
             "primary": bool(is_primary),
             "donor_threshold": DONOR_THRESHOLD,
+            "primary_per_cell_type": primary_per_ct,
             "notes": COHORT_NOTES.get(holdout, ""),
         }
         folds.append(fold)

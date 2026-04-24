@@ -130,3 +130,28 @@ as permanent history — don't delete them.
    - Update the two `scFoundation × {OneK1K, Stephenson}` rows in `data/leakage_audit.csv`.
 
 **Estimated human effort:** ~15 min total.
+
+---
+
+## 2026-04-24 #5 — Report corrupt Terekhova `raw_counts_h5ad.tar.gz` to authors
+
+**Related roadmap task:** `roadmap/phase-1.md` / Task 1d-terekhova
+**Kind:** upstream bug report (low priority; blocker already worked around via Task #13)
+
+**Issue.** The Synapse-hosted `syn56693935` (`raw_counts_h5ad.tar.gz`, 9.8 GB) contains a truncated h5ad. Diagnostic evidence:
+
+- Tar file MD5: `20fcbe2531a999c51ed03dfce5d29b7b` — matches Synapse's posted MD5 ✅
+- Tar contents (per `tar -tzvf`): the archive header claims `raw_counts_h5ad/pbmc_gex_raw_with_var_obs.h5ad` is **77,016,305,915 bytes** (71.7 GiB).
+- After `tar -xzf`, the extracted file on disk is **23,477,328,896 bytes** (21.86 GiB) — i.e. the tar content itself is incomplete: only ~30% of the expected 77 GB was written into the tar before upload.
+- `h5py.File(...)` and `anndata.read_h5ad(...)` both refuse to open: `OSError: Unable to synchronously open file (truncated file: eof = 23477328896, sblock->base_addr = 0, stored_eof = 77016305915)`.
+
+This suggests the upload pipeline at Terekhova's end truncated the file at the point it was packaged into the tar — not a corruption in download or decompression.
+
+**What to do (low priority — we have a local workaround via `all_pbmcs.tar.gz`):**
+1. Email the Terekhova lab data-custody contact (Terekhova / Artyomov lab at Washington University; `artyomov <at> wustl.edu` is the PI). Cc Synapse helpdesk (`synapseinfo <at> sagebionetworks.org`).
+2. Reference `syn56693935` and attach the tar listing output above.
+3. Request a re-upload of the raw-counts h5ad.
+
+**Local workaround (done):** Task #13 downloads `all_pbmcs.tar.gz` (`syn51197006`, 15.9 GB full Seurat atlas) and converts R→h5ad to produce a working `load_terekhova()` input.
+
+**Estimated human effort:** ~10 min for the email.

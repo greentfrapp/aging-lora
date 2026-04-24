@@ -1,0 +1,142 @@
+{
+  "methodology": {
+    "description": "Per-cell-type detectability floor from Task 1e baseline residuals. Paired one-sided test of relative MAE reduction; Wilcoxon signed-rank under asymptotic relative efficiency 0.955 vs paired t.",
+    "relative_effect": 0.1,
+    "power": 0.8,
+    "alpha": 0.05,
+    "pairing_rho": 0.5,
+    "one_sided": true,
+    "source_csvs": [
+      "results\\baselines\\pretrained_sanity_CD4T.csv",
+      "results\\baselines\\pretrained_sanity_CD8T.csv",
+      "results\\baselines\\pretrained_sanity_MONO.csv",
+      "results\\baselines\\pretrained_sanity_NK.csv",
+      "results\\baselines\\pretrained_sanity_B.csv"
+    ]
+  },
+  "per_cell_type": {
+    "CD4T": {
+      "n_donors_observed": 981,
+      "median_abs_err_yr": 9.448,
+      "mean_abs_err_yr": 10.086,
+      "sd_abs_err_yr": 6.724,
+      "delta_target_yr": 0.945,
+      "pairing_rho_assumed": 0.5,
+      "sigma_d_yr": 6.724,
+      "n_required_ttest": 314,
+      "n_required_wilcoxon": 328,
+      "relative_effect": 0.1,
+      "power": 0.8,
+      "alpha": 0.05,
+      "one_sided": true
+    },
+    "CD8T": {
+      "n_donors_observed": 981,
+      "median_abs_err_yr": 7.56,
+      "mean_abs_err_yr": 8.693,
+      "sd_abs_err_yr": 6.301,
+      "delta_target_yr": 0.756,
+      "pairing_rho_assumed": 0.5,
+      "sigma_d_yr": 6.301,
+      "n_required_ttest": 430,
+      "n_required_wilcoxon": 450,
+      "relative_effect": 0.1,
+      "power": 0.8,
+      "alpha": 0.05,
+      "one_sided": true
+    },
+    "MONO": {
+      "n_donors_observed": 978,
+      "median_abs_err_yr": 7.948,
+      "mean_abs_err_yr": 9.551,
+      "sd_abs_err_yr": 7.464,
+      "delta_target_yr": 0.795,
+      "pairing_rho_assumed": 0.5,
+      "sigma_d_yr": 7.464,
+      "n_required_ttest": 546,
+      "n_required_wilcoxon": 571,
+      "relative_effect": 0.1,
+      "power": 0.8,
+      "alpha": 0.05,
+      "one_sided": true
+    },
+    "NK": {
+      "n_donors_observed": 981,
+      "median_abs_err_yr": 9.637,
+      "mean_abs_err_yr": 10.755,
+      "sd_abs_err_yr": 7.46,
+      "delta_target_yr": 0.964,
+      "pairing_rho_assumed": 0.5,
+      "sigma_d_yr": 7.46,
+      "n_required_ttest": 371,
+      "n_required_wilcoxon": 389,
+      "relative_effect": 0.1,
+      "power": 0.8,
+      "alpha": 0.05,
+      "one_sided": true
+    },
+    "B": {
+      "n_donors_observed": 981,
+      "median_abs_err_yr": 10.664,
+      "mean_abs_err_yr": 11.926,
+      "sd_abs_err_yr": 8.232,
+      "delta_target_yr": 1.066,
+      "pairing_rho_assumed": 0.5,
+      "sigma_d_yr": 8.232,
+      "n_required_ttest": 369,
+      "n_required_wilcoxon": 386,
+      "relative_effect": 0.1,
+      "power": 0.8,
+      "alpha": 0.05,
+      "one_sided": true
+    }
+  },
+  "sensitivity_pairing_rho": {
+    "rho=0.3": {
+      "CD4T": 460,
+      "CD8T": 630,
+      "MONO": 800,
+      "NK": 544,
+      "B": 541
+    },
+    "rho=0.5": {
+      "CD4T": 328,
+      "CD8T": 450,
+      "MONO": 571,
+      "NK": 389,
+      "B": 386
+    },
+    "rho=0.7": {
+      "CD4T": 197,
+      "CD8T": 270,
+      "MONO": 343,
+      "NK": 233,
+      "B": 232
+    },
+    "rho=0.8": {
+      "CD4T": 132,
+      "CD8T": 180,
+      "MONO": 229,
+      "NK": 156,
+      "B": 155
+    },
+    "rho=0.9": {
+      "CD4T": 66,
+      "CD8T": 90,
+      "MONO": 115,
+      "NK": 78,
+      "B": 78
+    }
+  },
+  "summary": {
+    "max_required_across_cell_types": 571,
+    "median_required_across_cell_types": 389,
+    "interpretation": "A LOCO fold that holds out >= the per-cell-type n_required is adequately powered for that cell type. A fold holding out >= max_required is powered across all five cell types; a fold holding out >= median_required is powered for the median cell type. Folds below both thresholds are exploratory-only and should not carry the paper's headline MAE numbers.",
+    "current_loco_folds": {
+      "loco_onek1k": 981,
+      "loco_terekhova": 166,
+      "loco_stephenson": 29
+    },
+    "threshold_80_donor": 80
+  }
+}
