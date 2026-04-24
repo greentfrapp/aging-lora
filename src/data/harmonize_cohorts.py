@@ -347,59 +347,173 @@ def load_cellxgene_cohort(
 # Terekhova (Synapse syn49637038) loader
 # ---------------------------------------------------------------------------
 #
-# Terekhova et al. 2023 Immunity. 166 healthy donors aged 25-85, 10x 5' v2.
-# Download requires a free Synapse account + DUC acceptance — see HUMAN_TASKS.md #2.
+# Schema discovered 2026-04-24 after extraction of all_pbmcs.tar.gz (syn51197006,
+# the fallback for the corrupt raw_counts_h5ad.tar.gz — see HUMAN_TASKS.md #5):
 #
-# The Synapse-hosted format is expected to be an h5ad (single or per-cell-type),
-# but the exact schema cannot be verified until download. This loader is written
-# against the typical CellxGene/scanpy schema (obs: donor_id/age/cell_type/disease)
-# and will be tightened after first inspection of the downloaded file. If the
-# release is an RDS / Seurat object instead, a one-off R-to-h5ad conversion
-# script lives at src/data/convert_terekhova_rds.R (not written until needed).
+#   all_pbmcs/all_pbmcs_rna.h5ad       1.916M cells x 36,601 genes, 27 GB.
+#                                       obs is empty; var is empty; var.index are
+#                                       HGNC gene symbols (e.g. MIR1302-2HG); X is
+#                                       raw integer counts.
+#   all_pbmcs/all_pbmcs_metadata.csv   406 MB. One row per cell barcode. Columns
+#                                       include Donor_id, Age (int years), Sex,
+#                                       Batch, Cluster_names (top-level cell type).
+#
+# load_terekhova joins the metadata CSV onto the empty obs, applies the canonical
+# cell-type remap, and produces the same {cohort_id, donor_id, age, age_precision,
+# sex, assay, cell_type} schema as load_cellxgene_cohort.
+#
+# Gene identifier alignment: var.index is HGNC symbols; OneK1K and Stephenson var
+# uses Ensembl IDs (with symbols in a `feature_name`/`gene_symbol` column). To
+# keep all three cohorts compatible, we map Terekhova's symbols back to Ensembl
+# using a supplied symbol_to_ensembl dictionary (typically built from OneK1K's
+# var during the harmonization run). Unmapped symbols retain only the symbol
+# and carry ensembl_id = NaN.
 # ---------------------------------------------------------------------------
 TEREKHOVA_DIR = Path("data/cohorts/raw/terekhova")
 
-
-def _discover_terekhova_h5ad(raw_dir: Path) -> Path:
-    """Return the single expected h5ad under raw_dir; fail loudly otherwise."""
-    candidates = sorted(raw_dir.glob("*.h5ad"))
-    if len(candidates) == 0:
-        raise FileNotFoundError(
-            f"[terekhova] no h5ad found under {raw_dir}. Download from Synapse "
-            f"syn49637038 — see HUMAN_TASKS.md #2."
-        )
-    if len(candidates) > 1:
-        log.warning(f"[terekhova] multiple h5ads under {raw_dir}; using the largest: "
-                    + ", ".join(p.name for p in candidates))
-        candidates.sort(key=lambda p: p.stat().st_size, reverse=True)
-    return candidates[0]
+# Terekhova's Cluster_names top-level labels, mapped to canonical five.
+# "Myeloid cells" is coarser than scImmuAging's "Monocyte" (~90% monocytes, ~10%
+# dendritic in PBMC). Acceptable trade-off for a PBMC aging clock; the DC
+# contamination is orders-of-magnitude lower than the donor-age signal.
+_TEREKHOVA_CELLTYPE_MAP = {
+    "CD4+ T cells": "CD4+ T",
+    "TRAV1-2- CD8+ T cells": "CD8+ T",
+    "NK cells": "NK",
+    "B cells": "B",
+    "Myeloid cells": "Monocyte",
+    # Explicit drops (not in canonical 5):
+    "gd T cells": "Other",
+    "MAIT cells": "Other",
+    "Progenitor cells": "Other",
+    "DN T cells": "Other",
+}
 
 
 def load_terekhova(
     raw_dir: Path = TEREKHOVA_DIR,
     cohort_id: str = "terekhova",
+    *,
+    symbol_to_ensembl: dict[str, str] | None = None,
 ) -> ad.AnnData:
-    """Load the Terekhova 2023 PBMC atlas.
+    """Load Terekhova 2023 PBMC atlas from all_pbmcs/{h5ad,metadata.csv}.
 
-    Extraction of raw_counts_h5ad.tar.gz produces a ~77 GB uncompressed h5ad
-    substantially larger than OneK1K's 4.2 GB. Loading naively would exceed a
-    32 GB box. We therefore open in backed='r' mode so filters apply without
-    materializing .X, and only `.to_memory()` the final canonical-cell-type
-    subset inside load_cellxgene_cohort.
-
-    Terekhova is healthy-only by paper design, so healthy_only=False skips the
-    disease-column check the schema may not carry a 'disease' column.
-    adult_only=True because the age range is 25-85.
+    Parameters
+    ----------
+    raw_dir          directory containing the extracted `all_pbmcs/` folder
+    cohort_id        cohort tag for obs['cohort_id'] and donor_id prefix
+    symbol_to_ensembl  optional {symbol -> ensembl_id} map used to fill the
+                       var.ensembl_id column. If None, ensembl_id is left as
+                       the gene symbol (downstream code that keys on
+                       `ensembl_id` should intersect-on-symbol in that case).
     """
-    h5ad_path = _discover_terekhova_h5ad(raw_dir)
-    log.info(f"[terekhova] using {h5ad_path}; opening in backed mode")
-    return load_cellxgene_cohort(
-        h5ad_path=h5ad_path,
-        cohort_id=cohort_id,
-        healthy_only=False,
-        adult_only=True,
-        backed="r",
+    extracted_dir = raw_dir / "all_pbmcs"
+    h5ad_path = extracted_dir / "all_pbmcs_rna.h5ad"
+    meta_path = extracted_dir / "all_pbmcs_metadata.csv"
+    if not h5ad_path.exists() or not meta_path.exists():
+        raise FileNotFoundError(
+            f"[terekhova] expected all_pbmcs/all_pbmcs_rna.h5ad + "
+            f"all_pbmcs_metadata.csv under {raw_dir}. "
+            f"Extract via: tar --force-local -xzvf all_pbmcs.tar.gz -C {raw_dir}/"
+        )
+
+    log.info(f"[{cohort_id}] reading metadata {meta_path}")
+    meta = pd.read_csv(meta_path, low_memory=False)
+    meta = meta.rename(columns={"Unnamed: 0": "barcode"}).set_index("barcode")
+    log.info(f"[{cohort_id}] metadata: {len(meta):,} rows, {meta['Donor_id'].nunique()} donors, "
+             f"ages {int(meta['Age'].min())}-{int(meta['Age'].max())}")
+
+    log.info(f"[{cohort_id}] opening {h5ad_path} (backed)")
+    adata = ad.read_h5ad(h5ad_path, backed="r")
+    log.info(f"[{cohort_id}] loaded: {adata.n_obs:,} cells x {adata.n_vars:,} genes")
+
+    # Align metadata to adata.obs_names
+    missing = set(adata.obs_names) - set(meta.index)
+    if missing:
+        raise RuntimeError(
+            f"[{cohort_id}] {len(missing)} barcodes in h5ad but not in metadata; "
+            f"sample missing: {list(missing)[:3]}"
+        )
+    meta_aligned = meta.reindex(adata.obs_names)
+
+    # Compute filters on the obs-side dataframe
+    keep = np.ones(len(meta_aligned), dtype=bool)
+    age = meta_aligned["Age"].astype(float)
+    age_ok = age.notna().values
+    n_drop = int((~age_ok & keep).sum())
+    keep &= age_ok
+    if n_drop:
+        log.warning(f"[{cohort_id}] dropped {n_drop:,} cells with NaN age")
+
+    # Adult-only: Terekhova is 25-81 by paper design, but enforce anyway.
+    adult_mask = (age.values >= 18) & age_ok
+    keep &= adult_mask
+
+    # Canonical cell-type remap via the Terekhova-specific map + CANONICAL_CELL_TYPES filter.
+    canonical = meta_aligned["Cluster_names"].astype(str).map(_TEREKHOVA_CELLTYPE_MAP).fillna("Other")
+    canon_keep = canonical.isin(CANONICAL_CELL_TYPES).values
+    n_drop = int((~canon_keep & keep).sum())
+    keep &= canon_keep
+    if n_drop:
+        log.info(f"[{cohort_id}] cell-type filter drops {n_drop:,} cells not in canonical five "
+                 f"(gd/MAIT/Progenitor/DN T)")
+
+    n_kept = int(keep.sum())
+    log.info(f"[{cohort_id}] combined filters keep {n_kept:,} / {adata.n_obs:,} cells "
+             f"({100 * n_kept / max(adata.n_obs, 1):.1f}%)")
+
+    # Single materialization of the kept rows, then re-align metadata to the
+    # surviving obs_names (post-filter order matches adata.obs_names).
+    adata = adata[keep].to_memory()
+    meta_kept = meta.reindex(adata.obs_names)
+
+    # Ensure X is sparse CSR float32 (Terekhova all_pbmcs stores raw int counts)
+    X = adata.X
+    if not sparse.issparse(X):
+        X = sparse.csr_matrix(X)
+    X = X.astype(np.float32).tocsr()
+
+    # Build var: gene_symbol = var.index (already symbols); ensembl_id via map or self
+    gene_symbols = np.asarray(adata.var_names, dtype=object)
+    if symbol_to_ensembl:
+        ensembl_ids = np.array(
+            [symbol_to_ensembl.get(s, s) for s in gene_symbols],
+            dtype=object,
+        )
+        n_mapped = int(sum(1 for s in gene_symbols if s in symbol_to_ensembl))
+        log.info(f"[{cohort_id}] mapped {n_mapped:,} / {len(gene_symbols):,} "
+                 f"gene symbols to Ensembl via supplied table")
+    else:
+        ensembl_ids = gene_symbols.copy()
+        log.warning(f"[{cohort_id}] no symbol->ensembl map supplied; var.ensembl_id "
+                    f"falls back to gene symbols")
+    new_var = pd.DataFrame(
+        {"gene_symbol": gene_symbols, "ensembl_id": ensembl_ids},
+        index=gene_symbols,
     )
+
+    harmonized = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame(
+            {
+                "cohort_id": cohort_id,
+                "donor_id": (cohort_id + ":" + meta_kept["Donor_id"].astype(str)).values,
+                "age": meta_kept["Age"].astype(float).values,
+                "age_precision": "exact",
+                "sex": meta_kept["Sex"].astype(str).values,
+                "assay": "10x 5' v2",
+                "cell_type": meta_kept["Cluster_names"].astype(str).map(_TEREKHOVA_CELLTYPE_MAP).values,
+                "batch": meta_kept["Batch"].astype(str).values,
+            },
+            index=adata.obs_names,
+        ),
+        var=new_var,
+    )
+    log.info(
+        f"[{cohort_id}] harmonized: {harmonized.n_obs:,} cells | "
+        f"{harmonized.obs['donor_id'].nunique()} donors | "
+        f"ages {harmonized.obs['age'].min():.0f}-{harmonized.obs['age'].max():.0f}"
+    )
+    return harmonized
 
 
 # ---------------------------------------------------------------------------
@@ -489,19 +603,44 @@ def main() -> None:
 
     out_dir = Path(args.out_dir)
     adatas: list[ad.AnnData] = []
+    # symbol->ensembl map is built from the first CellxGene cohort we load (OneK1K
+    # or Stephenson — both carry gene_symbol + ensembl_id pairs in their var) and
+    # passed to load_terekhova to translate Terekhova's symbol-indexed var into
+    # Ensembl for downstream gene-vocab alignment.
+    symbol_to_ensembl: dict[str, str] | None = None
+
+    def _harvest_symbol_map(a: ad.AnnData) -> dict[str, str]:
+        if "gene_symbol" not in a.var.columns or "ensembl_id" not in a.var.columns:
+            return {}
+        # Build a dict{symbol: ensembl}. If multiple Ensembl IDs share a symbol
+        # (happens for ~1% of readthrough / paralog genes), keep the first.
+        out: dict[str, str] = {}
+        for sym, ens in zip(a.var["gene_symbol"], a.var["ensembl_id"]):
+            sym_s = str(sym)
+            if sym_s and sym_s not in out:
+                out[sym_s] = str(ens)
+        return out
 
     if not args.skip_onek1k:
         if not ONEK1K_H5AD.exists():
             raise FileNotFoundError(f"OneK1K h5ad not found at {ONEK1K_H5AD}; run Task 1d first")
-        adatas.append(load_cellxgene_cohort(ONEK1K_H5AD, cohort_id="onek1k"))
+        onek1k = load_cellxgene_cohort(ONEK1K_H5AD, cohort_id="onek1k")
+        adatas.append(onek1k)
+        symbol_to_ensembl = _harvest_symbol_map(onek1k)
+        log.info(f"[main] harvested {len(symbol_to_ensembl):,} symbol->ensembl mappings from OneK1K")
 
     if not args.skip_stephenson:
         if not STEPHENSON_H5AD.exists():
             raise FileNotFoundError(f"Stephenson h5ad not found at {STEPHENSON_H5AD}")
-        adatas.append(load_cellxgene_cohort(STEPHENSON_H5AD, cohort_id="stephenson"))
+        stephenson = load_cellxgene_cohort(STEPHENSON_H5AD, cohort_id="stephenson")
+        adatas.append(stephenson)
+        if symbol_to_ensembl is None or len(symbol_to_ensembl) == 0:
+            symbol_to_ensembl = _harvest_symbol_map(stephenson)
+            log.info(f"[main] harvested {len(symbol_to_ensembl):,} symbol->ensembl mappings from Stephenson")
 
     if not args.skip_terekhova:
-        adatas.append(load_terekhova(TEREKHOVA_DIR, cohort_id="terekhova"))
+        adatas.append(load_terekhova(TEREKHOVA_DIR, cohort_id="terekhova",
+                                      symbol_to_ensembl=symbol_to_ensembl))
 
     if not adatas:
         log.error("No cohorts loaded (all --skip flags set)")
