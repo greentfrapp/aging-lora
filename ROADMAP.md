@@ -2,8 +2,8 @@
 
 ## Phases
 
-- [ ] **Phase 1 — Data ingestion & infrastructure.** See [phase-1](./roadmap/phase-1.md).
-      Success: all five sc-ImmuAging cohorts processed to AnnData; leakage-audit table produced for all four foundation models × five cohorts; LOCO fold matrix frozen with ≥80-donor filter applied; AIDA 50/50 split frozen before any model is trained.
+- [x] **Phase 1 — Data ingestion & infrastructure.** See [phase-1](./roadmap/phase-1.md). *(Closed 2026-04-24.)*
+      Three cohorts (OneK1K, Stephenson, Terekhova — Barreiro/Randolph dropped, tracked in `FUTURE_WORK.md`) harmonized to `data/cohorts/integrated/{B,CD4p_T,CD8p_T,Monocyte,NK}.h5ad` — 2.75M cells × 48,968 genes, raw integer counts (Terekhova reverse-normalized from log1p(CP10k) via metadata `nCount_RNA`; commit c220d92). Frozen immutable artifacts: `data/cohort_summary.csv`, `data/leakage_audit.csv` (16 rows, no `unknown`), `data/loco_folds.json`, `data/aida_split.json` (625 donors → 307/318), `data/detectability_floor.json` (ρ-sensitivity sweep), `data/checkpoint_hashes.txt` (all 4 FMs smoke-tested). Findings that reshape Phase 3/4: (a) `loco_terekhova` is the only leakage-clean fold across all 4 FMs — **replaces OneK1K as headline**; (b) Terekhova 10x 5' chemistry degrades the pre-trained LASSO cell-type-selectively (CD4T/CD8T robust; MONO/NK/B degrade; B collapses to R=0.08) — **reframed as Phase-4 chemistry-rescue secondary claim**; (c) detectability-floor + chemistry-shift stacking reduces the strict-clean headline cell count from 20 to ~10 (see `methods/terekhova_chemistry_shift.md`).
 
 - [ ] **Phase 2 — Baseline reproduction.** See [phase-2](./roadmap/phase-2.md).
       Success: LASSO m.a.e. on the internal sc-ImmuAging split matches published Extended Data Table 2 values within 15% for all five cell types; LOCO m.a.e. recorded for LASSO, random forest, and PointNet across all five LOCO folds × five cell types in `results/baselines/loco_baseline_table.csv`; Pasta architecture retrained on PBMC pseudobulk produces per-cohort m.a.e. on the same LOCO folds.
@@ -19,11 +19,11 @@
 
 ## Cross-phase notes
 
-1. **Leakage audit gates Phase 4 scope.** The Phase 1 leakage-audit table determines which (model, cohort) pairs are promoted to "primary" folds vs. "leakage-restricted" folds; the size and composition of the Phase 4 primary LOCO matrix are not known until that audit is complete.
+1. **Leakage audit gates Phase 4 scope.** *(Resolved 2026-04-24.)* `data/leakage_audit.csv` is frozen: Geneformer is the only FM clean across all cohorts; scGPT/UCE overlap OneK1K+Stephenson via CellxGene Census; scFoundation overlaps Stephenson via HCA-Covid19PBMC. Phase 4 now uses a three-way stratification (`leakage_status` × `chemistry_match_to_baseline_training` × `detectability_flag`) with three aggregation modes — strict-clean headline, leakage-inclusive, chemistry-inclusive. See `methods/leakage_audit_notes.md` and `methods/terekhova_chemistry_shift.md`.
 
 2. **GPU-hours calibration gates Phase 4 scheduling.** Phase 3's measured per-run GPU cost is a hard prerequisite for booking Phase 4 compute; Phase 4 scheduling cannot be committed until Phase 3 reports this figure.
 
-3. **AIDA split frozen in Phase 1; consumed across Phases 4 and 5.** The 50/50 AIDA ancestry-holdout split must be frozen before any model is trained (Phase 1). The ancestry-shift m.a.e. half is used for evaluation in Phase 4; the age-axis cosine-alignment half is used in Phase 5. Both phases depend on the frozen split produced in Phase 1.
+3. **AIDA split frozen in Phase 1; consumed across Phases 4 and 5.** *(Frozen 2026-04-24 in `data/aida_split.json`: 625 donors → 307 ancestry_shift_mae + 318 age_axis_alignment, stratified over 35 age_decile × ethnicity strata.)* The ancestry-shift m.a.e. half is used for evaluation in Phase 4; the age-axis cosine-alignment half is used in Phase 5.
 
 4. **Phase 3 is the go/no-go gate for the primary claim.** If both scGPT and Geneformer LoRA fine-tunes fail to improve over the LASSO baseline by more than 5% relative m.a.e. on the CD4+ T LOCO primary folds (i.e., the LoRA-outperforms-LASSO claim appears null), the project pivots before Phase 4 begins: (a) Phase 4 is narrowed to the zero-shot transfer and few-shot curve experiments only (dropping the full 4-model × 5-cell-type sweep to the best single model); (b) the paper is repositioned as an evaluation study — "Do scRNA-seq foundation models improve immune aging clocks?" — with the null fine-tuning result as the headline. The preprint posted in Phase 3 already frames this as a possibility, so the pivot requires only a revision rather than a retraction.
 
