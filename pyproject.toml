@@ -24,7 +24,9 @@ dependencies = [
     "tqdm>=4.66",
     "requests>=2.31",
     "GEOparse>=2.0",
+    "synapseclient>=4.4",
     "rich>=13.7",
+    "rdata>=1.0.0",
 ]
 
 [project.optional-dependencies]
