@@ -30,3 +30,8 @@ save/
 
 # Transient run artefacts (regenerated each run)
 data/cohort_summary.csv
+
+# Local audit scratchpad — third-party paper supplementaries and one-off
+# inspection scripts. Reproducible via the URLs documented in
+# methods/leakage_audit_notes.md; do not commit (copyright + bloat).
+scratchpad/
