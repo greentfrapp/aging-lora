@@ -392,7 +392,12 @@ def main():
     ap.add_argument("--cohort-id", default=None,
                     help="filter --source harmonized by this cohort_id (e.g. 'terekhova')")
     ap.add_argument("--out-csv", default=None,
-                    help=f"output CSV; default: {RESULTS_DIR}/pretrained_sanity_{{cell_type}}.csv")
+                    help=f"per-donor output CSV; default: {RESULTS_DIR}/pretrained_sanity_{{cell_type}}.csv")
+    ap.add_argument("--summary-csv", default=None,
+                    help=f"per-cell-type summary CSV the script appends to; "
+                         f"default: {RESULTS_DIR}/pretrained_sanity_summary.csv. "
+                         f"Use a different file for non-OneK1K runs e.g. Task 1f on Terekhova "
+                         f"so the OneK1K sanity summary is not overwritten.")
     ap.add_argument("--pseudocell-n", type=int, default=100)
     ap.add_argument("--pseudocell-size", type=int, default=15)
     ap.add_argument("--seed", type=int, default=0)
@@ -451,7 +456,7 @@ def main():
     log.info(f"wrote {out_csv}")
 
     # Also append a single-row summary
-    summary_csv = RESULTS_DIR / "pretrained_sanity_summary.csv"
+    summary_csv = Path(args.summary_csv) if args.summary_csv else RESULTS_DIR / "pretrained_sanity_summary.csv"
     summary_row = {
         "cell_type": cell_type_code,
         "n_donors": len(df),
