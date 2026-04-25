@@ -33,6 +33,10 @@ data/cohorts/logs/
 # Re-clone via: git clone https://github.com/CiiM-Bioinformatics-group/scImmuAging data/scImmuAging
 data/scImmuAging/
 
+# Vendored scAgeClock repo + 44 MB GMA checkpoint.
+# Re-clone via: git clone --depth=1 https://github.com/gangcai/scageclock data/scAgeClock/scageclock
+data/scAgeClock/
+
 # Foundation-model checkpoints — large (~5 GB total). Re-download via:
 #   uv run python scripts/download_foundation_models.py
 save/

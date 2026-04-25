@@ -52,3 +52,34 @@ Each per-(model, cohort) LOCO row in `results/phase3/*.csv` and `results/phase4/
 - [x] scFoundation Nat Methods Supp Tables (Hao 2024, MOESM4 + MOESM5, 10 747 sample rows and 522 project rows) — verified: zero hits for OneK1K accessions → **clean**; Stephenson deposited via HCA-Covid19PBMC project ID, row 81 of MOESM5 → **overlapping**.
 
 All 16 leakage-audit rows now resolved; `data/leakage_audit.csv` is the authoritative source for Phase 3/4 result-table footnoting.
+
+## Addendum — scAgeClock × 4 cohorts (2026-04-24)
+
+scAgeClock (Xie 2026, *npj Aging*; preprint bioRxiv 2025.08.29.673183) was added as a fifth foundation model and audited against the same four cohorts. Final classifications:
+
+| cohort | scAgeClock |
+|---|---|
+| OneK1K (`3faad104`) | **overlapping** |
+| Stephenson healthy controls (`ddfad306`) | **overlapping** |
+| Terekhova (`syn49637038`) | **clean** |
+| AIDA (`ced320a1`) | **clean** |
+
+### Methodology
+
+The audit followed the same template as the four-FM audit above: identify the model's pretraining-corpus snapshot, identify any cell-level filters, then check each cohort's deposit date and metadata against the snapshot.
+
+**Source-of-truth quote (Xie 2026 npj Aging Methods, surfaced via search of the published article):** *"The human scRNA-seq datasets used for training, validation, and testing of the scAgeClock model were obtained from the CZ CELLxGENE Discover database (`census_version = "2024-07-01"`)."* Filters: normal tissues + primary cohorts (`is_primary_data=True`) + non-null age. Funnel: 74,322,510 human cells → 30,197,419 (normal + primary) → 16,497,049 (with age). The Census `2024-07-01` LTS release was *built on 2024-05-20* per the chanzuckerberg/cellxgene-census release-info doc — this build-date is the actual cutoff (not the label date).
+
+Per-cohort reasoning:
+
+- **OneK1K** — CellxGene-curated since 2022, healthy-by-design, `is_primary_data=True`, all 981 donors carry age metadata → trivially passes all three of scAgeClock's filters; in pretraining set.
+- **Stephenson** — collection in CellxGene since 2021 and in Census 2024-07-01. The collection mixes COVID-19 cases and 29 healthy controls; CellxGene's schema requires the `disease` ontology field, so the healthy controls are tagged `disease='normal'` and would survive scAgeClock's normal-tissue filter. The COVID cells are excluded — but our project's `loco_stephenson` fold uses *exactly* those 29 healthy donors, so the overlap is real for our evaluation.
+- **Terekhova** — distributed only on Synapse (`syn49637038`), never deposited in CELLxGENE Census. scAgeClock did no manual ingestion outside Census, so Terekhova is impossible to leak.
+- **AIDA** — bioRxiv preprint posted 2024-07-01, Cell publication 2025-03-19; CellxGene collection `ced320a1` postdates the Census 2024-05-20 build cutoff. Confirmed clean by timing.
+
+### Surprises and confidence notes
+
+1. **The "2024-07-01" label is misleading** — the actual data freeze for that Census LTS is 2024-05-20. AIDA's preprint+CellxGene deposit on 2024-07-01 falls *after* the build but *on* the version label, which would have been a coin flip without the explicit build-date in the release-info doc. Worth flagging if any future audit checks a cohort deposited in May–June 2024.
+2. **No per-dataset manifest is published** — unlike scGPT/UCE (which list Census version) and Geneformer/scFoundation (which publish full manifests), scAgeClock only states the Census version and filters. Dataset-level inclusion is therefore *inferred* from `is_primary_data`/`disease`/age metadata rather than directly verified. All four classifications above are inferential, not from a published manifest. To upgrade to "verified", one would need to re-run the same `cellxgene-census` query (`census_version="2024-07-01"`, `value_filter="is_primary_data==True and disease=='normal' and tissue_general=='blood'"`) and grep `dataset_id` for `3faad104` and `ddfad306`.
+3. **scAgeClock's `normal` filter does not exclude pediatric or adult-only cohorts**; it only excludes diseased tissue. Age is required to be non-null but no minimum age was disclosed, so we cannot use age-range arguments to reduce overlap.
+4. **Methods-section access:** Both the npj Aging article and the bioRxiv full HTML were 403-blocked by WebFetch; the Census version and filtering funnel were recovered via Google search snippets that quote the Methods. The rationale above relies on those search-surfaced quotes plus the cellxgene-census release-info doc — primary-source-quote-grade for the Census version, secondary-grade for the filter chain.
