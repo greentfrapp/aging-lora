@@ -33,10 +33,10 @@ CODE_TO_CANONICAL = {"CD4T": "CD4+ T", "CD8T": "CD8+ T", "MONO": "Monocyte", "NK
 CANONICAL_TO_FILENAME = {"CD4+ T": "CD4p_T", "CD8+ T": "CD8p_T", "Monocyte": "Monocyte", "NK": "NK", "B": "B"}
 
 
-def pseudobulk_one(cohort: str, ct_code: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+def pseudobulk_one(cohort: str, ct_code: str, integrated_dir: Path = INTEGRATED_DIR) -> tuple[pd.DataFrame, pd.DataFrame]:
     canonical = CODE_TO_CANONICAL[ct_code]
     fname = CANONICAL_TO_FILENAME[canonical]
-    a = ad.read_h5ad(INTEGRATED_DIR / f"{fname}.h5ad")
+    a = ad.read_h5ad(integrated_dir / f"{fname}.h5ad")
     keep = (a.obs["cohort_id"] == cohort).values
     sub = a[keep].copy()
     log.info(f"{cohort} × {ct_code}: {sub.n_obs:,} cells, {sub.obs['donor_id'].nunique()} donors")
@@ -87,8 +87,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cohorts", nargs="+", default=["onek1k", "stephenson", "terekhova"])
     ap.add_argument("--cell-types", nargs="+", default=["CD4T", "CD8T", "MONO", "NK", "B"])
+    ap.add_argument("--integrated-dir", default=str(INTEGRATED_DIR),
+                    help="Source dir of harmonized per-cell-type h5ads. Use data/cohorts/aida_eval for AIDA.")
     ap.add_argument("--out-dir", default=str(OUT_DIR))
     args = ap.parse_args()
+    integrated_dir = Path(args.integrated_dir)
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -96,7 +99,7 @@ def main():
     for cohort in args.cohorts:
         for ct in args.cell_types:
             log.info(f"=== {cohort} × {ct} ===")
-            pb_df, meta_df = pseudobulk_one(cohort, ct)
+            pb_df, meta_df = pseudobulk_one(cohort, ct, integrated_dir=integrated_dir)
             pb_path = out_dir / f"{cohort}_{ct}.tsv"
             meta_path = out_dir / f"{cohort}_{ct}_meta.csv"
             pb_df.to_csv(pb_path, sep="\t")

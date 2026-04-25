@@ -73,3 +73,25 @@ When loco_terekhova is underpowered for a given cell type at our observed ρ (af
 3. **Explicit exploratory label** in the main result table; the combined (OneK1K + Terekhova) primary fold count remains 1 (OneK1K only) for those two cell types.
 
 Option 1 is the expected outcome; aging clocks typically show very high per-donor error correlation.
+
+## Phase 2 Task 2.8 update (2026-04-25): empirical pairing-ρ from baseline residuals
+
+The Phase-1 floor used a sensitivity sweep over ρ ∈ {0.3, 0.5, 0.7, 0.8, 0.9}. Phase-2 produced per-donor predictions for three baselines (LASSO, scAgeClock, Pasta-REG) on the same 3 cohorts × 5 cell types, so we can now **measure** the actual pairing-ρ between baseline residuals as an empirical proxy for what Phase 3's baseline-vs-FM ρ will look like.
+
+**Per-cell-type empirical ρ** (median across 9 cohort × baseline-pair values, see `results/baselines/empirical_pairing_rho.csv`):
+
+| Cell type | Empirical median ρ | Range across pairs | n_required at empirical ρ (Wilcoxon) |
+|---|---|---|---|
+| CD4T | **0.23** | −0.42 to 0.73 | **504** |
+| CD8T | **0.16** | −0.09 to 0.61 | **753** |
+| MONO | **0.06** | −0.86 to 0.66 | **1,075** |
+| NK | **0.28** | −0.27 to 0.66 | **557** |
+| B | **0.35** | 0.07 to 0.63 | **502** |
+
+These are far below the Phase-1 ρ=0.8 planning value. Under the conservative empirical-ρ interpretation, the only adequately-powered LOCO fold is **OneK1K (981 donors)** — and only for CD4T, NK, B. Terekhova (166 donors) is underpowered for *all five cell types*; Stephenson (29) underpowered everywhere. The Phase-1 floor was overoptimistic by 2–7×.
+
+**Important caveat.** The ρ values above are between BASELINE PAIRS (LASSO vs Pasta-REG, etc.), not between BASELINE and FM. The Phase-3 LoRA fine-tunes are expected to share more residual structure with the baselines than the baselines do with each other (both are predicting the same chronological-age signal from the same gene-expression data). The empirical baseline-pair ρ here is therefore a **conservative lower bound** on the Phase-3-measured baseline-vs-FM ρ. The truth is somewhere between 0.06–0.35 (this measurement) and 0.8 (Phase-1 planning value); Phase 3 will measure it directly and append a `post_phase3_override` block to `data/loco_folds.json`.
+
+**Practical implication for Phase 3 reporting.** The preprint's headline detectability flags use the **post_phase3 measured ρ** (not these baseline-pair values, not the Phase-1 ρ=0.8). For the Phase-3 preprint that posts before Phase 4 is run, the empirical baseline-pair ρ table above goes in the supplementary as a transparency disclosure: "the Phase-1 detectability floor was overoptimistic; Phase 3 measured ρ=X, between the two extremes."
+
+Empirical-ρ data: `results/baselines/empirical_pairing_rho.csv`. The detectability floor JSON now carries a `post_phase2_empirical_rho` block alongside the original Phase-1 fields.

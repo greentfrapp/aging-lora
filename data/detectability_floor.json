@@ -138,5 +138,71 @@
       "loco_stephenson": 29
     },
     "threshold_80_donor": 80
+  },
+  "post_phase2_empirical_rho": {
+    "generated_at": "2026-04-25T05:30:18.729886+00:00",
+    "method": "Pearson \u03c1 between |err| vectors of baseline pairs (LASSO, scAgeClock, Pasta-REG) per (cohort \u00d7 cell type), aggregated to per-cell-type median across all 9 (cohort \u00d7 baseline-pair) values",
+    "interpretation": "Empirical lower bound on the baseline-vs-FM \u03c1 that Phase-3 measures (FMs are expected to share more residual structure with the baselines than the baselines do with each other). At the empirical median \u03c1, n_required is markedly larger than the Phase-1 \u03c1=0.8 planning value \u2014 the Phase-1 floor was overoptimistic.",
+    "per_cell_type_median_rho": {
+      "CD4T": 0.23161043067279466,
+      "CD8T": 0.16266321484556553,
+      "MONO": 0.05767813436684421,
+      "NK": 0.2812775499382581,
+      "B": 0.34924312813604386
+    },
+    "per_cell_type_min_rho": {
+      "CD4T": -0.4155204537286845,
+      "CD8T": -0.0890347573975915,
+      "MONO": -0.8610552354123121,
+      "NK": -0.2707877074224803,
+      "B": 0.07298862387803608
+    },
+    "per_cell_type_max_rho": {
+      "CD4T": 0.725737248408994,
+      "CD8T": 0.6138290375510411,
+      "MONO": 0.6609078556148075,
+      "NK": 0.660734267245664,
+      "B": 0.6330019565492895
+    },
+    "n_baseline_pairs_per_cell_type": {
+      "CD4T": 9,
+      "CD8T": 9,
+      "MONO": 9,
+      "NK": 9,
+      "B": 9
+    },
+    "n_required_at_empirical_rho": {
+      "CD4T": {
+        "rho_empirical_median": 0.23161043067279466,
+        "sigma_d_yr": 8.335534109460031,
+        "n_required_ttest": 481,
+        "n_required_wilcoxon": 504
+      },
+      "CD8T": {
+        "rho_empirical_median": 0.16266321484556553,
+        "sigma_d_yr": 8.154072391585597,
+        "n_required_ttest": 719,
+        "n_required_wilcoxon": 753
+      },
+      "MONO": {
+        "rho_empirical_median": 0.05767813436684421,
+        "sigma_d_yr": 10.246752888945938,
+        "n_required_ttest": 1027,
+        "n_required_wilcoxon": 1075
+      },
+      "NK": {
+        "rho_empirical_median": 0.2812775499382581,
+        "sigma_d_yr": 8.944054371688049,
+        "n_required_ttest": 532,
+        "n_required_wilcoxon": 557
+      },
+      "B": {
+        "rho_empirical_median": 0.34924312813604386,
+        "sigma_d_yr": 9.39138708024788,
+        "n_required_ttest": 480,
+        "n_required_wilcoxon": 502
+      }
+    },
+    "note": "Phase-1 \u03c1=0.5/0.8/0.9 grid preserved in 'sensitivity_pairing_rho'. Phase-3 will measure the actual baseline-vs-FM \u03c1 and append a post_phase3_override block; the empirical-baseline-pair \u03c1 here is a conservative LOWER BOUND on that, since FMs and baselines tend to share more residual structure than two baselines do with each other."
   }
 }

@@ -44,6 +44,7 @@ COHORT_TO_ASSAY = {
     "onek1k":     "10x 3' v2",
     "stephenson": "10x 3' transcription profiling",
     "terekhova":  "10x 5' v2",
+    "aida":       "10x 5' v2",
 }
 
 # Map our canonical 5 cell types -> scAgeClock cell_type categorical_value
@@ -92,10 +93,10 @@ def load_protein_coding_table() -> pd.DataFrame:
     return df  # cols: gene_id, gene_name, number_of_cells_expressed
 
 
-def slice_cohort(canonical_ct: str, cohort_id: str) -> ad.AnnData:
+def slice_cohort(canonical_ct: str, cohort_id: str, integrated_dir: Path = INTEGRATED_DIR) -> ad.AnnData:
     """Read the harmonized per-cell-type h5ad and filter to one cohort."""
     fname = CANONICAL_TO_FILENAME[canonical_ct]
-    path = INTEGRATED_DIR / f"{fname}.h5ad"
+    path = integrated_dir / f"{fname}.h5ad"
     log.info(f"loading {path}")
     a = ad.read_h5ad(path)
     keep = (a.obs["cohort_id"] == cohort_id).values
@@ -256,9 +257,13 @@ def main():
     ap.add_argument("--cohorts", nargs="+", default=["onek1k", "stephenson", "terekhova"])
     ap.add_argument("--cell-types", nargs="+", default=["CD4T", "CD8T", "MONO", "NK", "B"])
     ap.add_argument("--chunk-size", type=int, default=50_000)
+    ap.add_argument("--integrated-dir", default=str(INTEGRATED_DIR),
+                    help="Source dir of harmonized per-cell-type h5ads (default: data/cohorts/integrated). "
+                         "Use data/cohorts/aida_eval to score AIDA.")
     ap.add_argument("--out-csv", default=str(RESULTS_DIR / "scageclock_loco_summary.csv"))
     ap.add_argument("--per-donor-dir", default=str(RESULTS_DIR / "scageclock_per_donor"))
     args = ap.parse_args()
+    integrated_dir = Path(args.integrated_dir)
 
     Path(args.per_donor_dir).mkdir(parents=True, exist_ok=True)
 
@@ -285,7 +290,7 @@ def main():
             canonical = CODE_TO_CANONICAL[ct_code]
             log.info(f"=== {cohort} × {canonical} ({ct_code}) ===")
             # 1) Load + filter cohort
-            adata_raw = slice_cohort(canonical, cohort)
+            adata_raw = slice_cohort(canonical, cohort, integrated_dir=integrated_dir)
             if adata_raw.n_obs == 0:
                 log.warning(f"  empty slice; skipping")
                 continue

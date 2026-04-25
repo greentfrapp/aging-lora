@@ -32,7 +32,7 @@ PER_DONOR_DIR <- file.path(PROJ_ROOT, "results", "baselines", "pasta_per_donor")
 SUMMARY_PATH <- file.path(PROJ_ROOT, "results", "baselines", "pasta_loco_summary.csv")
 dir.create(PER_DONOR_DIR, showWarnings = FALSE, recursive = TRUE)
 
-cohorts <- c("onek1k", "stephenson", "terekhova")
+cohorts <- c("onek1k", "stephenson", "terekhova", "aida")
 ct_codes <- c("CD4T", "CD8T", "MONO", "NK", "B")
 
 # Load the REG cv.glmnet model once into the script's global environment.

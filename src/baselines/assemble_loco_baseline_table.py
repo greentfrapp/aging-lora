@@ -16,16 +16,20 @@ SOURCES = {
     "onek1k": RESULTS_DIR / "pretrained_sanity_summary.csv",
     "stephenson": RESULTS_DIR / "stephenson_loco_summary.csv",
     "terekhova": RESULTS_DIR / "terekhova_chemistry_shift_naive.csv",
+    "aida": RESULTS_DIR / "aida_lasso_summary.csv",
 }
 
 SCAGECLOCK_SUMMARY = RESULTS_DIR / "scageclock_loco_summary.csv"
+SCAGECLOCK_AIDA_SUMMARY = RESULTS_DIR / "aida_scageclock_summary.csv"
 PASTA_SUMMARY = RESULTS_DIR / "pasta_loco_summary.csv"
+LASSO_RETRAINED_SUMMARY = RESULTS_DIR / "lasso_retrained_3cohort_summary.csv"
 
 # Cohort -> chemistry (10x 3' vs 5'). LASSO was trained on 3', so 3' = match.
 CHEMISTRY_BY_COHORT = {
     "onek1k":     ("10x 3' v2",  "match"),
     "stephenson": ("10x 3'",     "match"),
     "terekhova":  ("10x 5' v2",  "shifted"),
+    "aida":       ("10x 5' v2",  "shifted"),
 }
 
 # LOCO detectability flags at ρ=0.8 from data/detectability_floor.json +
@@ -38,6 +42,9 @@ DETECTABILITY = {
     "onek1k":     {"CD4T": "powered", "CD8T": "powered", "MONO": "powered", "NK": "powered", "B": "powered"},
     "stephenson": {"CD4T": "underpowered", "CD8T": "underpowered", "MONO": "underpowered", "NK": "underpowered", "B": "underpowered"},
     "terekhova":  {"CD4T": "powered", "CD8T": "underpowered", "MONO": "underpowered", "NK": "powered", "B": "powered"},
+    # AIDA (595-625 donors per cell type) is powered against the ρ=0.8 floor for all 5 cell types
+    # (CD4T 132, CD8T 180, MONO 229, NK 156, B 155). Borderline at empirical ρ for CD8T+MONO.
+    "aida":       {"CD4T": "powered", "CD8T": "powered", "MONO": "powered", "NK": "powered", "B": "powered"},
 }
 
 # pre-trained LASSO is cohort-external (trained on the paper's 5 original cohorts,
@@ -46,14 +53,14 @@ DETECTABILITY = {
 
 
 # scAgeClock leakage from data/leakage_audit.csv (recorded 2026-04-25)
-SCAGECLOCK_LEAKAGE = {"onek1k": "overlapping", "stephenson": "overlapping", "terekhova": "clean"}
+SCAGECLOCK_LEAKAGE = {"onek1k": "overlapping", "stephenson": "overlapping", "terekhova": "clean", "aida": "clean"}
 
 # Pasta is trained on bulk transcriptomics (microarray/bulk RNA-seq from public GEO
 # datasets per Salignon 2025); does not ingest any single-cell PBMC cohort, so all
 # our single-cell cohorts are leakage-`clean` for Pasta. Chemistry-match doesn't
 # apply directly (different modality entirely), but we record it as `bulk-vs-sc`
 # so the stratification column is non-empty for downstream filtering.
-PASTA_LEAKAGE = {"onek1k": "clean", "stephenson": "clean", "terekhova": "clean"}
+PASTA_LEAKAGE = {"onek1k": "clean", "stephenson": "clean", "terekhova": "clean", "aida": "clean"}
 
 
 def main():
@@ -81,9 +88,14 @@ def main():
                 "detectability_flag": DETECTABILITY[cohort][ct],
             })
 
-    # ---- scAgeClock (Xie 2026, CELLxGENE Census) ----
+    # ---- scAgeClock (Xie 2026, CELLxGENE Census) — combine 3-cohort + AIDA summaries ----
+    scage_dfs = []
     if SCAGECLOCK_SUMMARY.exists():
-        for _, row in pd.read_csv(SCAGECLOCK_SUMMARY).iterrows():
+        scage_dfs.append(pd.read_csv(SCAGECLOCK_SUMMARY))
+    if SCAGECLOCK_AIDA_SUMMARY.exists():
+        scage_dfs.append(pd.read_csv(SCAGECLOCK_AIDA_SUMMARY))
+    if scage_dfs:
+        for _, row in pd.concat(scage_dfs, ignore_index=True).iterrows():
             cohort = row["eval_cohort"]
             ct = row["cell_type"]
             chemistry, _ = CHEMISTRY_BY_COHORT[cohort]
@@ -132,19 +144,50 @@ def main():
                 "detectability_flag": DETECTABILITY[cohort][ct],
             })
 
+    # ---- LASSO retrained on our 3 cohorts (training-matched comparator) ----
+    if LASSO_RETRAINED_SUMMARY.exists():
+        for _, row in pd.read_csv(LASSO_RETRAINED_SUMMARY).iterrows():
+            cohort = row["eval_cohort"]
+            ct = row["cell_type"]
+            chemistry, _ = CHEMISTRY_BY_COHORT[cohort]
+            # Retrained LASSO trained on ALL 3 cohorts (including 5' Terekhova),
+            # so the model has seen mixed chemistries → mark chemistry_match = "match"
+            # for any of our cohorts. (The retrain is the apples-to-apples comparator
+            # to FM fine-tunes which also see mixed chemistries.)
+            r = float(row["pearson_r"]) if pd.notna(row["pearson_r"]) else float("nan")
+            p = float(row["pearson_p"]) if pd.notna(row["pearson_p"]) else float("nan")
+            rows.append({
+                "baseline": "LASSO-retrained-3cohort",
+                "training_cohorts": "our-three-cohort",
+                "eval_cohort": cohort,
+                "eval_chemistry": chemistry,
+                "cell_type": ct,
+                "n_donors": int(row["n_donors"]),
+                "median_abs_err_yr": float(row["median_abs_err_yr"]),
+                "mean_abs_err_yr": float(row["mean_abs_err_yr"]),
+                "pearson_r": r,
+                "pearson_p": p,
+                "mean_bias_yr": float(row["mean_bias_yr"]),
+                "leakage_status": "clean",  # retrained on 2 of our 3 cohorts; eval on the held-out 3rd
+                "chemistry_match_to_baseline_training": "match",
+                "detectability_flag": DETECTABILITY[cohort][ct],
+            })
+
     out = pd.DataFrame(rows)
     # Sort: cohort, cell_type in canonical order, then baseline.
     ct_order = {"CD4T": 0, "CD8T": 1, "MONO": 2, "NK": 3, "B": 4}
-    baseline_order = {"scImmuAging-LASSO": 0, "scAgeClock": 1, "Pasta-REG": 2}
+    cohort_order = {"onek1k": 0, "stephenson": 1, "terekhova": 2, "aida": 3}
+    baseline_order = {"scImmuAging-LASSO": 0, "LASSO-retrained-3cohort": 1, "scAgeClock": 2, "Pasta-REG": 3}
     out["_ct_ord"] = out["cell_type"].map(ct_order)
-    out["_b_ord"] = out["baseline"].map(baseline_order)
-    out = out.sort_values(["eval_cohort", "_ct_ord", "_b_ord"]).drop(columns=["_ct_ord", "_b_ord"]).reset_index(drop=True)
+    out["_c_ord"] = out["eval_cohort"].map(cohort_order).fillna(99)
+    out["_b_ord"] = out["baseline"].map(baseline_order).fillna(99)
+    out = out.sort_values(["_c_ord", "_ct_ord", "_b_ord"]).drop(columns=["_ct_ord", "_c_ord", "_b_ord"]).reset_index(drop=True)
 
     out_path = RESULTS_DIR / "loco_baseline_table.csv"
     out.to_csv(out_path, index=False)
     print(f"wrote {out_path}: {len(out)} rows")
     # Headline summary: per-cohort × per-cell-type pivot of best-baseline MAE
-    for cohort in ("onek1k", "stephenson", "terekhova"):
+    for cohort in ("onek1k", "stephenson", "terekhova", "aida"):
         sub = out[out["eval_cohort"] == cohort]
         if sub.empty:
             continue

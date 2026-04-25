@@ -62,6 +62,62 @@ Applying all three Phase-4 green filters:
 
 **Result: 5 strict-clean-AND-chemistry-match-AND-powered LASSO baseline cells** — the reference against which FM primary-fold improvements are measured in Phase 4. Combined with the inclusive-mode contrasts, this gives 15 data points total for the LASSO-vs-FM comparison.
 
+## Phase 2 Task 2.6 (added 2026-04-25): AIDA baselines
+
+AIDA (Kock 2025 *Cell*, 625 donors, 7 Asian population groups, 10x 5' v2) was harmonized into a separate `data/cohorts/aida_eval/{B,CD4p_T,CD8p_T,Monocyte,NK}.h5ad` directory to honor the "frozen for FM evaluation" principle (NOT mixed into the 3-cohort training set). All three Phase-2 baselines were scored on AIDA via `--integrated-dir data/cohorts/aida_eval`, adding 15 rows to `loco_baseline_table.csv`.
+
+| Cell | LASSO MAE / R | scAgeClock MAE / R | Pasta-REG MAE / R | Best baseline |
+|---|---|---|---|---|
+| CD4T | 7.5 / 0.65 | 9.2 / 0.30 | **6.3 / 0.66** | Pasta-REG (lowest MAE in the entire 45-cell baseline matrix) |
+| CD8T | **10.6 / 0.58** | 8.7 / 0.39 | 20.2 / 0.62 | LASSO (Pasta has −19y bias inflating MAE) |
+| MONO | **9.9 / 0.35** | 9.1 / 0.30 | 26.0 / 0.30 | LASSO |
+| NK | 18.6 / 0.20 | **8.5 / 0.20** | 11.5 / 0.26 | scAgeClock (lowest MAE; LASSO bias +16y) |
+| B | 12.4 / −0.03 | **9.1 / 0.22** | 11.1 / 0.27 | scAgeClock |
+
+**Two notable findings**:
+
+1. **Pasta-REG achieves MAE=6.3y / R=0.66 on AIDA CD4+ T**, the lowest MAE in the entire 75-row Phase-2 baseline matrix. This is on a 10x 5' v2 cohort with 595 Asian donors — Pasta's rank-normalization makes it both chemistry-invariant and ancestry-invariant. The Phase-3 FM headline must clear 6.3y × 0.9 = **5.7y** on AIDA CD4+ T to register a 10% win on the cross-ancestry headline cell.
+
+2. **LASSO collapses on AIDA B cells** (R=−0.03) — same chemistry-collapse pattern observed on Terekhova B. scAgeClock and Pasta both rescue the signal weakly (R ≈ 0.22–0.27). The **chemistry-rescue baseline floor for B cells is now Pasta-REG R=0.27 / MAE=11.1y**, not the chemistry-collapsed LASSO.
+
+AIDA detectability flags (ρ=0.8 floor): all 5 cell types `powered` (595–625 donors >> 132–229 floor). Under the empirical-ρ floor (Phase-2 Task 2.8), AIDA CD4T and B are clearly powered (504/502); CD8T (753) and MONO (1,075) are borderline; NK (557) is borderline.
+
+## Phase 2 Task 2.7 (added 2026-04-25): LASSO retrained on our 3 cohorts
+
+Training-matched comparator to the FM fine-tunes: LASSO retrained per LOCO fold on our 3-cohort corpus (same as FMs see), using the upstream sc-ImmuAging marker-gene panels for direct comparability. Implementation: sklearn `LassoCV(cv=10)` on pseudocell-aggregated (100 × 15) log1p(CP10k) data; `src/baselines/retrain_lasso_3cohort.py`. 15 rows added to `loco_baseline_table.csv`.
+
+| Eval cohort | Retrained R/MAE (best cell) | Pretrained R/MAE (same cell) | Retrained vs pretrained |
+|---|---|---|---|
+| OneK1K | CD4T 10.96 / 0.71 | CD4T 9.45 / 0.75 | Pretrained better — 5-cohort training advantages MAE |
+| Stephenson | CD4T 8.65 / 0.77 | CD4T 8.44 / 0.79 | Essentially equivalent |
+| Terekhova | **CD4T 8.66 / 0.81** | CD4T 9.15 / 0.82 | **Retrained beats pretrained on MAE** (training-matched chemistry mix helps) |
+
+Headline: the **retrained 3-cohort LASSO is essentially equivalent to the pretrained 5-cohort LASSO for CD4+ T and CD8+ T across all evaluation cohorts**, with two specific exceptions worth flagging:
+
+- **OneK1K-out × B cells**: retrained `LassoCV` regularized to intercept-only (α=0.90, 0/1100 non-zero coefs), R=NaN. The 195-donor Stephenson+Terekhova training set was too small + chemistry-mixed for the OneK1K B-cell signal. Documented as a fold-specific failure mode of the small-corpus retrain.
+- **Retrained MONO/NK on OneK1K**: large negative bias (−15 to −17y); R=0.29–0.34 vs pretrained 0.71/0.63. Same 195-donor + chemistry-mixed limitation; the pretrained 5-cohort model has more training data and matched chemistry.
+
+**Implication for the FM-vs-baseline narrative**: the retrained 3-cohort LASSO is the **training-matched apples-to-apples comparator**. If FMs beat the retrained LASSO, the win cannot be attributed to "FMs had access to more cohorts." The 3-cohort-retrained MAE on Terekhova CD4T (8.66y) sets the FM bar for the headline cell at **7.8y for a 10% win, lower than both Pasta (8.0y → 7.2y target) and pretrained LASSO (9.15y → 8.2y target)**. Pasta-REG remains the headline floor — but FMs now also need to clear the symmetric retrain.
+
+## Phase 2 Task 2.8 (added 2026-04-25): empirical pairing-ρ → detectability floor
+
+Detailed in `methods/detectability_floor.md`. The Phase-1 ρ=0.8 floor was 2–7× too optimistic; empirical baseline-pair ρ ranges 0.06–0.35 per cell type. Phase-3 will measure the actual baseline-vs-FM ρ (expected to be higher than the baseline-pair ρ since FM and baseline share more residual structure). Until then, both extremes are reported in the supplement: Phase-1 ρ=0.8 (floor=132–229 donors, all 3 cohorts adequately powered for ≥3 cell types) and Phase-2 empirical ρ=0.06–0.35 (floor=502–1,075 donors, only OneK1K powered for any cell type). The headline detectability flags in Phase 4 use the post-Phase-3 measured ρ.
+
+## Updated per-cell minimum-MAE baseline (the Phase-3/4 FM bar)
+
+`results/baselines/loco_baseline_table.csv` now has **75 rows** = 4 baselines × 3 cohorts (no LASSO-retrained for AIDA) × 5 cell types + 3 baselines × 5 cell types for AIDA. Best-baseline-per-cell:
+
+| Cohort | CD4T | CD8T | MONO | NK | B |
+|---|---|---|---|---|---|
+| OneK1K | LASSO-pre 9.4 | LASSO-pre 7.6 | LASSO-pre 7.9 | scAgeClock 11.5 | LASSO-pre 10.7 |
+| Stephenson | LASSO-pre 8.4 | LASSO-pre 11.4 | LASSO-pre 10.7 | Pasta 11.4 | LASSO-pre 12.1 |
+| Terekhova | **Pasta 8.0** | **Pasta 7.6** | LASSO-pre 12.8 | LASSO-pre 12.5 | **Pasta 10.9** |
+| AIDA | **Pasta 6.3** ★ | scAgeClock 8.7 | scAgeClock 9.1 | scAgeClock 8.5 | scAgeClock 9.1 |
+
+★ = lowest MAE in the entire 75-row baseline matrix; the FM headline must clear 5.7y on AIDA CD4+ T for a 10% win.
+
+The Phase-4 forest plot uses these per-cell minima as the reference; FMs are evaluated against the BEST baseline per cell, not just LASSO.
+
 ## Phase 2 Task 2.3: scAgeClock baseline (added 2026-04-25)
 
 scAgeClock GMA (Xie 2026) scored on the same 15 cohort × cell-type slices via `src/baselines/score_scageclock.py`. Inputs: harmonized h5ads → CP10k+log1p normalize on the full 48,968-gene matrix → reindex to scAgeClock's 19,234-gene vocabulary (96.9% gene-vocabulary overlap with our data) → prepend 4 categorical-feature columns (assay/cell_type/tissue=blood/sex with integer codes from scAgeClock's index TSVs) → CPU inference in 25K-cell chunks → per-donor median age. 30 minutes wall-clock for 2.75M cells.
