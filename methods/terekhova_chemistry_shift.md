@@ -10,7 +10,7 @@ OneK1K and Stephenson are 10x 3'; Terekhova is 10x 5' v2. The pre-trained sc-Imm
 
 - Source: `data/cohorts/integrated/*.h5ad` after the 2026-04-24 Terekhova raw-count fix (reverse-normalized from log1p(CP10k) to integer counts using `nCount_RNA` metadata; see `src/data/harmonize_cohorts.py::load_terekhova`).
 - Scoring: `src/baselines/score_pretrained_lasso.py --source harmonized --cohort-id terekhova` for each of the 5 canonical cell types (CD4T, CD8T, MONO, NK, B). 100 pseudocells × 15 cells per donor; seed=0.
-- Reference: OneK1K sanity results in `results/baselines/pretrained_sanity_summary.csv` (Task 1e, 981 donors).
+- Reference: OneK1K sanity results in `results/baselines/lasso_pretrained/summary_onek1k.csv` (Task 1e, 981 donors).
 - 166 Terekhova donors scored.
 
 ## Results
@@ -23,7 +23,7 @@ OneK1K and Stephenson are 10x 3'; Terekhova is 10x 5' v2. The pre-trained sc-Imm
 | NK | 0.63 | 10.8 | 0.44 | 13.2 | −0.19 | +5.6 |
 | B | 0.53 | 11.9 | **0.08** | 15.0 | **−0.45** | −2.5 |
 
-Source: `results/baselines/terekhova_chemistry_shift_naive.csv`.
+Source: `results/baselines/lasso_pretrained/summary_terekhova.csv`.
 
 ## Interpretation
 
@@ -55,8 +55,8 @@ The LOCO-fold primary/exploratory flags in `data/loco_folds.json` (frozen 2026-0
 
 ## Deliverables produced 2026-04-24
 
-- `results/baselines/terekhova_chemistry_shift_naive.csv` — per-cell-type naive MAE/R summary
-- `results/baselines/terekhova_naive_{B,CD4T,CD8T,MONO,NK}.csv` — per-donor predictions
+- `results/baselines/lasso_pretrained/summary_terekhova.csv` — per-cell-type naive MAE/R summary
+- `results/baselines/lasso_pretrained/per_donor/terekhova_{B,CD4T,CD8T,MONO,NK}.csv` — per-donor predictions
 - This memo (`methods/terekhova_chemistry_shift.md`)
 
 ## Deferred to Phase 3

@@ -392,10 +392,10 @@ def main():
     ap.add_argument("--cohort-id", default=None,
                     help="filter --source harmonized by this cohort_id (e.g. 'terekhova')")
     ap.add_argument("--out-csv", default=None,
-                    help=f"per-donor output CSV; default: {RESULTS_DIR}/pretrained_sanity_{{cell_type}}.csv")
+                    help=f"per-donor output CSV; default: {RESULTS_DIR}/lasso_pretrained/per_donor/{{cohort_id}}_{{cell_type}}.csv")
     ap.add_argument("--summary-csv", default=None,
                     help=f"per-cell-type summary CSV the script appends to; "
-                         f"default: {RESULTS_DIR}/pretrained_sanity_summary.csv. "
+                         f"default: {RESULTS_DIR}/lasso_pretrained/summary_{{cohort_id}}.csv. "
                          f"Use a different file for non-OneK1K runs e.g. Task 1f on Terekhova "
                          f"so the OneK1K sanity summary is not overwritten.")
     ap.add_argument("--pseudocell-n", type=int, default=100)
@@ -450,13 +450,21 @@ def main():
         f"Pearson R={r:.3f} (p={pval:.2g})  mean_bias={bias:+.2f}y"
     )
 
-    out_csv = Path(args.out_csv) if args.out_csv else RESULTS_DIR / f"pretrained_sanity_{cell_type_code}.csv"
+    # Default output paths now organized by baseline (lasso_pretrained/) and
+    # keyed by cohort_id when supplied via --cohort-id (Phase-2+ scoring path).
+    # Legacy onek1k-raw default still works (cohort_id=None → "onek1k").
+    cohort_tag = (args.cohort_id or "onek1k").replace(":", "_")
+    out_csv = Path(args.out_csv) if args.out_csv else (
+        RESULTS_DIR / "lasso_pretrained" / "per_donor" / f"{cohort_tag}_{cell_type_code}.csv"
+    )
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_csv, index=False)
     log.info(f"wrote {out_csv}")
 
-    # Also append a single-row summary
-    summary_csv = Path(args.summary_csv) if args.summary_csv else RESULTS_DIR / "pretrained_sanity_summary.csv"
+    # Also append a single-row summary, by default to the per-cohort file
+    summary_csv = Path(args.summary_csv) if args.summary_csv else (
+        RESULTS_DIR / "lasso_pretrained" / f"summary_{cohort_tag}.csv"
+    )
     summary_row = {
         "cell_type": cell_type_code,
         "n_donors": len(df),

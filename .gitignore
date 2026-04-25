@@ -43,7 +43,7 @@ data/scAgeClock/
 # Pasta pseudobulk TSVs (~597 MB) — regenerable in ~3 min via
 #   uv run python src/baselines/pseudobulk_for_pasta.py
 # We commit the *_meta.csv files (small) but not the gene × donor TSVs.
-results/baselines/pasta_pseudobulk/*.tsv
+results/baselines/pasta_reg/pseudobulk/*.tsv
 
 # Foundation-model checkpoints — large (~5 GB total). Re-download via:
 #   uv run python scripts/download_foundation_models.py

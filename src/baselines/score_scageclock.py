@@ -260,8 +260,8 @@ def main():
     ap.add_argument("--integrated-dir", default=str(INTEGRATED_DIR),
                     help="Source dir of harmonized per-cell-type h5ads (default: data/cohorts/integrated). "
                          "Use data/cohorts/aida_eval to score AIDA.")
-    ap.add_argument("--out-csv", default=str(RESULTS_DIR / "scageclock_loco_summary.csv"))
-    ap.add_argument("--per-donor-dir", default=str(RESULTS_DIR / "scageclock_per_donor"))
+    ap.add_argument("--out-csv", default=str(RESULTS_DIR / "scageclock" / "summary_3cohort.csv"))
+    ap.add_argument("--per-donor-dir", default=str(RESULTS_DIR / "scageclock" / "per_donor"))
     args = ap.parse_args()
     integrated_dir = Path(args.integrated_dir)
 

@@ -54,9 +54,9 @@ def normalize_donor(s: str, cohort: str) -> str:
 def load_lasso_per_donor(cohort: str, ct: str) -> pd.DataFrame | None:
     """Find the LASSO per-donor file for this slice."""
     candidates = {
-        "onek1k": RESULTS_DIR / f"pretrained_sanity_{ct}.csv",
-        "stephenson": RESULTS_DIR / f"stephenson_loco_{ct}.csv",
-        "terekhova": RESULTS_DIR / f"terekhova_naive_{ct}.csv",
+        "onek1k": RESULTS_DIR / "lasso_pretrained" / "per_donor" / f"onek1k_{ct}.csv",
+        "stephenson": RESULTS_DIR / "lasso_pretrained" / "per_donor" / f"stephenson_{ct}.csv",
+        "terekhova": RESULTS_DIR / "lasso_pretrained" / "per_donor" / f"terekhova_{ct}.csv",
     }
     p = candidates.get(cohort)
     if not p or not p.exists():
@@ -83,8 +83,8 @@ def main():
     for cohort in COHORTS:
         for ct in CT_CODES:
             lasso = load_lasso_per_donor(cohort, ct)
-            scage = load_other_per_donor(cohort, ct, "scageclock_per_donor")
-            pasta = load_other_per_donor(cohort, ct, "pasta_per_donor")
+            scage = load_other_per_donor(cohort, ct, "scageclock/per_donor")
+            pasta = load_other_per_donor(cohort, ct, "pasta_reg/per_donor")
             if lasso is None or scage is None or pasta is None:
                 log.warning(f"  skip {cohort} × {ct}: missing per-donor file(s)")
                 continue

@@ -74,7 +74,7 @@ WILCOXON_ARE = 0.955  # Hodges-Lehmann, Pitman efficiency
 
 def per_cell_type_errors(cell_type_code: str, dir_: Path = SANITY_DIR) -> pd.Series:
     """Return per-donor absolute errors from the Task 1e sanity-check CSV."""
-    csv = dir_ / f"pretrained_sanity_{cell_type_code}.csv"
+    csv = dir_ / "lasso_pretrained" / "per_donor" / f"onek1k_{cell_type_code}.csv"
     if not csv.exists():
         raise FileNotFoundError(f"{csv} not found. Run Task 1e first.")
     df = pd.read_csv(csv)
@@ -160,7 +160,7 @@ def main():
             "alpha": args.alpha,
             "pairing_rho": args.pairing_rho,
             "one_sided": not args.two_sided,
-            "source_csvs": [str(SANITY_DIR / f"pretrained_sanity_{ct}.csv")
+            "source_csvs": [str(SANITY_DIR / "lasso_pretrained" / "per_donor" / f"onek1k_{ct}.csv")
                             for ct in ("CD4T", "CD8T", "MONO", "NK", "B")],
         },
         "per_cell_type": {},

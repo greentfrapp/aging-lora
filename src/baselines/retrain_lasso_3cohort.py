@@ -216,7 +216,7 @@ def loco_one_fold(
              f"R={out['pearson_r']:.3f} p={out['pearson_p']:.2e} bias={out['mean_bias_yr']:+.2f}y")
 
     # Write per-donor predictions
-    per_donor_dir = RESULTS_DIR / "lasso_retrained_per_donor"
+    per_donor_dir = RESULTS_DIR / "lasso_retrained_3cohort" / "per_donor"
     per_donor_dir.mkdir(parents=True, exist_ok=True)
     per_donor.to_csv(per_donor_dir / f"{holdout_cohort}_{ct_code}.csv", index=False)
     return out
@@ -226,7 +226,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cohorts", nargs="+", default=COHORTS)
     ap.add_argument("--cell-types", nargs="+", default=CT_CODES)
-    ap.add_argument("--out-csv", default=str(RESULTS_DIR / "lasso_retrained_3cohort_summary.csv"))
+    ap.add_argument("--out-csv", default=str(RESULTS_DIR / "lasso_retrained_3cohort" / "summary.csv"))
     ap.add_argument("--pseudocell-n", type=int, default=100)
     ap.add_argument("--pseudocell-size", type=int, default=15)
     ap.add_argument("--seed", type=int, default=0)

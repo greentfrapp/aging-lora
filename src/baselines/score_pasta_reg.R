@@ -27,9 +27,9 @@ get_script_dir <- function() {
   return(getwd())
 }
 PROJ_ROOT <- normalizePath(file.path(get_script_dir(), "..", ".."))
-PSEUDOBULK_DIR <- file.path(PROJ_ROOT, "results", "baselines", "pasta_pseudobulk")
-PER_DONOR_DIR <- file.path(PROJ_ROOT, "results", "baselines", "pasta_per_donor")
-SUMMARY_PATH <- file.path(PROJ_ROOT, "results", "baselines", "pasta_loco_summary.csv")
+PSEUDOBULK_DIR <- file.path(PROJ_ROOT, "results", "baselines", "pasta_reg", "pseudobulk")
+PER_DONOR_DIR <- file.path(PROJ_ROOT, "results", "baselines", "pasta_reg", "per_donor")
+SUMMARY_PATH <- file.path(PROJ_ROOT, "results", "baselines", "pasta_reg", "summary.csv")
 dir.create(PER_DONOR_DIR, showWarnings = FALSE, recursive = TRUE)
 
 cohorts <- c("onek1k", "stephenson", "terekhova", "aida")

@@ -12,17 +12,23 @@ import pandas as pd
 
 RESULTS_DIR = Path("results/baselines")
 
+# Per-baseline output directory layout (reorganized 2026-04-25 for scalability):
+#   results/baselines/lasso_pretrained/summary_{cohort}.csv + per_donor/{cohort}_{ct}.csv
+#   results/baselines/lasso_retrained_3cohort/summary.csv  + per_donor/{cohort}_{ct}.csv
+#   results/baselines/scageclock/summary_{3cohort,aida}.csv + per_donor/{cohort}_{ct}.csv
+#   results/baselines/pasta_reg/summary.csv + per_donor/{cohort}_{ct}.csv + pseudobulk/{cohort}_{ct}.tsv
+LASSO_PRETRAINED_DIR = RESULTS_DIR / "lasso_pretrained"
 SOURCES = {
-    "onek1k": RESULTS_DIR / "pretrained_sanity_summary.csv",
-    "stephenson": RESULTS_DIR / "stephenson_loco_summary.csv",
-    "terekhova": RESULTS_DIR / "terekhova_chemistry_shift_naive.csv",
-    "aida": RESULTS_DIR / "aida_lasso_summary.csv",
+    "onek1k": LASSO_PRETRAINED_DIR / "summary_onek1k.csv",
+    "stephenson": LASSO_PRETRAINED_DIR / "summary_stephenson.csv",
+    "terekhova": LASSO_PRETRAINED_DIR / "summary_terekhova.csv",
+    "aida": LASSO_PRETRAINED_DIR / "summary_aida.csv",
 }
 
-SCAGECLOCK_SUMMARY = RESULTS_DIR / "scageclock_loco_summary.csv"
-SCAGECLOCK_AIDA_SUMMARY = RESULTS_DIR / "aida_scageclock_summary.csv"
-PASTA_SUMMARY = RESULTS_DIR / "pasta_loco_summary.csv"
-LASSO_RETRAINED_SUMMARY = RESULTS_DIR / "lasso_retrained_3cohort_summary.csv"
+SCAGECLOCK_SUMMARY = RESULTS_DIR / "scageclock" / "summary_3cohort.csv"
+SCAGECLOCK_AIDA_SUMMARY = RESULTS_DIR / "scageclock" / "summary_aida.csv"
+PASTA_SUMMARY = RESULTS_DIR / "pasta_reg" / "summary.csv"
+LASSO_RETRAINED_SUMMARY = RESULTS_DIR / "lasso_retrained_3cohort" / "summary.csv"
 
 # Cohort -> chemistry (10x 3' vs 5'). LASSO was trained on 3', so 3' = match.
 CHEMISTRY_BY_COHORT = {

@@ -78,8 +78,8 @@ uv run python -m src.baselines.score_pretrained_lasso --cell-type B
 ```
 
 Outputs:
-- `results/baselines/pretrained_sanity_{CELLTYPE}.csv` — per-donor predictions.
-- `results/baselines/pretrained_sanity_summary.csv` — per-cell-type metrics (regenerated on each run).
+- `results/baselines/lasso_pretrained/per_donor/onek1k_{CELLTYPE}.csv` — per-donor predictions.
+- `results/baselines/lasso_pretrained/summary_onek1k.csv` — per-cell-type metrics (regenerated on each run). *(Paths updated 2026-04-25 in the baselines/ reorg.)*
 
 Runtime: ~90 s per cell type on a 32 GB consumer box (250k cells × 5 cell types + OneK1K h5ad backed load).
 

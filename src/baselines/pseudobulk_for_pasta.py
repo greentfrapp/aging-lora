@@ -2,13 +2,13 @@
 matrices suitable for the Pasta R pipeline.
 
 Output (one file per cohort × cell_type):
-  results/baselines/pasta_pseudobulk/{cohort}_{cell_type_code}.tsv
+  results/baselines/pasta_reg/pseudobulk/{cohort}_{cell_type_code}.tsv
     rows  = Ensembl gene IDs (var.index)
     cols  = donor_id values
     cells = summed raw counts (integer; cast to int when saving)
 
 Plus a single companion file with donor metadata:
-  results/baselines/pasta_pseudobulk/{cohort}_{cell_type_code}_meta.csv
+  results/baselines/pasta_reg/pseudobulk/{cohort}_{cell_type_code}_meta.csv
     cols: donor_id, age, sex, n_cells_aggregated
 """
 from __future__ import annotations
@@ -27,7 +27,7 @@ log = logging.getLogger("pseudobulk")
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 INTEGRATED_DIR = PROJ_ROOT / "data" / "cohorts" / "integrated"
-OUT_DIR = PROJ_ROOT / "results" / "baselines" / "pasta_pseudobulk"
+OUT_DIR = PROJ_ROOT / "results" / "baselines" / "pasta_reg" / "pseudobulk"
 
 CODE_TO_CANONICAL = {"CD4T": "CD4+ T", "CD8T": "CD8+ T", "MONO": "Monocyte", "NK": "NK", "B": "B"}
 CANONICAL_TO_FILENAME = {"CD4+ T": "CD4p_T", "CD8+ T": "CD8p_T", "Monocyte": "Monocyte", "NK": "NK", "B": "B"}

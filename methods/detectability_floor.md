@@ -6,7 +6,7 @@
 
 ## Inputs
 
-- Per-donor absolute errors from the Task 1e pre-trained LASSO sanity check: `results/baselines/pretrained_sanity_{CD4T,CD8T,MONO,NK,B}.csv` (OneK1K, 981 donors, per cell type).
+- Per-donor absolute errors from the Task 1e pre-trained LASSO sanity check: `results/baselines/lasso_pretrained/per_donor/onek1k_{CD4T,CD8T,MONO,NK,B}.csv` (OneK1K, 981 donors, per cell type). *(Path updated 2026-04-25 in the baselines/ reorg; old path was `results/baselines/pretrained_sanity_*.csv`.)*
 - Baseline MAE and residual SD per cell type are taken from these CSVs rather than the paper's Ext Data Table 2 (which we don't have verbatim). The Task 1e sanity check reproduces paper internal R within 0.05–0.15 per cell type, so this is a reasonable proxy.
 
 ## Methodology
