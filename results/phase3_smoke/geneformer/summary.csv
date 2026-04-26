@@ -1,0 +1,5 @@
+fm,fold,seed,cell_type,eval_cohort,n_train_cells,n_eval_cells,n_eval_donors,mae_y,pearson_r,wall_s,device,smoke,params
+geneformer,loco_onek1k,0,CD4+ T,onek1k,250,125,5,30.74319839477539,0.3269906654085156,637.2680642604828,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
+geneformer,loco_onek1k,0,CD4+ T,onek1k,250,125,5,30.74319839477539,0.3269906654085156,118.68779802322388,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
+geneformer,loco_onek1k,0,CD4+ T,onek1k,250,125,5,30.825706481933597,0.6151024878892076,99.99316072463988,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
+geneformer,loco_onek1k,0,CD4+ T,onek1k,9500,19620,981,18.484155654907227,0.31559193316044487,16327.40205025673,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"

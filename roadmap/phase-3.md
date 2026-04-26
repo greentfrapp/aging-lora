@@ -52,6 +52,18 @@ The Terekhova bar is materially tighter than the original "beat LASSO 9.2y" gate
 
 The 4th comparator (LASSO-retrained-3cohort) is the **methodologically symmetric apples-to-apples baseline** to the FM fine-tunes — both see the same 3 cohorts. Including it in the gate directly addresses the "FM win is just from more training data" reviewer concern. Phase-2 data shows LASSO-retrained ≈ LASSO-pretrained for CD4+T/CD8+T, so the per-cell minimum bar is unchanged for those cells, but explicitly listing both LASSOs in the comparator panel pre-empts the criticism.
 
+### Phase-3-A status (updated 2026-04-26)
+
+Phase-3-A smoke (single Geneformer LoRA fine-tune on `loco_onek1k` × CD4+T × seed 0) is in progress; **GATE 2 not yet cleared**. Investigation chain so far (full diagnosis in `notes/phase3_geneformer_convergence.md`; chronological summary in `notes/research_journal.md` 2026-04-26 entries):
+
+| Run | Train cells | Epochs | LR (backbone / head) | Wall | MAE | R | Status |
+|---|---|---|---|---|---|---|---|
+| #1 (`*.headbug-failed`) | 19,000 | 1 | 5e-5 / 1e-3 | 9.6 h | 30.5 y | NaN | Head bias zero-init → divergence; archived |
+| #2 | 9,500 | 1 | 5e-5 / 1e-3 | 3.1 h | 19.99 y | 0.33 | Bias init = mean train age (48.93); train MSE plateau ≈ 270 — underfit |
+| Intermediate v2 | 9,500 | 1 | 2e-4 / 2e-4 | 4.5 h | 18.48 y | 0.32 | 4× LR; LoRA delta grew 3.2× but R unchanged at 981-donor scale — bias drift, not signal |
+
+State-dict + per-donor analysis on Runs #2 and v2 reveals both runs are sitting on the "predict mean(train)" minimum of MSE: prediction sd is 0.9–1.1y while true age range spans 78y. The 1.5y MAE improvement in v2 is bias-drift, not age-axis-signal. Phase-2's *linear* LASSO hits MAE 9.4y on the same train data — a 110M-param frozen FM stuck at MAE 18–20y points to **severe undertraining + likely cls-pooling weakness** as the binding constraints, not LR. Next experiments planned in the convergence memo: E5a mean-pool ablation (5-min code change), E5b 3-epoch rerun, E5c 10× cells/donor.
+
 ## Success criteria
 
 - Geneformer, scFoundation, and scGPT LoRA (rank-16, attention + MLP layers, peft library) fine-tuned on all CD4+ T LOCO training folds; per-fold LOCO m.a.e. and Pearson R recorded for all three models and compared against the **Phase 2 panel (LASSO-pretrained + LASSO-retrained-3cohort + scAgeClock + Pasta-REG)** numbers on the same folds. Result rows carry the three Phase-4 stratification columns (`leakage_status` from `data/leakage_audit.csv`, `chemistry_match_to_baseline_training`, `detectability_flag`).

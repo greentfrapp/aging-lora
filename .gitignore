@@ -49,6 +49,12 @@ results/baselines/pasta_reg/pseudobulk/*.tsv
 #   uv run python scripts/download_foundation_models.py
 save/
 
+# LoRA + head fine-tune checkpoints — ~10 MB each, regenerable from the run config
+# captured in the JSONL log + summary.csv. Per-donor predictions and summary CSVs
+# are committed; the .pt files are not.
+results/**/checkpoints/*.pt
+results/**/archive/*.pt
+
 # Note: data/cohort_summary.csv was previously gitignored as "transient" during
 # the Stephenson-only sanity-run era. Now that 3-cohort harmonization is frozen,
 # we commit it as a small reproducibility artefact alongside loco_folds.json.

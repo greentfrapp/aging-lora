@@ -1,0 +1,6 @@
+fm,fold,seed,cell_type,wall_s,n_train_cells,device,smoke,timestamp
+geneformer,loco_onek1k,0,CD4+ T,11215.947721004486,9500,cuda,False,2026-04-26T11:24:55
+geneformer,loco_onek1k,0,CD4+ T,637.2680642604828,250,cuda,False,2026-04-26T12:16:02
+geneformer,loco_onek1k,0,CD4+ T,118.68779802322388,250,cuda,False,2026-04-26T12:19:28
+geneformer,loco_onek1k,0,CD4+ T,99.99316072463988,250,cuda,False,2026-04-26T12:21:45
+geneformer,loco_onek1k,0,CD4+ T,16327.40205025673,9500,cuda,False,2026-04-26T20:34:48
