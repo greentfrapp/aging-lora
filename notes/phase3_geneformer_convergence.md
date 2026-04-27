@@ -326,3 +326,36 @@ Head bias stays glued to ≈48.93 (mean train age, init value) across all runs �
 - **E5e — 7 epochs (conditional)**: only if E5d's R shows the +0.05/2-epochs trend continuing. Otherwise we shift to E5c or to a different objective.
 
 MAE 12y is still the hard part: even if R climbs to 0.6, MAE-bound by the train→eval domain shift floor (Stephenson+Terekhova mean 50.1y vs OneK1K 63.1y; perfect-rank predictor on train would still hit |Δμ|=13y eval MAE absent good age-rank generalization). The 2/3-headline preprint outcome (R>0.5 wins) is still in play; the 3/3 (MAE<8.5y) requires the model to substantially correct for the domain shift, not just rank-order within it.
+
+## 16. E5d results (2026-04-27, 5 epochs + mean-pool on A10g)
+
+Same data scale and hyperparameters as E5b; only change is `--epochs 5`. Wall=8,693s (~2.4h, scaled cleanly from E5b's 1.7h × 5/3 + fixed eval). Final eval on OneK1K CD4+T (981 donors): **MAE=16.53y / R=0.431**. Train-MSE-running continued descending to 196 at step 1475 (lowest of any run, total descent ~75 points from epoch-0 baseline 271).
+
+| run | pred sd (y) | pred range | err mean | err sd | LoRA Δ RMS median | LoRA Δ RMS max | head_w RMS | head_b | R | MAE |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Run #2 (cls, 1ep) | 0.89 | 4.7 | −16.0 | 16.2 | 1.4e-4 | 3.8e-4 | 0.0273 | 48.927 | 0.327 | 19.99 |
+| v2 (cls, 1ep) | 1.13 | 9.4 | −13.7 | 16.2 | 4.5e-4 | 1.1e-3 | 0.0216 | 48.926 | 0.316 | 18.48 |
+| E5a (mean, 1ep) | 1.09 | — | — | — | 5.9e-4 | 1.6e-3 | — | — | 0.362 | 19.34 |
+| E5b (mean, 3ep) | 2.48 | 16.7 | −12.7 | 15.50 | 9.4e-4 | 2.3e-3 | 0.0234 | 48.927 | 0.466 | 17.37 |
+| **E5d (mean, 5ep)** | **3.24** | **20.6** | **−11.9** | **15.38** | **1.4e-3** | **3.3e-3** | **0.0254** | **48.926** | **0.431** | **16.53** |
+
+Findings — the §15 "more epochs continue paying" extrapolation **fails between epochs 3 and 5**, but in a more subtle way than naive overfitting:
+
+1. **R regressed from 0.466 → 0.431** while MAE continued improving (17.37 → 16.53). Train MSE kept descending (222 → 196). Predictions are getting *more* confident (pred sd 2.48 → 3.24, pred range 16.7y → 20.6y) and the err mean is closer to zero, but per-donor age correlation got *looser*.
+
+2. **Not classic overfitting (model wasn't just memorizing train).** Decomposition: cov(pred, true) actually grew from 19.07 to 23.04 between E5b and E5d — the model's predictions are still aligned with truth, the alignment is just less *tight per unit of prediction-variance*. Pearson R = cov / (sd_pred × sd_true): pred_sd grew 30%, cov only grew 21%, so R drops. The additional learning is real on train but the prediction-spread it produces on eval doesn't scale proportionally with truth.
+
+3. **MAE-vs-R divergence is bias-closure-driven.** Continued bias closure (err mean −12.7 → −11.9) shifts predictions ~1y closer to eval mean, dropping MAE. Err sd dropped marginally too (15.50 → 15.38). The MAE improvement is real but doesn't reflect rank-improvement; R drops because the *spread* of the more-confident predictions is partially off-axis.
+
+4. **LoRA still moving, head still parked.** LoRA delta median RMS climbed to 1.4e-3 (the largest yet, +47% over E5b). Head bias stays at 48.93 (mean train age, init value) across all five runs — head is not the moving variable. The optimizer found 47% more parameter movement between epochs 4-5; the *quality* of that movement, not its magnitude, is what regressed.
+
+GATE 2 status: **R bar moved further away** (E5b 0.466 was closer to 0.5 than E5d's 0.431). MAE 16.53y is still 4.5y over the 12y bar. The "more epochs" track has run its course at this data scale.
+
+## 17. Next experiment: data scale (E5c)
+
+§15's conditional triggers: "If R asymptotes between E5b and E5d, the next move is data scale (E5c)." E5d went past asymptote into regression — even stronger signal that the 9,500-cells × 190-donors data slice is the binding constraint, not training budget.
+
+- **E5c — `--max-cells-per-donor 500`, 1 epoch, mean-pool, A10g** [no code change, ~3.8h, ~$3.80 on-demand]. 95,000 train cells/epoch (10× E5b/E5d), ~2,968 optimizer steps (~3.3× E5b's 888, ~2× E5d's 1,480). Tests whether more cells per donor reduces the per-donor age estimate's noise enough to break through the R~0.45 ceiling, separately from the "more epochs" lever that just played out. CLI: `--epochs 1 --lr 2e-4 --head-lr 2e-4 --pool mean --max-cells-per-donor 500 --eval-max-cells-per-donor 20 --run-tag-suffix _e5c`.
+- **Variance check (deferred)**: 3 seeds at the *winning* config. Both E5b's +0.104 R jump and E5d's −0.035 R regression are single-seed measurements. Will run multi-seed once we've identified the best base config so the variance characterization is on the right config, not on a pre-final one.
+
+If E5c also asymptotes around R=0.45, the next thread is reconsidering objective: per-donor median targets (one prediction per donor) rather than per-cell MSE may be a better fit — or auxiliary tasks (e.g., predicting cell-type-shared age signal across cell types).
