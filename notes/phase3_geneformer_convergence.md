@@ -359,3 +359,34 @@ GATE 2 status: **R bar moved further away** (E5b 0.466 was closer to 0.5 than E5
 - **Variance check (deferred)**: 3 seeds at the *winning* config. Both E5b's +0.104 R jump and E5d's −0.035 R regression are single-seed measurements. Will run multi-seed once we've identified the best base config so the variance characterization is on the right config, not on a pre-final one.
 
 If E5c also asymptotes around R=0.45, the next thread is reconsidering objective: per-donor median targets (one prediction per donor) rather than per-cell MSE may be a better fit — or auxiliary tasks (e.g., predicting cell-type-shared age signal across cell types).
+
+## 18. E5c results (2026-04-27, 1 epoch + 10× cells/donor on A10g)
+
+Same hyperparameters as E5b/E5d (mean-pool, lr=2e-4, head_lr=2e-4, bf16) but `--max-cells-per-donor 500 --epochs 1`. 93,702 train cells (after the per-donor cap takes effect on donors with <500 cells), 2,930 optimizer steps (~3.3× E5b, ~2× E5d). Wall=15,347s (~4.3h on A10g). Final eval on OneK1K CD4+T (981 donors): **MAE=16.27y / R=0.385**. MAE is the lowest of any run; R is below E5b (0.466) AND E5d (0.431).
+
+| run | n_train_cells | epochs | pred sd (y) | pred range | LoRA Δ RMS median | LoRA Δ RMS max | head_w RMS | head_b | R | MAE |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Run #2 (cls) | 9,500 | 1 | 0.89 | 4.7 | 1.4e-4 | 3.8e-4 | 0.0273 | 48.927 | 0.327 | 19.99 |
+| E5b (mean) | 9,500 | 3 | 2.48 | 16.7 | 9.4e-4 | 2.3e-3 | 0.0234 | 48.927 | **0.466** | 17.37 |
+| E5d (mean) | 9,500 | 5 | 3.24 | 20.6 | 1.4e-3 | 3.3e-3 | 0.0254 | 48.926 | 0.431 | 16.53 |
+| **E5c (mean)** | **93,702** | **1** | **2.63** | **19.3** | **1.7e-3** | **4.5e-3** | 0.0271 | 48.997 | 0.385 | **16.27** |
+
+**E5b is the sweet spot, not the bottom of a curve.** Both scaling levers — more epochs (E5d) and more cells/donor (E5c) — regress R below E5b's 0.466. MAE keeps improving in both directions because predictions continue walking toward eval mean (err mean −16.0 → −12.7 → −11.9 → −10.7 across the four runs), but per-donor age correlation is *worse* whenever you scale.
+
+**Mechanism (different from E5d's "more confident off-axis"):** E5c's pred_sd is 2.63y (intermediate between E5b's 2.48 and E5d's 3.24), pred_range 19.3y (comparable to E5d's 20.6), but R 0.385 — *worse* than either despite the more-parameter-movement evidence (LoRA Δ median 1.7e-3, the largest of any run). The model is moving more parameters and producing more-spread predictions, but the spread is *less aligned* with truth than at E5b. This points to a fundamentally different bottleneck than undertraining — it's the **per-cell MSE objective**: when each donor contributes 500 cells with the same age label, the model gets 500 duplicated (cell, age) targets per donor and learns donor-specific cell-level idiosyncrasies that don't carry the donor's true age. More duplication (E5c) → more donor-memorization → less age-rank generalization.
+
+Compare LoRA Δ trajectory: 1.4e-4 (Run #2) → 9.4e-4 (E5b) → 1.4e-3 (E5d) → 1.7e-3 (E5c). The optimizer is finding more parameter movement under each scaling lever, but the *quality* of that movement peaks at E5b and degrades thereafter. The per-cell MSE loss surface is a confound: extra capacity is spent on donor-cell-level memorization, not age-rank improvement.
+
+GATE 2 status: **E5b's R=0.466 is the single-seed best**, 0.034 below the 0.5 bar. Neither scaling lever closes the gap. Phase-3-A's diagnostic question is now answered: at 9,500 train cells × 3 epochs × mean-pool × cap=50, this Geneformer LoRA configuration is at its R-ceiling for this fold; further scaling on either lever degrades it.
+
+## 19. Phase-3-A close-out plan
+
+The convergence investigation has run its course. Time to lock in:
+
+1. **Variance check (E5b config × 2 seeds, ~3.4h, ~$3.40)**: rerun `--epochs 3 --max-cells-per-donor 50 --pool mean --lr 2e-4 --head-lr 2e-4 --seed {1,2} --run-tag-suffix _e5b_seed{1,2}`. Establishes seed-to-seed variance on R and MAE. Required regardless of scale-lever results — the +0.104 R jump from E5a to E5b and the −0.035 regression to E5d are single-seed measurements.
+2. **AIDA scoring (~30 min total)**: score E5b/E5c/E5d/seed1/seed2 checkpoints on AIDA CD4+T (293 donors from `ancestry_shift_mae` half) using `scripts/score_aida.py`. Cross-ancestry headline cell numbers, no extra training. Phase-2 baseline (Pasta-REG R=0.66, MAE=6.3y) is the floor to beat — unlikely given the loco_onek1k R~0.45 ceiling, but the AIDA numbers are needed for the preprint regardless.
+3. **Phase-3-A close-out memo + Phase-3-B go/no-go**: summarize seed-mean R and MAE on loco_onek1k + AIDA, declare the best Geneformer config, recommend whether to proceed to Phase-3-B (full sweep of 3 FMs × 2 folds × 3 seeds) or pivot to objective-change first (per-donor MSE, multi-task auxiliary, etc.).
+
+**Skipped this autonomous window**: loco_terekhova fold at E5b config would be ~6h (1005 train donors × 50 cells × 3 epochs = 150,750 cell-passes / 32 batch = 4,710 steps); doesn't fit alongside variance check + AIDA + close-out within the autonomous budget. Reserved for the next session — first move when context allows.
+
+**Skipped**: per-donor objective ablation. Code change (~2h dev time) plus a fresh training run (~1.7h). Worth doing if the user agrees post-window; tightly motivated by the §18 mechanism finding.
