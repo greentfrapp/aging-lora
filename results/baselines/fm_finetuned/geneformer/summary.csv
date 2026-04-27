@@ -3,3 +3,5 @@ geneformer,loco_onek1k,0,CD4+ T,onek1k,9500,19620,981,19.99163627624512,0.326825
 geneformer,loco_onek1k,0,CD4+ T,onek1k,9500,19620,981,17.374216079711914,0.4662494598714678,5993.8957278728485,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
 geneformer,loco_onek1k,0,CD4+ T,onek1k,9500,19620,981,16.531986236572266,0.4313632121510273,8692.85576224327,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
 geneformer,loco_onek1k,0,CD4+ T,onek1k,93702,19620,981,16.265005111694336,0.3854014777921061,15346.597869634628,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
+geneformer,loco_onek1k,1,CD4+ T,onek1k,9500,19620,981,17.574588775634766,0.4979991632218049,5973.614086866379,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
+geneformer,loco_onek1k,2,CD4+ T,onek1k,9500,19620,981,16.55655288696289,0.39619730221170746,5970.407015800476,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
