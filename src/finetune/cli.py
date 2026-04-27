@@ -60,6 +60,10 @@ def main():
     p.add_argument("--lora-rank", type=int, default=16)
     p.add_argument("--lora-alpha", type=int, default=32)
     p.add_argument("--lora-dropout", type=float, default=0.05)
+    p.add_argument("--pool", choices=["cls", "mean"], default="cls",
+                   help="pooling over backbone hidden states for the regression head; "
+                        "'cls' = position-0 only (Run #2 / v2 default); "
+                        "'mean' = mean over attended positions (E5a ablation)")
     p.add_argument("--max-cells-per-donor", type=int, default=500)
     p.add_argument("--eval-max-cells-per-donor", type=int, default=200)
     p.add_argument("--max-train-steps", type=int, default=None)
@@ -101,6 +105,11 @@ def main():
         args.max_cells_per_donor = 25
         args.eval_max_cells_per_donor = 25
         args.max_train_steps = 20
+
+    # Defensive: if the user runs a smoke without explicitly redirecting --output-dir,
+    # divert to results/phase3_smoke so the production summary.csv stays clean.
+    if (args.smoke or args.gpu_smoke) and args.output_dir == "results/baselines/fm_finetuned":
+        args.output_dir = "results/phase3_smoke"
 
     if args.device in (None, "auto"):
         args.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -172,6 +181,7 @@ def main():
         lora_dropout=args.lora_dropout,
         gradient_checkpointing=args.gradient_checkpointing and device.type == "cuda",
         head_bias_init=train_age_mean,
+        pool=args.pool,
     )
     model.to(device)
     summary = trainable_param_summary(model)

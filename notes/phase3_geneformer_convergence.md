@@ -228,20 +228,42 @@ This is the classic LoRA-undertraining pattern. Phase-2's *linear* LASSO hits MA
 4. **bf16 numerical noise (D).** Looking less likely — LoRA delta moved cleanly in fp32-equivalent magnitudes.
 5. **Gradient checkpointing × peft bug (F).** Already ruled out.
 
-## 10. Revised plan
+## 10. E5a results (2026-04-27, mean-pool ablation)
 
-Three cheap experiments before committing to a long multi-epoch run. All use `--lr 2e-4 --head-lr 2e-4` (carry over the v2 default):
+Same data scale as Run #2 / v2 (9,500 train cells × 1 epoch, full 981-donor OneK1K eval, lr=2e-4 head_lr=2e-4 bf16). Only change: `<cls>`-only pooling → mean-pool over attended positions, via new `--pool {cls,mean}` flag in `src/finetune/cli.py` and `src/finetune/lora_wrappers/geneformer.py`. Wall=9,354s (≈2.6h, fastest of the three production runs — parallel scAgeClock CPU load lifted by the time E5a launched).
 
-- **E5a — mean-pool over `<cls>`** [~5 min code change in `geneformer.py:forward()`, ~3h compute at Run #2 data scale]. Test the pooling hypothesis directly. If R jumps cleanly, this is the cheapest unlock.
-- **E5b — 3 epochs at Run #2 data scale** [no code change, ~10–12h compute]. Direct test of the undertraining hypothesis. Cumulative LR-area goes 3×, optimizer-step count goes 3×.
-- **E5c — `--max-cells-per-donor 500`, 1 epoch** [no code change, ~10× more steps per epoch, ~10–12h compute]. Tests undertraining via dataset size rather than epochs.
+| | Run #2 (cls, lr=5e-5) | v2 (cls, lr=2e-4) | **E5a (mean, lr=2e-4)** |
+|---|---|---|---|
+| MAE (y) | 19.99 | 18.48 | 19.34 |
+| **R** | 0.327 | 0.316 | **0.362** ← best |
+| pred mean | 47.89 | 50.23 | 48.99 |
+| pred sd | 0.89 | 1.13 | 1.09 |
+| **LoRA delta RMS (median)** | 1.4e-4 | 4.5e-4 | **5.9e-4** ← largest |
+| LoRA delta RMS (max) | 3.8e-4 | 1.1e-3 | **1.6e-3** ← largest |
 
-E5a runs first because the code change is trivial and the mechanistic plausibility (cls-only ≠ best aggregation for rank-value embedded gene tokens in age regression) is high. If E5a moves R meaningfully (≥0.5 on full eval), continue with mean-pool baked in. If not, run E5b in parallel with E5a's result analysis.
+Findings:
 
-**GATE 2 criterion (unchanged):** validation MAE < 12y on OneK1K CD4+T, R > 0.5 on the full 981-donor eval. Once cleared, scale to the full 18-fine-tune sweep (Phase-3-B).
+1. **Mean-pool is the largest single-knob R improvement so far** (+0.046 vs v2). Surfaces gradient signal across all attended token positions, not just `<cls>` — LoRA delta is the biggest yet (median 5.9e-4, max 1.6e-3, ≈4× Run #2). Strictly dominates cls in every metric we have.
+2. **MAE creeps back up to ~19.3y** because the v2 +2.3y bias-drift effect is gone — that drift was a side effect of cls-pool's tighter prediction range under high LR, not a generalizable improvement. With mean-pool the head bias stays near 48.93 (≈ train mean), and MAE = |eval_mean − pred_mean| + dispersion ≈ 14.9 + 4.4 ≈ 19.3y, dominated by the train→eval domain shift floor.
+3. **The fundamental regime hasn't changed.** Prediction sd 1.09y vs true sd 16.5y — predictions span ~7% of the true range. R=0.362 is still well below GATE 2's R>0.5 threshold; Phase-2's *linear* LASSO at MAE=9.4y still beats the FM by a wide margin. The model is still stuck in the "predict near-mean(train)" basin.
 
-## 11. CLI changes committed during investigation
+**Pattern across the three runs**: each architectural intervention buys ~+0.04 R. To clear R>0.5 (need ~+0.14 more) we need a **regime change** — many more optimizer steps — not another single-knob fix. That's E5b (3 epochs) and E5c (10× cells/donor) territory.
+
+## 11. Updated plan
+
+Now down to two experiments. Both use the new `--pool mean` default (E5a confirmed it dominates cls):
+
+- **E5b — 3 epochs at Run #2 data scale, mean-pool** [no code change, ~8h local / ~3h on A10g cloud]. Direct test of the undertraining hypothesis. Cumulative LR-area goes 3×, optimizer-step count goes 3×.
+- **E5c — `--max-cells-per-donor 500`, 1 epoch, mean-pool** [no code change, 10× more train cells per epoch, ~8h local]. Tests undertraining via dataset size rather than epochs.
+
+E5b is preferred next: same data sees more SGD steps, isolates the "more training" variable cleanly. E5c also tests "more data" but adds a confound (different cells sampled per donor each step).
+
+**GATE 2 criterion (unchanged):** validation MAE < 12y on OneK1K CD4+T, R > 0.5 on the full 981-donor eval. Once cleared, scale to the full 18-fine-tune sweep (Phase-3-B) with mean-pool baked in.
+
+## 12. CLI changes committed during investigation
 
 - `--run-tag-suffix STR`: appended to run_tag; isolates outputs for ablation runs.
 - `--log-every INT`: previously hardcoded at 25; now CLI-configurable so short smokes produce step traces.
 - `--gpu-smoke` now adds `gpusmoke_` prefix to run_tag and skips checkpoint save (was previously sharing paths with real runs).
+- `--pool {cls,mean}`: pooling over backbone hidden states for the regression head (new in E5a). Default still `cls` for back-compat with Run #2 / v2; should be flipped to `mean` after Phase-3-A closes.
+- Smoke modes (`--smoke`, `--gpu-smoke`) now defensively redirect `--output-dir` from the production `results/baselines/fm_finetuned` to `results/phase3_smoke` if the user kept the production default. Prevents accidental contamination of the production `summary.csv` (which happened once during E5a code-validation; reverted in the same commit).

@@ -4,3 +4,5 @@ geneformer,loco_onek1k,0,CD4+ T,637.2680642604828,250,cuda,False,2026-04-26T12:1
 geneformer,loco_onek1k,0,CD4+ T,118.68779802322388,250,cuda,False,2026-04-26T12:19:28
 geneformer,loco_onek1k,0,CD4+ T,99.99316072463988,250,cuda,False,2026-04-26T12:21:45
 geneformer,loco_onek1k,0,CD4+ T,16327.40205025673,9500,cuda,False,2026-04-26T20:34:48
+geneformer,loco_onek1k,0,CD4+ T,15.451773643493652,16,cpu,True,2026-04-26T23:13:44
+geneformer,loco_onek1k,0,CD4+ T,9354.000630140305,9500,cuda,False,2026-04-27T01:50:25

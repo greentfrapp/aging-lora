@@ -19,13 +19,14 @@ GENEFORMER_CKPT = Path("save/Geneformer/Geneformer-V2-104M")
 
 
 class GeneformerRegressor(nn.Module):
-    """Geneformer + 1-layer regression head over <cls> token."""
+    """Geneformer + 1-layer regression head over a pooled cell embedding."""
 
     def __init__(
         self,
         ckpt_path: Path = GENEFORMER_CKPT,
         dropout: float = 0.1,
         bias_init: float = 0.0,
+        pool: str = "cls",
     ):
         super().__init__()
         self.backbone = BertModel.from_pretrained(str(ckpt_path), add_pooling_layer=False)
@@ -34,11 +35,19 @@ class GeneformerRegressor(nn.Module):
         self.head = nn.Linear(h, 1)
         nn.init.normal_(self.head.weight, std=0.02)
         nn.init.constant_(self.head.bias, bias_init)
+        if pool not in {"cls", "mean"}:
+            raise ValueError(f"unknown pool={pool!r}; expected 'cls' or 'mean'")
+        self.pool = pool
 
     def forward(self, input_ids, attention_mask):
         out = self.backbone(input_ids=input_ids, attention_mask=attention_mask)
-        cls = out.last_hidden_state[:, 0]  # <cls> at position 0
-        return self.head(self.dropout(cls)).squeeze(-1)
+        h = out.last_hidden_state  # [B, T, H]
+        if self.pool == "cls":
+            feat = h[:, 0]
+        else:  # "mean": average over attended (non-pad) positions
+            m = attention_mask.unsqueeze(-1).to(h.dtype)
+            feat = (h * m).sum(dim=1) / m.sum(dim=1).clamp(min=1)
+        return self.head(self.dropout(feat)).squeeze(-1)
 
 
 def build_geneformer_lora(
@@ -48,6 +57,7 @@ def build_geneformer_lora(
     lora_dropout: float = 0.05,
     gradient_checkpointing: bool = True,
     head_bias_init: float = 0.0,
+    pool: str = "cls",
 ):
     """Construct GeneformerRegressor and wrap backbone with LoRA adapters.
 
@@ -58,8 +68,12 @@ def build_geneformer_lora(
     head_bias_init should be set to mean(y_train) so the model starts at the
     optimal mean predictor; otherwise AdamW + weight decay cannot grow the
     bias from 0 to mean(age) within a few-epoch fine-tune budget.
+
+    pool: "cls" (default, back-compat) or "mean" (E5a ablation — mean over
+    attended positions, motivated by Run #2 / v2 cls-only being stuck at
+    "predict mean(train)" prediction floor; see notes/phase3_geneformer_convergence.md).
     """
-    model = GeneformerRegressor(ckpt_path=ckpt_path, bias_init=head_bias_init)
+    model = GeneformerRegressor(ckpt_path=ckpt_path, bias_init=head_bias_init, pool=pool)
 
     # Freeze the entire backbone first; LoRA will inject trainable adapters.
     for p in model.backbone.parameters():
