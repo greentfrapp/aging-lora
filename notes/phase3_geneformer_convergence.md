@@ -297,13 +297,32 @@ Findings:
 3. **Train-MSE trajectory matches the diagnosis exactly.** Epoch 1 plateaued at 260–264 (same as 1-epoch runs ending at ~270). Epoch 2 dropped 20 points — the model only began escaping the predict-mean basin once it had >1 epoch of cumulative LR-area. By epoch 3 end, MSE 222 is ~23% below var(train_ages).
 4. **Mechanism not yet verified.** Have per-donor predictions and the trainable-state checkpoint, but haven't yet checked whether the +0.104 R is "model finally learning the age axis" (prediction sd ↑↑, LoRA delta ↑↑) vs "extended bias drift" (prediction sd ~1y like Run #2/v2/E5a, MAE drop driven by mean-shift toward eval mean). Pending §14 inspection.
 
-## 14. Plan post-E5b
+## 14. E5b mechanism inspection (2026-04-27)
 
-Two threads:
+Loaded `results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed0_CD4p_T_e5b.pt` + the Run #2 / E5b per-donor CSVs (only Run #2 unsuffixed CSV survived locally; v2 / E5a numbers carried forward from §1.1, §8, §10). Script: `scratchpad/_inspect_e5b.py` (gitignored).
 
-- **Mechanism check (immediate, no GPU)**: load `results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed0_CD4p_T_e5b.pt`, compute per-donor prediction sd, LoRA delta RMS (median + max) over the 60 attention/MLP weight matrices, head weight RMS, head bias. Compare against the §1.1, §8, §10 numbers for Run #2 / v2 / E5a. Determines whether E5b's R win is age-axis learning or bias drift — gates whether the next step is "more epochs" or "different objective."
-- **Next experiment (GPU)**: depends on §14a result.
-  - If E5b's prediction sd grew ≥2× over E5a's 1.09y (i.e. the model is actually spreading predictions): scale to **5 or 7 epochs** on the same data — the trajectory says R has not asymptoted, so more cumulative LR-area should keep paying.
-  - If E5b's prediction sd is still ~1y (R win is bias drift): the bottleneck isn't training budget; need to reconsider the regression objective (per-donor mean targets vs per-cell), or augment with E5c (10× cells/donor) to test data-volume vs step-count separately.
+| run | pred sd (y) | pred range (y) | err mean | err sd | LoRA Δ RMS median | LoRA Δ RMS max | head_w RMS | head_b | R | MAE |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Run #2 (cls, 1ep) | 0.89 | 4.7 | −16.0 | 16.2 | 1.4e-4 | 3.8e-4 | 0.0273 | 48.927 | 0.327 | 19.99 |
+| v2 (cls, 1ep) | 1.13 | 9.4 | −13.7 | 16.2 | 4.5e-4 | 1.1e-3 | 0.0216 | 48.926 | 0.316 | 18.48 |
+| E5a (mean, 1ep) | 1.09 | — | — | — | 5.9e-4 | 1.6e-3 | — | — | 0.362 | 19.34 |
+| **E5b (mean, 3ep)** | **2.48** | **16.7** | **−12.7** | **15.5** | **9.4e-4** | **2.3e-3** | **0.0234** | **48.927** | **0.466** | **17.37** |
 
-GATE 2 is now within reach (need +0.034 R, ≥5.4y MAE). The 2/3-headline preprint outcome is in play if Geneformer can clear it on OneK1K CD4+T and Terekhova/AIDA generalize.
+Three findings settle the §13.4 open question — **E5b is a regime change, not bias drift**:
+
+1. **Prediction sd more than doubled** (1.09y → 2.48y). All three 1-epoch runs sat at ~1y sd regardless of LR or pooling — the bias-drift basin. E5b is the first run to genuinely spread predictions across the age axis. Range went 9.4y → 16.7y, 21% of true range vs the basin's 6–12%.
+
+2. **MAE improvement is partly real signal, not pure bias closure.** The 2.6y MAE drop from Run #2 decomposes into ~3.3y of bias closure (pred mean 47.9 → 51.2, walking toward eval mean 63.9) and a 0.7y err-sd reduction (16.2 → 15.5). Err-sd only drops when predictions actually correlate with truth — corroborated by the +0.14 R jump. Contrast v2's MAE drop, where err-sd was unchanged (pure bias drift); E5b is mixed.
+
+3. **LoRA continues to grow.** Median delta RMS climbed 1.4e-4 → 4.5e-4 → 5.9e-4 → 9.4e-4 across the four runs. 6.7× Run #2's. The optimizer is still finding gradient signal — no plateau evidence in the parameter trajectory.
+
+Head bias stays glued to ≈48.93 (mean train age, init value) across all runs — head bias is not the moving variable; the LoRA-driven hidden-state representation is.
+
+## 15. Next experiment: more epochs
+
+§14 picks the "model is actually spreading predictions" branch from §13.4: pred sd doubled, LoRA delta climbed 1.6× E5a, R climbed 2.5× the single-knob plateau. Undertraining is the binding constraint and more cumulative LR-area is still paying. Crude extrapolation from the +0.014 R/epoch slope (E5a→E5b: 0.362→0.466 in 2 extra epochs) puts GATE 2's R>0.5 within reach of 2–3 more epochs.
+
+- **E5d — 5 epochs at the E5b config, mean-pool, A10g** [no code change, ~3h, ~$3 on-demand]. Same data scale (`--max-cells-per-donor 50`, ~9,500 train cells/epoch), `--lr 2e-4 --head-lr 2e-4 --pool mean --epochs 5`. If R clears 0.5 at 5 epochs, GATE 2 is the next thing to verify (MAE<12y is a longer reach: need −5.4y from E5b vs the 2.6y three epochs delivered). If R asymptotes between E5b and E5d, the next move is data scale (E5c) rather than more epochs. Either outcome is informative.
+- **E5e — 7 epochs (conditional)**: only if E5d's R shows the +0.05/2-epochs trend continuing. Otherwise we shift to E5c or to a different objective.
+
+MAE 12y is still the hard part: even if R climbs to 0.6, MAE-bound by the train→eval domain shift floor (Stephenson+Terekhova mean 50.1y vs OneK1K 63.1y; perfect-rank predictor on train would still hit |Δμ|=13y eval MAE absent good age-rank generalization). The 2/3-headline preprint outcome (R>0.5 wins) is still in play; the 3/3 (MAE<8.5y) requires the model to substantially correct for the domain shift, not just rank-order within it.
