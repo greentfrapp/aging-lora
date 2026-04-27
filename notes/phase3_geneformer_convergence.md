@@ -267,3 +267,43 @@ E5b is preferred next: same data sees more SGD steps, isolates the "more trainin
 - `--gpu-smoke` now adds `gpusmoke_` prefix to run_tag and skips checkpoint save (was previously sharing paths with real runs).
 - `--pool {cls,mean}`: pooling over backbone hidden states for the regression head (new in E5a). Default still `cls` for back-compat with Run #2 / v2; should be flipped to `mean` after Phase-3-A closes.
 - Smoke modes (`--smoke`, `--gpu-smoke`) now defensively redirect `--output-dir` from the production `results/baselines/fm_finetuned` to `results/phase3_smoke` if the user kept the production default. Prevents accidental contamination of the production `summary.csv` (which happened once during E5a code-validation; reverted in the same commit).
+
+## 13. E5b results (2026-04-27, 3 epochs + mean-pool on A10g)
+
+First cloud run (g5.xlarge, A10g 24 GB, native bf16). Same data scale as Run #2 / v2 / E5a (9,500 train cells × 190 donors, 19,620 eval cells × 981 OneK1K donors), `--pool mean --lr 2e-4 --head-lr 2e-4 --epochs 3 --max-cells-per-donor 50 --eval-max-cells-per-donor 20 --run-tag-suffix _e5b`. Wall=5,994s (~1.7h) — A10g delivered ~4.6 s/step vs the 2080 Ti's ~37 s/step (8× per-step speedup; net 3× wall after 3× steps).
+
+| | Run #2 (cls, lr=5e-5, 1ep) | v2 (cls, lr=2e-4, 1ep) | E5a (mean, lr=2e-4, 1ep) | **E5b (mean, lr=2e-4, 3ep)** |
+|---|---|---|---|---|
+| MAE (y) | 19.99 | 18.48 | 19.34 | **17.37** ← best |
+| **R** | 0.327 | 0.316 | 0.362 | **0.466** ← best |
+| Wall | 3.1h (2080 Ti) | 4.5h (2080 Ti) | 2.6h (2080 Ti) | **1.7h (A10g)** |
+
+Train-MSE-running trajectory (logs/phase3/geneformer_loco_onek1k_seed0_CD4p_T_e5b.jsonl):
+
+| step | MSE | epoch | note |
+|---|---|---|---|
+| 125 | 264.6 | 0 | near var(train_ages)≈288 (matches Run #2/v2 epoch-1 plateau) |
+| 250 | 260.5 | 0 | ~end of epoch 1 — same plateau Run #2/v2/E5a stopped at |
+| 375 | 239.9 | 1 | **first 20-pt drop below var(train) — basin escape begins in epoch 2** |
+| 500 | 236.1 | 1 | descent slowing |
+| 650 | 232.3 | 2 | |
+| 775 | 247.3 | 2 | bounces (batch noise; Run #2 trace had similar swings 258–282) |
+| 875 | 222.8 | 2 | lowest yet, total descent ~65 points |
+
+Findings:
+
+1. **+0.104 R over E5a — biggest single jump of the four runs.** Pattern across the prior three runs was ~+0.04 R per single-knob fix (LR 5e-5→2e-4: −0.011; cls→mean: +0.046). E5b is the first true regime change (3× SGD steps) and bought 2.5× the single-knob delta. Confirms the §9 hypothesis that undertraining is the binding constraint, not LR or pooling alone.
+2. **GATE 2 still not cleared.** Target was MAE<12y, R>0.5. E5b is 17.37y / 0.466 — closest yet on both axes; R is 0.034 below the bar. Headline LASSO floor on this fold is 9.4y, so the FM is still ~2× over the linear baseline at this MAE.
+3. **Train-MSE trajectory matches the diagnosis exactly.** Epoch 1 plateaued at 260–264 (same as 1-epoch runs ending at ~270). Epoch 2 dropped 20 points — the model only began escaping the predict-mean basin once it had >1 epoch of cumulative LR-area. By epoch 3 end, MSE 222 is ~23% below var(train_ages).
+4. **Mechanism not yet verified.** Have per-donor predictions and the trainable-state checkpoint, but haven't yet checked whether the +0.104 R is "model finally learning the age axis" (prediction sd ↑↑, LoRA delta ↑↑) vs "extended bias drift" (prediction sd ~1y like Run #2/v2/E5a, MAE drop driven by mean-shift toward eval mean). Pending §14 inspection.
+
+## 14. Plan post-E5b
+
+Two threads:
+
+- **Mechanism check (immediate, no GPU)**: load `results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed0_CD4p_T_e5b.pt`, compute per-donor prediction sd, LoRA delta RMS (median + max) over the 60 attention/MLP weight matrices, head weight RMS, head bias. Compare against the §1.1, §8, §10 numbers for Run #2 / v2 / E5a. Determines whether E5b's R win is age-axis learning or bias drift — gates whether the next step is "more epochs" or "different objective."
+- **Next experiment (GPU)**: depends on §14a result.
+  - If E5b's prediction sd grew ≥2× over E5a's 1.09y (i.e. the model is actually spreading predictions): scale to **5 or 7 epochs** on the same data — the trajectory says R has not asymptoted, so more cumulative LR-area should keep paying.
+  - If E5b's prediction sd is still ~1y (R win is bias drift): the bottleneck isn't training budget; need to reconsider the regression objective (per-donor mean targets vs per-cell), or augment with E5c (10× cells/donor) to test data-volume vs step-count separately.
+
+GATE 2 is now within reach (need +0.034 R, ≥5.4y MAE). The 2/3-headline preprint outcome is in play if Geneformer can clear it on OneK1K CD4+T and Terekhova/AIDA generalize.

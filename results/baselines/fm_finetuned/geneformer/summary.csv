@@ -1,2 +1,3 @@
 fm,fold,seed,cell_type,eval_cohort,n_train_cells,n_eval_cells,n_eval_donors,mae_y,pearson_r,wall_s,device,smoke,params
-geneformer,loco_onek1k,0,CD4+ T,onek1k,9500,19620,981,19.991636276245117,0.3268253382813733,11215.947721004486,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
+geneformer,loco_onek1k,0,CD4+ T,onek1k,9500,19620,981,19.99163627624512,0.3268253382813733,11215.947721004486,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
+geneformer,loco_onek1k,0,CD4+ T,onek1k,9500,19620,981,17.374216079711914,0.4662494598714678,5993.8957278728485,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
