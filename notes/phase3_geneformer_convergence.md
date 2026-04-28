@@ -600,3 +600,40 @@ The "preprint pivots toward evaluation-study framing" call from §20.4 was made 
 | B loco_terekhova | AIDA | 5' v2 | 11.33 | **−0.247** |
 
 The chemistry-shift collapse is reproducible and severe across both cell types — but again, with the §21.6 confound (98% single-cohort train) unresolved, it can't yet stand on its own as a finding. The Variant 1 ridge probe (§23+) will indirectly address whether the failure is protocol-level or representation-level.
+
+## 23. Variant 1 Phase 1 — frozen-base ridge beats every fine-tune on CD4+T (2026-04-28)
+
+Per the §22.4 + diagnostic-ladder pivot, built `scripts/extract_embeddings.py` (mean-pool over attended positions of last_hidden_state, per-donor average) and `scripts/donor_ridge.py` (RidgeCV alpha selection over [0.01, 1e4], per-cohort holdout eval, optional AIDA transfer). Phase 1 = frozen, unmodified Geneformer V2-104M extracted across 4 cohorts × CD4+T, then ridge fits on the two LOCO folds.
+
+| Fold × Eval | Frozen-base R | Frozen-base MAE | Best fine-tune R | Best fine-tune MAE | Δ R (frozen − fine-tune) |
+|---|---|---|---|---|---|
+| loco_onek1k × OneK1K | **0.560** | 16.52 | 0.466 (E5b s0) | 17.37 | +0.094 |
+| loco_onek1k × AIDA (transfer) | **0.527** | 11.76 | 0.545 (E5c s0) | 9.53 | −0.018 (R) / +2.23 (MAE) |
+| loco_terekhova × Terekhova | **0.576** | 24.03 | 0.140 (E5b s0) | 11.37 | **+0.436** |
+
+**The headline number is the +0.436 R uplift on Terekhova.** A linear ridge over the frozen-base mean-pool representation achieves R=0.576 on the chemistry-shift fold where the fine-tune collapsed to R=0.140. The signal Geneformer encodes pre-finetune is already chemistry-robust enough to power 5'-eval-from-3'-train; the per-cell MSE fine-tune protocol *destroyed* that property.
+
+### 23.1 Three protocol-attribution claims this supports
+
+1. **Per-cell MSE fine-tune is protocol-negative on CD4+T** — three folds, three cases where frozen ≥ fine-tune on R; the Terekhova case is catastrophic. The fine-tune is not extracting more signal than the pretrained representation already provides; on at least one fold it is actively destroying signal.
+2. **Geneformer's pretrained representation IS chemistry-robust** — a property the fine-tune erases. The §21 chemistry-collapse finding (R=0.140 on Terekhova) is therefore protocol-induced, not pretraining-induced. The §22 chemistry-rescue null on B-Terekhova may have the same explanation pending Phase 2.
+3. **The MAE-on-AIDA pattern is preserved**: fine-tunes can match frozen on R for AIDA transfer (E5c R=0.545 vs frozen 0.527) but at 2.23y *worse* MAE — fine-tunes shift the bias closer to AIDA mean while ridge does not. AIDA bias-closure is therefore a fine-tune *artifact*, not evidence of representation improvement.
+
+### 23.2 Bounded scope
+
+This is a one-cell-type result on CD4+T. Phase 2 (B + NK frozen-base across both folds) is the necessary generality test before calling the protocol-negative claim definitive. If Phase 2 shows frozen ≥ fine-tune on B and NK as well, the §22.3 0/6 negative claim transmutes from "Geneformer LoRA loses to baselines" to "Geneformer LoRA *protocol* loses to a linear probe over its own pretrained features" — the latter is a much sharper protocol-attribution finding than a horse-race loss.
+
+### 23.3 Frozen-base vs Phase-2 baselines (does this beat anything else?)
+
+Frozen-base R=0.527-0.576 is **not competitive with Phase-2 baselines** on CD4+T:
+- LASSO on OneK1K CD4+T: R=0.747 (frozen-base 0.560)
+- Pasta-REG on Terekhova CD4+T: R=0.778 (frozen-base 0.576)
+- Pasta-REG on AIDA CD4+T: R=0.659 (frozen-base 0.527)
+
+Frozen-base ridge is a *diagnostic* probe of the FM representation, not a competitor to the published baselines. The protocol-negative finding does not flip the §22.3 horse-race tally — but it does change the explanation for *why* the FM loses.
+
+### 23.4 Decision per §22.5 ladder
+
+Frozen-base AIDA R=0.527 falls in the §22.5 "mixed" bracket [0.45, 0.60). Recommended branch: Phase 2 first (B + NK frozen-base + cross-fold ridge fits, ~30 min compute, no LoRA training); then in parallel Variant 2 (pseudobulk-input fine-tune) and Variant 3 (layer-wise probe) once the cross-cell-type generality of the protocol-negative finding is established. scFoundation/scGPT FM-class diagnostic stays gated on Phase 2 + Variant 2/3 outcomes.
+
+Phase 2 batch script: `scratchpad/run_variant1_phase2.sh`. Expected: 8 frozen-base extractions (4 cohorts × {B, NK}) + 6 ridge fits (3 cell types × 2 folds, with AIDA transfer on loco_onek1k folds) → 6 new rows in `results/phase3/ridge_summary.csv`.
