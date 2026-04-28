@@ -699,3 +699,86 @@ The §22.5 decision tree was set on CD4+T frozen-base AIDA R=0.527. Phase 2 part
 4. **Variant 4 (cancelled)** — original Variant 4 was an ensemble; not informative without first knowing whether any variant works at all.
 
 Phase 2 outcome strengthens the negative claim into a more granular methodological story: "Geneformer LoRA with per-cell MSE fine-tune is protocol-negative on the one cell type where its frozen representation has signal, and is representation-negative on B and NK regardless of protocol." This is publishable as a diagnostic-study finding and motivates the FM-class comparison directly.
+
+> **2026-04-28 audit note (§25)**: The "smoking gun" framing in §23 and the "substrate is empty" wording in §24 both **overreach**. See §25 for the bias-variance audit per `scratchpad/variant_1_review.md`; the §23/§24 numbers stand but the *interpretation* is materially refined.
+
+## 25. Variant 1 audit (D.9 + D.10 + D.11) — bias-variance analysis refines the §23/§24 narrative (2026-04-28)
+
+`scripts/variant1_audit.py` re-fits all 9 ridge conditions, saves predictions, and computes (i) exact R + 95% bootstrap CI + p, (ii) pred_sd vs eval_sd compression, (iii) OLS slope of pred~true (slope < 1 = mean-compression), (iv) AIDA pred mean vs train mean (bias-toward-training-mean). Output: `results/phase3/variant1_audit.csv` + per-condition prediction `.npz` in `results/phase3/variant1_predictions/`.
+
+### 25.1 D.9 — exact R + 95% bootstrap CI for all 9 conditions
+
+| Cell × Eval | R | 95% CI | p | Verdict |
+|---|---|---|---|---|
+| CD4+T × OneK1K | 0.560 | [0.514, 0.605] | <1e-300 | real |
+| CD4+T × AIDA | 0.527 | [0.453, 0.594] | 2.2e-22 | real |
+| CD4+T × Terekhova | 0.576 | [0.460, 0.665] | 4.4e-16 | real |
+| **B × OneK1K** | −0.013 | **[−0.079, 0.046]** | 0.69 | **CI straddles 0 — empty** |
+| **B × AIDA** | 0.099 | **[−0.009, 0.203]** | 0.085 | **CI straddles 0 — empty** |
+| **B × Terekhova** | 0.102 | **[−0.056, 0.255]** | 0.19 | **CI straddles 0 — empty** |
+| NK × OneK1K | 0.260 | [0.197, 0.320] | 1.2e-16 | **real but weak** |
+| **NK × AIDA** | 0.047 | **[−0.064, 0.162]** | 0.41 | **CI straddles 0 — empty** |
+| NK × Terekhova | 0.199 | [0.044, 0.347] | 0.010 | **real but weak (lower CI grazes 0.04)** |
+
+**Reframe of §24**:
+- **B is genuinely empty substrate**. 0/3 CIs exclude zero. The §24 wording "substrate is empty" is correct *for B*.
+- **NK is NOT empty substrate**. 2/3 CIs exclude zero. NK substrate has weak but real signal — particularly NK × OneK1K with R=0.260 [0.197, 0.320] which is a tight CI and highly significant. The §24 wording "B and NK look representation-negative" was wrong for NK; it should be **"NK substrate has weak signal materially below LASSO (0.260 vs 0.629), suggesting Geneformer's mean-pool last-layer representation captures ~40% of LASSO's NK-aging signal"**.
+- The reframed cell-type taxonomy is now **CD4+T (real signal, partly preserved) / NK (weak signal) / B (genuinely empty substrate)**.
+
+### 25.2 D.10 — bias-variance audit reveals universal compression and CD4+T-Terekhova bias catastrophe
+
+| Cell × Eval | pred_sd | eval_sd | sd ratio | OLS slope | train mean | eval mean | pred mean |
+|---|---|---|---|---|---|---|---|
+| CD4+T × OneK1K | 7.05 | 16.51 | **0.43** | 0.24 | 48.89 | 63.91 | 50.05 |
+| **CD4+T × AIDA** | 8.98 | 12.30 | 0.73 | 0.39 | 48.89 | 41.76 | **52.86** |
+| **CD4+T × Terekhova** | 10.86 | 16.83 | 0.65 | 0.37 | 63.47 | 49.43 | **25.46** |
+| B × OneK1K | 6.61 | 16.51 | 0.40 | −0.005 | 48.48 | 63.91 | 47.01 |
+| B × AIDA | 7.54 | 12.44 | 0.61 | 0.060 | 48.48 | 41.07 | 58.45 |
+| B × Terekhova | 6.87 | 16.76 | 0.41 | 0.042 | 63.32 | 49.42 | 57.24 |
+| NK × OneK1K | 4.97 | 16.51 | **0.30** | 0.078 | 48.53 | 63.91 | 55.81 |
+| NK × AIDA | 6.53 | 12.45 | 0.52 | 0.025 | 48.53 | 41.10 | 54.40 |
+| NK × Terekhova | 6.10 | 16.78 | 0.36 | 0.072 | 63.32 | 49.48 | 39.19 |
+
+**Universal compression (all 9 conditions)**: Every prediction is materially compressed relative to eval-sd; sd ratio in [0.30, 0.73]. This is generic ridge behavior on a noisy linear probe — the regularization deliberately shrinks predictions toward the training-mean.
+
+**CD4+T × AIDA — cross-ancestry claim must be qualified, not retracted**:
+- pred_mean = 52.86, train_mean = 48.89, eval_mean = 41.76
+- Predictions lie 11.1y *above* the AIDA eval mean and ~4y above the train mean
+- OLS slope = 0.39 is non-zero but well below 1 → predictions track ranking but at compressed scale
+- pred range = 73% of eval range
+- **Conclusion**: AIDA R=0.527 is real ranking signal but the MAE=11.76 understates the model's true cross-ancestry error. A bias-corrected predictor (subtract pred_mean - eval_mean) would have lower MAE; the unaltered ridge benefits from the fact that pred_mean (52.86) and eval_mean (41.76) happen to be in the right neighborhood after accounting for population age distributions. The §23 "frozen-base ridge generalizes to AIDA" claim should be qualified to **"frozen-base ridge produces partially-compressed AIDA predictions (sd ratio 0.73, slope 0.39) with mean centered near the European train mean; R=0.527 reflects real but bias-shifted ranking."**
+
+**CD4+T × Terekhova — bias catastrophe partially resurrects the fine-tune**:
+- pred_mean = 25.46, train_mean = 63.47, eval_mean = 49.43
+- Predictions are 24y *below* the eval mean — even worse than the fine-tune (whose §21 pred_mean was 39.87, error 9.6y)
+- This is what produces MAE=24.03 despite R=0.576: the embedding mean of Terekhova cells projects to a far-lower scalar than the train cohorts under the ridge weights, producing systematic underestimation
+- **The §23 "smoking gun" claim that frozen-base R=0.576 beats fine-tune R=0.140 is therefore one-sided**: frozen wins on R but loses badly on MAE (24.03 vs fine-tune 11.37). The fine-tune destroys ranking but learns bias closure that frozen ridge cannot.
+- Refined story: the per-cell MSE fine-tune is **bias-closure-positive AND rank-negative**; frozen-base ridge is **bias-closure-negative AND rank-positive**. Neither protocol jointly delivers both. The right diagnostic next step is whether a *different* fine-tune protocol (e.g. Variant 2 pseudobulk) jointly delivers both.
+
+**B and NK CD4+T-comparable — flat-line predictions confirm substrate-empty for B**:
+- B × all evals: OLS slopes ∈ [−0.005, 0.060]. Slope-zero = predictions don't track true age at all — flat at the train-influenced mean.
+- NK × OneK1K: slope=0.078 — small but non-zero, consistent with the tight R CI [0.197, 0.320].
+
+### 25.3 D.11 — honestly-bounded claim ladder (memo's calibrated narrative going forward)
+
+| Tier | Claim | Evidence | Caveats |
+|---|---|---|---|
+| **Strongest** | "Per-cell MSE LoRA fine-tuning of Geneformer is **rank-negative** on CD4+T relative to a frozen-base linear probe — fine-tune destroys ranking signal Geneformer's pretrained representation already encodes (Terekhova frozen R=0.576 vs fine-tune R=0.140; +0.436 R uplift, both p<<0.001). The fine-tune is also **bias-closure-positive** (Terekhova fine-tune MAE 11.37 vs frozen MAE 24.03). The current protocol therefore couples rank-destruction with bias-correction — the wrong tradeoff." | §23 + §25.2 Terekhova row | Bounded to CD4+T; Variant 2/3 needed for protocol-attribution generality. |
+| **Medium** | "Geneformer's pretrained mean-pool of last-layer representation captures CD4+T age signal *partially* — R=0.527–0.576 on raw frozen ridge, materially below LASSO/Pasta on raw genes (0.747–0.778). All predictions are compressed (sd ratio 0.43–0.73) — the FM is not a drop-in replacement for the linear baseline." | §25.1 + §25.2 | LASSO/Pasta numbers from Phase-2 baselines. |
+| **Weakest (qualified)** | "Frozen-base ridge produces partially-compressed AIDA cross-ancestry predictions (sd ratio 0.73, slope 0.39) with mean near the European train mean; R=0.527 reflects real but bias-shifted ranking, not a free-standing ancestry-generalization claim." | §25.2 AIDA row | Cannot be cited as evidence FOR ancestry generalization without bias correction. |
+| **Bounded null** | "B-cell substrate is genuinely empty in Geneformer's mean-pool of last layer (0/3 CIs exclude zero, OLS slopes near zero); NK substrate has weak signal materially below LASSO (R=0.260 vs LASSO 0.629). The B-cell representation gap is upstream of the encoder mean-pool. Variant 3 layer-wise probe is the cheapest test of whether earlier layers have B-cell signal." | §25.1 + §25.2 + LASSO numbers | Bound is "this representation, this pool"; doesn't rule out other Geneformer readouts. |
+
+### 25.4 What this changes for Variant 2 / Variant 3 / FM-class diagnostic
+
+- **Variant 3 (layer-wise probe) is now higher priority** than I'd weighted in §24.5. The B-cell empty-substrate finding is the cleanest target for Variant 3: if any layer has B-cell signal, that's the answer for B. If no layer does, B is bounded as a Geneformer-architectural failure and scFoundation/scGPT FM-class diagnostic becomes the natural next step. ~1h compute (just re-extract per-layer hidden states from frozen base).
+- **Variant 2 (pseudobulk fine-tune) is still motivated but with a clearer target**: a successful Variant 2 must deliver R ≥ 0.576 *and* MAE ≤ 12y on Terekhova CD4+T (jointly clear the rank-positive AND bias-closure-positive bars). The current per-cell fine-tune jointly fails; the question is whether pseudobulk objective decouples them.
+- **AIDA cross-ancestry as a headline is materially weaker**: cannot present R=0.527 / MAE 11.76 as "ancestry generalization" without showing the bias-variance audit. The §22.5 decision tree branch "AIDA R=0.527 is mixed bracket" was set on a number that doesn't support the cross-ancestry story it implied; with the audit, the AIDA result is "partially-compressed within-mean predictions, R from rank component."
+
+### 25.5 Updated decision tree for Variants 2/3 (replaces §22.5 + §24.5)
+
+1. **Variant 3 first** (highest information per dollar, ~1h compute, no training cost).
+   - **If any layer R(B) > 0.4** → B substrate exists at some layer; pivot Variants 2/3 to layer-N readout. Updates the §25.3 "bounded null" claim.
+   - **If max layer R(B) < 0.3** → B substrate is genuinely empty in Geneformer; bounded null stands; FM-class diagnostic is the natural next step.
+   - For NK and CD4+T, the layer-curve shape (monotonic vs middle-peak vs flat) refines the protocol-level story.
+2. **Variant 2 second** (only if Variant 3 doesn't immediately suggest a layer-N pivot). Target: R≥0.576 AND MAE≤12y on Terekhova CD4+T.
+3. **scFoundation FM-class diagnostic third** if Variant 3 indicates Geneformer-architectural weakness on B.
