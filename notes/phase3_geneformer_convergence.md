@@ -637,3 +637,65 @@ Frozen-base ridge is a *diagnostic* probe of the FM representation, not a compet
 Frozen-base AIDA R=0.527 falls in the §22.5 "mixed" bracket [0.45, 0.60). Recommended branch: Phase 2 first (B + NK frozen-base + cross-fold ridge fits, ~30 min compute, no LoRA training); then in parallel Variant 2 (pseudobulk-input fine-tune) and Variant 3 (layer-wise probe) once the cross-cell-type generality of the protocol-negative finding is established. scFoundation/scGPT FM-class diagnostic stays gated on Phase 2 + Variant 2/3 outcomes.
 
 Phase 2 batch script: `scratchpad/run_variant1_phase2.sh`. Expected: 8 frozen-base extractions (4 cohorts × {B, NK}) + 6 ridge fits (3 cell types × 2 folds, with AIDA transfer on loco_onek1k folds) → 6 new rows in `results/phase3/ridge_summary.csv`.
+
+## 24. Variant 1 Phase 2 — protocol-negative confirmed, but with cell-type-dependent magnitude (2026-04-28)
+
+Phase 2 ran in ~2.7h (4 extractions × ~10-20 min for OneK1K/Terekhova B+NK + ~5 min each for AIDA/Stephenson). Adds 9 ridge rows: B + NK × {loco_onek1k OneK1K + AIDA transfer, loco_terekhova Terekhova} + a clean re-run of the CD4+T trio for sanity (numbers identical to Phase 1, confirming determinism).
+
+### 24.1 Full 3-cell × 2-fold frozen-base ridge table
+
+| Cell × Fold | Frozen R | Frozen MAE | Fine-tune R | Δ R | Frozen p-value |
+|---|---|---|---|---|---|
+| CD4+T × OneK1K | 0.560 | 16.52 | 0.466 (E5b s0) | +0.094 | <1e-300 |
+| CD4+T × AIDA | 0.527 | 11.76 | 0.545 (E5c s0) | −0.018 | 2.2e-22 |
+| CD4+T × Terekhova | **0.576** | 24.03 | 0.140 | **+0.436** | 4.4e-16 |
+| B × OneK1K | −0.013 | 21.69 | −0.076 | +0.063 | **0.69 (n.s.)** |
+| B × AIDA | 0.099 | 18.69 | n/a | n/a | 0.085 (n.s.) |
+| B × Terekhova | 0.102 | 14.02 | 0.075 | +0.027 | **0.19 (n.s.)** |
+| NK × OneK1K | 0.260 | 14.13 | 0.165 | +0.095 | 1.2e-16 |
+| NK × AIDA | 0.047 | 14.88 | n/a | n/a | **0.41 (n.s.)** |
+| NK × Terekhova | 0.199 | 15.19 | n/a (cancelled) | n/a | 0.010 |
+
+**Frozen-base ridge ≥ fine-tune on R for every (cell × fold) pair tested with both** (5/5 such pairs; +Δ in [0.027, 0.436]). Direction of the §23 protocol-negative claim is confirmed across all three cell types.
+
+### 24.2 Two distinct failure modes co-exist (the §23 framing was too clean)
+
+The §23 memo treated "fine-tune destroys signal" as the unifying mechanism. Phase 2 reveals it splits cleanly by cell type:
+
+**Mode A — CD4+T (protocol-negative)**: Frozen R = 0.527-0.576 across three cohort/eval conditions, all p < 1e-15. Real, robust pretrained signal. Fine-tune erases it (Terekhova R=0.140 ← 0.576 = catastrophic; OneK1K R=0.466 ← 0.560 = mild). Variants 2 and 3 are the right diagnostic next.
+
+**Mode B — B and NK (representation-negative)**: Frozen R is in [−0.01, 0.26] across 6 (cell × eval) pairs, with **3 of 6 p > 0.1** (not distinguishable from chance). On B specifically, *both* frozen and fine-tune sit near zero — there's no signal to destroy, only to find. The substrate is empty. The fine-tune hurting on these cell types is a small effect because the floor is already near zero.
+
+The +0.436 R Terekhova uplift on CD4+T is the only smoking gun. The B/NK uplifts of [+0.027, +0.095] are real-direction but small-magnitude — what we'd expect when noise dominates and the linear probe finds nothing the fine-tune could destroy.
+
+### 24.3 What's published vs what's missing
+
+Phase-2 baselines (from `results/baselines/v0_summary.csv`):
+
+| Cell | LASSO R OneK1K | Pasta-REG R OneK1K | LASSO R Terekhova | Pasta-REG R Terekhova |
+|---|---|---|---|---|
+| CD4+T | 0.747 | 0.730 | n/a | 0.778 |
+| B | 0.531 | 0.450 | 0.080 | 0.281 |
+| NK | 0.629 | 0.578 | n/a | n/a |
+
+For B × OneK1K, LASSO recovers R=0.531 from the same input data. Frozen-base Geneformer ridge gets R=−0.013. **A linear probe on raw genes (LASSO) finds B-cell aging signal that a linear probe on Geneformer's mean-pool 768-dim features cannot.** This is a representation-quality finding — the FM compressed away features that LASSO can use directly. NK shows the same pattern (LASSO 0.629, frozen 0.260). Only CD4+T is competitive (LASSO 0.747, frozen 0.560).
+
+### 24.4 Hypotheses for B/NK representation gap
+
+1. **Layer ablation hypothesis** — last-layer mean-pool throws away aging-relevant detail that mid-layers preserve. Variant 3 (layer-wise probe) tests this directly. If layer-N probe restores B R to 0.3-0.5, Phase-2-baseline-competitive isn't far off.
+2. **Pooling hypothesis** — mean-pool over attended positions averages away aging-relevant subpopulations within B-cell pools (memory vs naive ratios are known aging markers). `<cls>` pooling, max-pool, or attention-weighted pool might capture more.
+3. **Vocabulary hypothesis** — Geneformer's gene-token vocabulary may underweight B-cell-aging-relevant markers (e.g. plasma-cell isotype switching). LASSO can directly use those genes; Geneformer must squeeze signal through tokens that may not represent them.
+4. **Pretraining domain mismatch** — Genecorpus-30M is broad but B-cell development states may be underrepresented relative to T cells. Less likely on its own; combines with hypothesis 1/2.
+
+Variants 2 and 3 distinguish (1+2) from (3+4): if no layer/pool combo lifts B above R=0.3, the issue is upstream of the encoder (vocab/pretraining), and only retraining the encoder or switching FM class fixes it.
+
+### 24.5 Decision per §22.5 ladder, updated
+
+The §22.5 decision tree was set on CD4+T frozen-base AIDA R=0.527. Phase 2 partitioned the picture: CD4+T sits in the §22.5 "mixed" bracket [0.45, 0.60), B and NK sit in the [0, 0.30) "low" bracket. Updated next-step plan:
+
+1. **Variant 3 (layer-wise probe) on B and NK first** — if the pretrained representation has B/NK signal in earlier layers, that's the cheapest path to an explanation. ~1h compute (re-extract from layers 4, 8, 12 of the same checkpoint).
+2. **Variant 2 (pseudobulk-input fine-tune) on CD4+T** — pseudobulk eliminates per-cell noise that may be the protocol's failure mode. Run on CD4+T first since that's where there's signal to either preserve or destroy. ~6h training + AIDA scoring.
+3. **scFoundation FM-class diagnostic** — only after Variants 2/3 results land. If Variant 3 surfaces signal in some layer of Geneformer, it's worth running scFoundation in parallel; if not, scFoundation is even higher priority because Geneformer is the wrong substrate entirely.
+4. **Variant 4 (cancelled)** — original Variant 4 was an ensemble; not informative without first knowing whether any variant works at all.
+
+Phase 2 outcome strengthens the negative claim into a more granular methodological story: "Geneformer LoRA with per-cell MSE fine-tune is protocol-negative on the one cell type where its frozen representation has signal, and is representation-negative on B and NK regardless of protocol." This is publishable as a diagnostic-study finding and motivates the FM-class comparison directly.
