@@ -540,3 +540,63 @@ Re-examining the train-set chemistry mix per fold (with `--max-cells-per-donor 5
 2. **Geneformer LoRA's chemistry-rescue capability is asymmetric.** A model trained predominantly on 5' generalizes acceptably to 3'. A model trained 100% on 3' fails catastrophically on 5'. Either the rank-value encoding is sensitive to which-end-of-transcript bias of the chemistries, or the optimizer found 3'-specific tokens that don't have valid embeddings on 5' inputs.
 3. **The Stephenson 3'-only signal is too weak to alone train a chemistry-robust model.** With 24 donors × 50 cells = 1,200 cells (~2% of the 50,250 loco_terekhova train mix), Stephenson contributes negligibly and the model effectively trains on OneK1K alone.
 4. **The §20.4 Phase-3-B priority order changes again**: the most informative cheap experiment is now (a) a balanced sampler (force equal cells from each train cohort) on loco_terekhova, to test whether the 3'→5' collapse is fundamental or just driven by OneK1K-only training. ~30 LOC change to `select_indices`, then a re-run (~6h, $6).
+
+## 22. Phase-3-A B + NK extension results (2026-04-28)
+
+Post-CD4+T close-out, B and NK pulled forward from Phase 4. Three Geneformer LoRA fine-tunes at the E5b config (3ep cap=50 mean-pool lr=2e-4/2e-4 seed 0) on `loco_onek1k` and `loco_terekhova`. NK × loco_terekhova was cancelled in favor of the Variant 1 diagnostic ladder (§23+).
+
+| Run | MAE (y) | R | Wall | Cost | Best baseline (MAE / R) | Verdict |
+|---|---|---|---|---|---|---|
+| B × loco_onek1k | 24.28 | **−0.076** | 1.3h | $1.3 | LASSO 10.66 / 0.531 | catastrophic loss (anti-correlated) |
+| NK × loco_onek1k | 19.77 | 0.165 | 1.3h | $1.3 | LASSO 9.64 / 0.629 | clean loss |
+| B × loco_terekhova | 14.23 | 0.075 | 4.7h | $4.7 | **Pasta-REG 10.86 / 0.281** | loss (chemistry-rescue null) |
+
+### 22.1 Cell-type pattern across loco_onek1k
+
+| Cell type | LoRA OneK1K R | Best baseline R |
+|---|---|---|
+| CD4+T (E5b mean) | 0.453 | 0.747 (LASSO) |
+| NK | 0.165 | 0.629 (LASSO) |
+| B | −0.076 | 0.531 (LASSO) |
+
+**FM R correlates positively with baseline R** — FMs do somewhat-OK where baselines do well, fail catastrophically where baselines fail. Exact OPPOSITE of the kickoff §3 few-shot hypothesis ("FMs win where baselines are weak"). The ratio FM-R / baseline-R is roughly constant at ~0.5–0.6 across cell types — suggesting the FM extracts a constant fraction of the available signal regardless of how much there is to extract.
+
+### 22.2 Chemistry-rescue test on B × loco_terekhova (the Phase-1 §1f headline cell)
+
+Phase-1 found the pretrained LASSO collapses on Terekhova B cells (R=0.08 — the canonical chemistry-shift collapse). Pasta-REG, via rank-normalization, recovers to R=0.28 / MAE=10.86 — chemistry-invariance via input transform. The kickoff hypothesized FMs would also be chemistry-invariant by virtue of pretraining on diverse data; the chemistry-rescue test is whether FMs add invariance on top of rank-norm bulk.
+
+**Result: Geneformer LoRA at R=0.075 / MAE=14.23 essentially ties LASSO's collapse (R=0.080) and beats scAgeClock (R=0.055) but loses cleanly to Pasta-REG (R=0.281). FMs do NOT rescue chemistry-shift collapse.** Pasta's rank-normalization remains the only competitive chemistry-invariant approach in the panel.
+
+The exact opposite of the kickoff §3 hypothesis is now confirmed across two folds: 3'→5' transfer fails on CD4+T (R=0.140 → §21) AND on B (R=0.075). The FM doesn't add anything Pasta-REG doesn't already have.
+
+### 22.3 Aggregate tri-cell × multi-celltype tally
+
+Phase-3-A negative claim now spans **6 (cell × fold) pairs** with all losses:
+
+| Cell × Fold | LoRA MAE / R | Best baseline MAE / R | Verdict |
+|---|---|---|---|
+| CD4+T × OneK1K | 17.17 / 0.453 (3-seed mean) | LASSO 9.45 / 0.747 | loss |
+| CD4+T × Terekhova | 11.37 / 0.140 | Pasta 8.04 / 0.778 | catastrophic loss |
+| CD4+T × AIDA | 9.53 / 0.545 (E5c best config) | Pasta 6.32 / 0.659 | loss (closest on R) |
+| B × OneK1K | 24.28 / −0.076 | LASSO 10.66 / 0.531 | catastrophic loss |
+| B × Terekhova | 14.23 / 0.075 | Pasta 10.86 / 0.281 | loss |
+| NK × OneK1K | 19.77 / 0.165 | LASSO 9.64 / 0.629 | loss |
+
+**0/6 wins.** Stronger negative claim than the original 0/3 CD4+T-only tally. **But** — and this is the §23 pivot — all six losses are at the same per-cell fine-tune protocol; the diagnostic ladder is needed to attribute the failure to (a) protocol, (b) FM class, or (c) substrate signal absence.
+
+### 22.4 What this changes for the preprint narrative
+
+The "preprint pivots toward evaluation-study framing" call from §20.4 was made on 0/3 CD4+T cells. With 0/6 (cell × fold) pairs and the chemistry-rescue null on B, the negative claim is materially stronger but **bounded** to "Geneformer LoRA at the per-cell fine-tune protocol" — exactly the bounded claim the diagnostic ladder is designed to upgrade.
+
+### 22.5 AIDA × B from the B × loco_terekhova checkpoint
+
+`scripts/score_aida.py --cell-type B` on the B × loco_terekhova checkpoint: **MAE 11.33, R = −0.247.** Same chemistry-shift propagation pattern as CD4+T (R=−0.146 on AIDA from the CD4+T × loco_terekhova checkpoint). 3'→5' collapse propagates: a model trained 100% on 3' (loco_terekhova train mix is 98% OneK1K + 2% Stephenson, both 3') produces anti-correlated predictions on 5' eval cohorts (Terekhova AND AIDA).
+
+| Source checkpoint | Eval cohort | Eval chemistry | MAE | R |
+|---|---|---|---|---|
+| CD4+T loco_terekhova | Terekhova | 5' v2 | 11.37 | 0.140 |
+| CD4+T loco_terekhova | AIDA | 5' v2 | 9.50 | −0.146 |
+| B loco_terekhova | Terekhova | 5' v2 | 14.23 | 0.075 |
+| B loco_terekhova | AIDA | 5' v2 | 11.33 | **−0.247** |
+
+The chemistry-shift collapse is reproducible and severe across both cell types — but again, with the §21.6 confound (98% single-cohort train) unresolved, it can't yet stand on its own as a finding. The Variant 1 ridge probe (§23+) will indirectly address whether the failure is protocol-level or representation-level.

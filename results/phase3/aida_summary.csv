@@ -6,4 +6,5 @@ loco_onek1k_seed1_e5b,results/baselines/fm_finetuned/geneformer/checkpoints/loco
 loco_onek1k_seed2_e5b,results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed2_CD4p_T_e5b_seed2.pt,CD4+ T,mean,5848,293,10.597793579101562,0.3501146359169674,407.43670630455017,cuda,2026-04-27T20:31:51
 loco_terekhova_seed0_e5b,results/baselines/fm_finetuned/geneformer/checkpoints/loco_terekhova_seed0_CD4p_T_e5b.pt,CD4+ T,mean,5848,293,9.49757957458496,-0.1460473224492759,410.5012626647949,cuda,2026-04-28T02:49:43
 B_loco_onek1k_seed0_e5b,results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed0_B_e5b.pt,B,mean,6044,307,11.701618194580078,-0.3566934081586858,391.031521320343,cuda,2026-04-28T04:36:29
-NK_loco_onek1k_seed0_e5b,results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed0_NK_e5b.pt,NK,mean,6091,306,11.524216651916504,-0.0035918384093323744,409.74864315986633,cuda,2026-04-28T06:04:28
+NK_loco_onek1k_seed0_e5b,results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed0_NK_e5b.pt,NK,mean,6091,306,11.524216651916504,-0.0035918384093323,409.74864315986633,cuda,2026-04-28T06:04:28
+B_loco_terekhova_seed0_e5b,results/baselines/fm_finetuned/geneformer/checkpoints/loco_terekhova_seed0_B_e5b.pt,B,mean,6044,307,11.329824447631836,-0.24740053465507414,384.4200839996338,cuda,2026-04-28T10:51:15

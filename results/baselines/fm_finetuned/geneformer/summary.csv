@@ -8,3 +8,4 @@ geneformer,loco_onek1k,2,CD4+ T,onek1k,9500,19620,981,16.55655288696289,0.396197
 geneformer,loco_terekhova,0,CD4+ T,terekhova,50250,3320,166,11.37360954284668,0.1396485595864064,21895.18797969818,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
 geneformer,loco_onek1k,0,B,onek1k,9687,19546,981,24.282787322998047,-0.0763032423110548,4576.490091085434,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
 geneformer,loco_onek1k,0,NK,onek1k,9709,19598,981,19.77083969116211,0.1648893552149349,4808.559867620468,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
+geneformer,loco_terekhova,0,B,terekhova,48875,3305,166,14.227330207824707,0.0749091816036602,16762.91155052185,cuda,False,"{""total_params"": 106134529, ""trainable_params"": 2360065, ""trainable_pct"": 2.2237}"
