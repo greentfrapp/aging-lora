@@ -456,3 +456,87 @@ By the kickoff outcome rules (3/3 wins → primary, 2/3 → strong, 1/3 → degr
 - `scratchpad/_inspect_e5b.py`, `_inspect_e5c.py`, `_inspect_e5d.py` (mechanism inspection scripts; gitignored)
 - This memo (§13–20) and `notes/research_journal.md` entries for E5b/E5c/E5d
 - 5 git commits pushed to `origin/main`
+
+## 21. Terekhova fold result (2026-04-28 02:35 UTC)
+
+`loco_terekhova` × E5b config × seed 0 completed at 6.1h wall (~$6.1 on g5.xlarge on-demand). Train: OneK1K (981 donors) + Stephenson (24 donors) = 1,005 donors. Eval: Terekhova (166 donors, 10x 5' v2 chemistry, mean age 49.4y). **Final eval: MAE=11.37y, R=0.140.**
+
+This is a catastrophic result, the worst of any LoRA fine-tune in Phase-3-A. Below scAgeClock (R=0.14 vs 0.14 — actually a tie on R, MAE 11.4 vs 13.2). Far below LASSO (R=0.82, MAE=9.15) and Pasta-REG (R=0.78, MAE=8.04).
+
+### 21.1 Mechanism inspection
+
+| | OneK1K E5b s0 | Terekhova E5b s0 |
+|---|---|---|
+| pred sd (y) | 2.48 | **4.71** |
+| pred range (y) | 16.7 | 26.1 |
+| pred mean | 51.2 | 39.9 |
+| true mean | 63.9 | 49.4 |
+| err mean | −12.7 | −9.6 |
+| LoRA Δ RMS median | 9.4e-4 | **2.2e-3** |
+| LoRA Δ RMS max | 2.3e-3 | 4.3e-3 |
+| head_weight RMS | 0.0234 | 0.0334 |
+| head_bias | 48.93 | **63.46** |
+
+**Surprising features:**
+1. **Pred sd 4.71y is the LARGEST of any Geneformer LoRA run** — predictions are spreading more across the age axis than on loco_onek1k.
+2. **LoRA delta median 2.2e-3 is 2.3× E5b loco_onek1k** — the optimizer found much more parameter movement.
+3. **Head bias = 63.46 ≈ train-cell mean** (init was ~62.65). Head bias barely moved, as in all prior runs.
+4. **But predictions land 23y BELOW head bias on average** (pred mean 39.87 vs head bias 63.46). The LoRA-modified hidden states produce features that, dotted with the head weight, contribute −23.6 on average. The model has learned to "subtract from the bias" rather than "predict the age."
+
+The pred_sd grew, the LoRA delta grew, but R = 0.14 — the spread is essentially uncorrelated with truth.
+
+### 21.2 Why does this fold fail so badly?
+
+The kickoff Phase-3 plan flagged Terekhova as the **chemistry-shift headline cell**: OneK1K + Stephenson are both 10x 3' v2 chemistry; Terekhova is 10x 5' v2. The Phase-1 Task 1f finding (`methods/terekhova_chemistry_shift.md`) showed pretrained LASSO holds on CD4+T across chemistry (R=0.82), and Pasta-REG is chemistry-invariant via rank-normalization (R=0.78 on Terekhova CD4+T). The hypothesis was that FMs, by virtue of pretraining on diverse chemistries, would also be chemistry-robust.
+
+**The opposite happened.** Geneformer LoRA fine-tuned on 3'-only data collapses to R=0.14 on 5' eval, while the LASSO and Pasta-REG baselines remain near their full performance. Three contributing factors:
+
+1. **Train-cohort homogeneity**: cap=50 × 1,005 donors gives 50,250 train cells, 98% of which are OneK1K (3' chemistry). Stephenson contributes only 1,200 cells. The model trains primarily on a single 3'-chemistry cohort.
+2. **LoRA over-fitting to 3' artifacts**: 2.3× larger LoRA delta than loco_onek1k means the adapters learned more 3'-specific patterns. When applied to 5' inputs, those adapters fire on tokens that don't correspond to the same biological signal.
+3. **Direction of mean shift exacerbates predictions**: train mean 62.6y, eval mean 49.4y. The model's "average prediction" should be 49.4 to minimize MAE. Instead it lands at 39.87 — 10y BELOW the eval mean. The LoRA-modified features produce systematically negative head-output on Terekhova cells (probably because the rank-value encoding of 5' UMI distributions differs from what the model saw on 3').
+
+This is exactly the failure mode the Phase-2 chemistry-rescue framing was set up to test — and it's a strong null finding: **FMs do not rescue chemistry shift; they fail at it, where rank-normalized bulk (Pasta) and pretrained-on-mixed-chemistry linear (LASSO) succeed.**
+
+### 21.3 Tri-headline outcome (kickoff §3.5 classification)
+
+With Terekhova added, the per-cell win/match/loss verdict is now:
+
+| Cell | Best baseline (MAE / R) | Best Geneformer LoRA (MAE / R) | FM target (10% win) | Outcome |
+|---|---|---|---|---|
+| OneK1K CD4T | LASSO 9.45 / 0.75 | E5b mean 17.17 / 0.453 | ≤8.50 | **loss** |
+| Terekhova CD4T | Pasta-REG 8.04 / 0.78 | E5b s0 11.37 / **0.14** | ≤7.20 | **loss (catastrophic)** |
+| AIDA CD4T | Pasta-REG 6.32 / 0.66 | E5c 9.53 / 0.55 | ≤5.69 | **loss** |
+
+**Phase-3-A aggregate: 0/3 wins.** Per the kickoff outcome rules, this is the strongest pivot toward evaluation-study framing. The preprint headline is no longer "FMs match published baselines" or even "methodology contribution + null result"; it's a **stronger negative finding**: at the 110M-param Geneformer LoRA scale, the FM is dominated by linear baselines on every headline cell, and *catastrophically* fails the chemistry-shift transfer test the kickoff designed Terekhova to probe.
+
+### 21.4 What this changes for Phase-3-B
+
+The §20.4 Phase-3-B recommendation (defer scFoundation/scGPT, test per-donor objective on Geneformer first) gets stronger here. The chemistry-shift collapse is the most urgent thing to understand:
+
+1. **Before any more FM training**, audit whether the Terekhova chemistry collapse is Geneformer-specific or FM-general. scFoundation has a different rank-encoding scheme; scGPT uses gene tokens directly. Both might transfer differently across chemistry. But running both on loco_terekhova first (~$15) is the cheap experiment.
+2. **Per-donor objective ablation should run on loco_terekhova specifically** (not loco_onek1k as §20.4 implied). loco_onek1k's R-ceiling at 0.45 is uninteresting if Terekhova catastrophe dominates the preprint.
+3. **Train-cohort balancing**: with 98% OneK1K cells, the loco_terekhova fold is essentially a 3'→5' transfer test, not a multi-cohort transfer test. A balanced sampler (equal cells per cohort, not per donor) might fix the chemistry overfit. ~30 LOC change to `select_indices`.
+4. **Frame preprint around the chemistry-shift collapse + OneK1K-AIDA inversion.** Both are methodological contributions; the chemistry collapse contradicts the Phase-2 hypothesis directly.
+
+### 21.5 AIDA score on the Terekhova-trained checkpoint: R = −0.146
+
+`scripts/score_aida.py` on `loco_terekhova_seed0_CD4p_T_e5b.pt`: **MAE 9.50, R = −0.146.** The chemistry collapse propagates from Terekhova (5') to AIDA (also 5' v2): the checkpoint produces *anti-correlated* predictions on both 5' eval cohorts. R<0 means the model is worse than predicting the train mean.
+
+### 21.6 Chemistry-asymmetry clarification
+
+Re-examining the train-set chemistry mix per fold (with `--max-cells-per-donor 50`):
+
+| Fold | Train cohorts | Train cells | 3' cells | 5' cells | Eval | Eval chemistry |
+|---|---|---|---|---|---|---|
+| loco_onek1k | Stephenson + Terekhova | 9,500 | 1,200 (13%) | 8,300 (87%) | OneK1K | 3' |
+| loco_terekhova | OneK1K + Stephenson | 50,250 | 50,250 (100%) | 0 | Terekhova | 5' |
+
+**The loco_onek1k models train predominantly on 5' chemistry (Terekhova dominates).** Their AIDA evaluations are therefore *same-chemistry* (5'→5') but cross-ancestry (European→Asian). R 0.24–0.55 reflects population-only transfer.
+
+**The loco_terekhova model trains 100% on 3' chemistry**, then evaluates on 5'. Its evaluations are *cross-chemistry* on both Terekhova (R=0.14) and AIDA (R=−0.15). The catastrophic failure stacks two effects: 3'→5' chemistry shift plus, on AIDA, additional cross-ancestry.
+
+**Implications:**
+1. The "OneK1K–AIDA inversion" finding from §20.2 is a **pure population effect**, not a chemistry effect. Both OneK1K and AIDA evaluations on loco_onek1k checkpoints are 5'→3' (OneK1K) and 5'→5' (AIDA); the chemistry direction differs but is not catastrophic. Population (European train → European OneK1K eval, vs European train → Asian AIDA eval) drives the inversion.
+2. **Geneformer LoRA's chemistry-rescue capability is asymmetric.** A model trained predominantly on 5' generalizes acceptably to 3'. A model trained 100% on 3' fails catastrophically on 5'. Either the rank-value encoding is sensitive to which-end-of-transcript bias of the chemistries, or the optimizer found 3'-specific tokens that don't have valid embeddings on 5' inputs.
+3. **The Stephenson 3'-only signal is too weak to alone train a chemistry-robust model.** With 24 donors × 50 cells = 1,200 cells (~2% of the 50,250 loco_terekhova train mix), Stephenson contributes negligibly and the model effectively trains on OneK1K alone.
+4. **The §20.4 Phase-3-B priority order changes again**: the most informative cheap experiment is now (a) a balanced sampler (force equal cells from each train cohort) on loco_terekhova, to test whether the 3'→5' collapse is fundamental or just driven by OneK1K-only training. ~30 LOC change to `select_indices`, then a re-run (~6h, $6).

@@ -4,3 +4,4 @@ loco_onek1k_seed0_e5d,results/baselines/fm_finetuned/geneformer/checkpoints/loco
 loco_onek1k_seed0_e5c,results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed0_CD4p_T_e5c.pt,CD4+ T,mean,5848,293,9.525812149047852,0.5449134921953631,407.2447974681854,cuda,2026-04-27T20:18:01
 loco_onek1k_seed1_e5b,results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed1_CD4p_T_e5b_seed1.pt,CD4+ T,mean,5848,293,10.174949645996094,0.2404968228891941,407.31595277786255,cuda,2026-04-27T20:24:56
 loco_onek1k_seed2_e5b,results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed2_CD4p_T_e5b_seed2.pt,CD4+ T,mean,5848,293,10.597793579101562,0.3501146359169674,407.43670630455017,cuda,2026-04-27T20:31:51
+loco_terekhova_seed0_e5b,results/baselines/fm_finetuned/geneformer/checkpoints/loco_terekhova_seed0_CD4p_T_e5b.pt,CD4+ T,mean,5848,293,9.497579574584961,-0.14604732244927596,410.5012626647949,cuda,2026-04-28T02:49:43
