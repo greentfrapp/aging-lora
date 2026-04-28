@@ -52,9 +52,17 @@ The Terekhova bar is materially tighter than the original "beat LASSO 9.2y" gate
 
 The 4th comparator (LASSO-retrained-3cohort) is the **methodologically symmetric apples-to-apples baseline** to the FM fine-tunes — both see the same 3 cohorts. Including it in the gate directly addresses the "FM win is just from more training data" reviewer concern. Phase-2 data shows LASSO-retrained ≈ LASSO-pretrained for CD4+T/CD8+T, so the per-cell minimum bar is unchanged for those cells, but explicitly listing both LASSOs in the comparator panel pre-empts the criticism.
 
-### Phase-3-A status (updated 2026-04-28: ridge-readout WIN on OneK1K CD4+T)
+### Phase-3-A status (updated 2026-04-28: ridge readout converts 0/3 → 0+2+1 at 3-seed mean; methodology contribution is the headline)
 
-**MAJOR UPDATE 2026-04-28.** Variant 3 follow-up extracted per-layer mean-pool embeddings from `loco_onek1k_seed0_CD4p_T_e5b.pt` and `loco_terekhova_seed0_CD4p_T_e5b.pt` and refit ridge per layer. Previously-held-out OneK1K eval at layer 12 mean-pool achieves **R=0.631 / MAE=8.21y**, beating LASSO (9.45y) by 13.1% — clearing the kickoff §28 10%-win threshold (≤8.5y). The same recipe achieves R=0.611 / MAE=7.84 on AIDA (close-loss vs Pasta 6.32) and R=0.619 / MAE=8.63 on Terekhova layer-1 (match vs Pasta 8.04). **Revised tri-headline tally: 1 WIN + 1 MATCH + 1 CLOSE-LOSS** (was 0/3 wins under the original linear head readout). The "horse-race loss" verdict from §22.4 was attributable to the per-cell MSE linear head readout, not the LoRA fine-tune itself: same backbone + same LoRA weights + ridge readout produces the win. See memo §27.
+**UPDATE 2026-04-28** (memo §27 + §28).
+Variant 3 follow-up extracted per-layer mean-pool embeddings from `loco_onek1k_seedX_CD4p_T_e5b.pt` (seeds 0/1/2) and `loco_terekhova_seed0_CD4p_T_e5b.pt`, refit ridge per layer, ran 3-seed variance check. **Revised tri-headline at 3-seed mean**:
+- **OneK1K CD4+T**: ridge L6 R=0.632 ± 0.008, MAE=10.85 ± 2.19y vs LASSO 9.45/0.747 → **CLOSE-MATCH (+15%)**. Single-seed best (seed 0 L12 = 8.21y) cleared the strict ≤8.5y WIN bar but does not generalize.
+- **Terekhova CD4+T**: ridge L1 single-seed = R=0.619 / MAE=8.63 vs Pasta 8.04/0.778 → **MATCH** (+7.4%, awaits 3-seed validation).
+- **AIDA CD4+T**: ridge L11 3-seed mean R=0.566 ± 0.032, MAE=7.96 ± 0.42y vs Pasta 6.32/0.659 → **close-loss** (+25.9%, most reproducible cross-ancestry FM result of the phase).
+
+Aggregate revised: **0 strict WINs + 2 MATCH-class + 1 close-loss** at 3-seed mean (better than the §22.3 0/3 horse-race tally; weaker than the optimistic single-seed §27 1+1+1 read).
+
+The "horse-race loss" verdict from §22.4 was substantially attributable to the per-cell MSE linear head readout: same backbone + same LoRA weights + per-donor ridge readout reduces median MAE by 1.7–9.2y across CD4+T conditions. **The publishable methodology contribution is "per-cell MSE head systematically underestimates donor-level signal in fine-tuned single-cell FMs; per-donor ridge is strictly better"** — independent of whether strict WIN bars are cleared. B and NK do NOT rescue under ridge readout (B remains representation-empty across layers × seeds; NK gets partial improvement, no win).
 
 ### Phase-3-A status (recorded 2026-04-26, superseded above)
 
