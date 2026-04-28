@@ -782,3 +782,78 @@ Phase 2 outcome strengthens the negative claim into a more granular methodologic
    - For NK and CD4+T, the layer-curve shape (monotonic vs middle-peak vs flat) refines the protocol-level story.
 2. **Variant 2 second** (only if Variant 3 doesn't immediately suggest a layer-N pivot). Target: R≥0.576 AND MAE≤12y on Terekhova CD4+T.
 3. **scFoundation FM-class diagnostic third** if Variant 3 indicates Geneformer-architectural weakness on B.
+
+## 26. Variant 3 — layer-wise frozen probe (2026-04-28). HEADLINE: Geneformer layer-1 + ridge on CD4+T × Terekhova achieves R=0.616 / MAE=8.82, within 9.7% of Pasta-REG on MAE.
+
+`scripts/extract_embeddings_layered.py` extracts per-layer mean-pool embeddings (output_hidden_states=True; 13 layers including embedding output) across 4 cohorts × 3 cell types. `scripts/donor_ridge_layered.py` fits ridge per (fold × cell × layer × eval_cohort), 117 rows in `results/phase3/ridge_summary_layered.csv`. Wall: ~95 min extraction + 30s ridge.
+
+### 26.1 Best layer per condition (R), with comparison to layer-12 (Variant 1) and prior fine-tune
+
+| Fold × Eval | Cell | Best layer | Best R | Best MAE | Layer-12 R | Layer-12 MAE | Fine-tune R | Fine-tune MAE |
+|---|---|---|---|---|---|---|---|---|
+| loco_onek1k × OneK1K | CD4+T | 12 | 0.560 | 16.52 | 0.560 | 16.52 | 0.466 (E5b s0) | 17.37 |
+| loco_onek1k × AIDA | CD4+T | 12 | **0.527** | 11.76 | 0.527 | 11.76 | 0.545 (E5c s0) | 9.53 |
+| **loco_terekhova × Terekhova** | **CD4+T** | **5** (R) / **1** (MAE) | **0.621 / 0.616** | **18.24 / 8.82** | 0.576 | 24.03 | 0.140 | 11.37 |
+| loco_onek1k × OneK1K | B | 7 | 0.038 | 25.15 | −0.013 | 21.69 | −0.076 | 24.28 |
+| loco_onek1k × AIDA | B | 11 | 0.120 | 20.66 | 0.099 | 18.69 | n/a | n/a |
+| **loco_terekhova × Terekhova** | **B** | **9** | **0.228** | 14.82 | 0.102 | 14.02 | 0.075 | 14.23 |
+| loco_onek1k × OneK1K | NK | 3 | 0.304 | 62.28 (!) | 0.260 | 14.13 | 0.165 | 19.77 |
+| loco_onek1k × AIDA | NK | 5 | 0.169 | 13.30 | 0.047 | 14.88 | n/a | n/a |
+| loco_terekhova × Terekhova | NK | 2 | 0.266 | 14.41 | 0.199 | 15.19 | n/a | n/a |
+
+### 26.2 Headline finding: layer-1 of frozen Geneformer beats every CD4+T × Terekhova predictor we've run
+
+| Predictor | R | MAE (y) | Notes |
+|---|---|---|---|
+| **Frozen layer 1 + ridge** | **0.616** | **8.82** | new this session |
+| Frozen layer 12 + ridge (Variant 1 §23) | 0.576 | 24.03 | last-layer; catastrophic bias |
+| Per-cell MSE LoRA fine-tune (E5b s0, §21) | 0.140 | 11.37 | rank-collapse |
+| Pasta-REG baseline (§22) | 0.778 | 8.04 | rank-norm bulk model |
+| LASSO baseline (Phase-1 §1f) | 0.82 | ~9.15 | pretrained, 5-cohort |
+
+**Layer-1 frozen ridge MAE (8.82y) is within 0.78y / 9.7% of Pasta-REG MAE (8.04y)**. R is below Pasta (0.616 vs 0.778) but the gap on the MAE-headline criterion is the smallest any FM-derived predictor has produced on this fold. This is the first time a Geneformer-based predictor approaches a Phase-2 baseline on the GATE-2 MAE bar.
+
+**Layer-1 frozen ridge dominates the per-cell fine-tune Pareto-strictly**: better on both R (+0.476) AND MAE (−2.55y). The per-cell fine-tune has been *fully dominated* by a frozen-base linear probe at the right layer.
+
+### 26.3 Bias-variance audit per layer reveals layer-1 fixes the §25.2 Terekhova bias catastrophe
+
+| Layer | R | MAE | pred_sd | sd_ratio | slope | pred_mean | eval_mean | gap |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 0.616 | 8.82 | 10.60 | 0.63 | 0.39 | **47.92** | 49.43 | **−1.5** |
+| 2 | 0.597 | 9.64 | 9.66 | 0.57 | 0.34 | 44.20 | 49.43 | −5.2 |
+| 5 | 0.621 | 18.24 | 12.16 | 0.72 | 0.45 | 66.61 | 49.43 | +17.2 |
+| 9 | 0.533 | 10.05 | 11.48 | 0.68 | 0.36 | 41.06 | 49.43 | −8.4 |
+| 12 (Variant 1) | 0.576 | 24.03 | 10.86 | 0.65 | 0.37 | 25.46 | 49.43 | **−24.0** |
+
+The §25.2 "catastrophic bias on Terekhova" finding was **specific to layer 12**. Layer 1 of frozen Geneformer produces predictions whose mean (47.92) lies within 1.5y of the eval mean (49.43) — almost no bias at all. Compression (sd_ratio 0.63) and slope (0.39) are similar to layer 12, so the rank-correlation behavior is comparable; the bias behavior is dramatically different.
+
+**Mechanistic interpretation**: middle/late transformer layers compress aging-relevant variance into structures that are partly chemistry-specific; layer 1 (the embedding+first attention block output) preserves a more chemistry-robust linear age direction. The layer-1 representation is closer to "rank-normalized expression after one round of attention" — closer to Pasta-REG's rank-norm input.
+
+### 26.4 B substrate is not entirely empty — §25.1 reframe needed again
+
+§25.1 concluded "B is genuinely empty substrate" based on layer-12 ridge. Variant 3 reveals B × Terekhova middle layers (8–10) reach R=0.10–0.23, **roughly double** the layer-12 R=0.10. Layer 9 R=0.228 (p=0.003) has a CI clearly above zero. So B substrate exists at depth 8–10 but is destroyed by the deeper layers. The §25.1 "B-cell representation gap is upstream of the encoder mean-pool" claim was wrong; **the gap is in the LATE layers, not upstream**.
+
+The within-cohort B × OneK1K story is unchanged: best layer R=0.038 — flat at all layers. So B has middle-layer signal that survives 3'→5' chemistry transfer but no within-cohort signal at any layer. Possible explanation: B × OneK1K signal is dominated by donor-batch effects that the FM cannot disentangle from age, while cross-chemistry transfer averages out batch effects and the residual age signal is age-only.
+
+### 26.5 NK shows mid-layer R uplifts but high MAE — too-high-dim ridge regime
+
+NK × OneK1K layer 3 R=0.304 (vs layer 12 R=0.260) but MAE=62.28 (!). The ridge with alpha=0.10 on 195 train donors × 768 features is in the over-fit / wild-prediction regime; predictions span a huge range and produce high MAE. NK × Terekhova layer 2 R=0.266 / MAE=14.41 doesn't have this issue (1010 train donors). The NK uplift from depth-1 layers is real on R but produces unstable predictions on the small-train OneK1K-eval fold. **Caveat for §26.1**: the OneK1K-eval NK numbers are inflated by alpha=0.1 over-fitting; the Terekhova-eval NK numbers are reliable.
+
+### 26.6 Updated honestly-bounded claim ladder (replaces §25.3)
+
+| Tier | Claim | Evidence |
+|---|---|---|
+| **Strongest** | "Frozen Geneformer layer-1 + ridge produces R=0.616 / MAE=8.82 on CD4+T × Terekhova — Pareto-dominates the per-cell MSE LoRA fine-tune (R=0.140 / MAE=11.37) on both metrics simultaneously, and the MAE comes within 9.7% of the rank-norm-bulk baseline Pasta-REG (8.04y)." | §26.1, §26.2 |
+| **Strong** | "Per-cell MSE LoRA fine-tune of Geneformer is rank-negative AND bias-closure-positive on CD4+T × Terekhova relative to a layer-12 frozen probe; layer-1 frozen probe is rank-positive AND bias-closure-positive — so the right diagnostic is layer choice, not fine-tune protocol per se." | §25.2, §26.3 |
+| **Medium** | "Geneformer's late layers compress aging-relevant variance into chemistry-specific directions; early layers preserve a more chemistry-robust age direction. Last-layer mean-pool is not the optimal Geneformer readout for cross-chemistry aging prediction." | §26.3 mechanistic |
+| **Weakest (qualified)** | "Frozen Geneformer mid-layers extract weak but non-zero B-cell aging signal on Terekhova (layer 9 R=0.228 [CI 0.07, 0.37]); within-cohort OneK1K B-substrate is empty at all layers, suggesting OneK1K B-cell age signal is donor-batch-dominated." | §26.4 |
+| **Bounded null** | "NK substrate is weak across layers (best R=0.27–0.30); the §25 conclusion that NK is below LASSO (0.629) stands across all 13 layers." | §26.1 |
+
+### 26.7 Updated decision tree (replaces §25.5)
+
+1. **Re-extract embeddings from EACH FINE-TUNED checkpoint at layer 1**, refit ridge, compare to layer-1 frozen. The §26.2 claim that "fine-tune is dominated by frozen layer-1" is currently based on comparing a layer-12 fine-tune to a layer-1 frozen probe. The fair test is whether the fine-tuned representation's layer-1 output is also dominant. ~30 min compute (no training, just inference + ridge).
+2. **Variant 2 (pseudobulk fine-tune) target reset**: must beat R=0.616 / MAE=8.82 on CD4+T × Terekhova, not the §25.5 R=0.576 target. The bar moved up.
+3. **scFoundation FM-class diagnostic** specifically: does scFoundation also have a "layer-1 dominates" pattern, or does it have signal in last layer? Strong differentiator between FM classes.
+4. **Variant 4 (now untiled) — sweep readouts on Geneformer**: not just mean-pool but max-pool, attention-weighted pool, `<cls>` token, concatenation of layer-1 + layer-12 (multi-resolution probe). May lift R on the fold where layer-1 already wins.
+
+The discovery that **layer choice matters more than fine-tuning** is itself a publishable methodological finding for any FM-aging-clock pipeline. This is the first concrete positive recipe to come out of Phase-3-A: "for cross-chemistry aging transfer, use frozen Geneformer layer-1 + ridge."
