@@ -138,6 +138,84 @@ Same shape as B-cell extension: 2 LoRA fine-tunes + 2 AIDA inferences, win/match
 
 4 fine-tunes (~14.8h GPU, ~$15) + 4 AIDA inferences (~30 min, ~$0.5) = **~$15.5 / ~15.4h wall sequential** on g5.xlarge A10g. Total Phase-3-A spend with B + NK additions ≈ $36–37 (CD4+T spend was ~$21).
 
+## Phase-3-A protocol-and-FM-class diagnostic (added 2026-04-28 after B+NK extension partial results)
+
+**Why pivot from per-cell fine-tuning.** B × loco_onek1k and NK × loco_onek1k completed mid-extension and produced more catastrophic losses than CD4+T (B R=−0.076 anti-correlation, NK R=0.165). Two scratchpad reviews (`scratchpad/pseudobulk_review.md`, `scratchpad/geneformer_review.md`) argue the per-cell fine-tune protocol confounds four variables — model class, feature space, unit of analysis, training objective — and the negative result so far cannot distinguish among them. The reviews propose a diagnostic ladder that disentangles these in increasing rigor.
+
+The full B + NK extension was originally 4 runs; **NK × loco_terekhova is cancelled** in favor of the diagnostic ladder. The compute saved (~$6, ~6h) plus diagnostic compute (~$3 for Variant 1) yields decisively more information per dollar.
+
+### Diagnostic ladder
+
+#### Variant 1 — mean-pool existing embeddings, fit ridge at donor level (cheapest, ~$3 / half-day)
+
+Reuse all existing Geneformer checkpoints. For each (checkpoint × eval cohort × cell type):
+1. Run inference, extract per-cell embeddings at the regression-head input layer (mean-pooled `last_hidden_state`).
+2. Average across cells per donor → 768-dim vector per donor.
+3. Fit ridge regression of donor age on these per-donor mean embeddings (nested 3-fold CV on training cohorts).
+4. Evaluate Pearson R + MAE on holdout.
+
+Run **two versions** per cell × fold:
+- *Frozen-base mean-pool*: use the unmodified Geneformer V2 backbone (skip LoRA load). Tells us what the FM's pretrained embeddings encode.
+- *Fine-tuned mean-pool*: load each LoRA + head checkpoint, take embeddings at the same layer. Tells us whether fine-tuning preserved or destroyed age-relevant structure.
+
+#### Variant 2 — pseudobulk-input fine-tune (medium, ~$15 / 1 day), conditional on Variant 1 mid-positive
+
+Compute per-donor pseudobulk (log1p mean expression) for each (cohort × cell type), tokenize as Geneformer rank-encoding, fine-tune LoRA at per-donor MSE on age. Tests whether matching input tokenization to the donor unit closes the residual gap. Watch for tokenization-OOD (pseudobulk rank distribution may differ from single-cell pretraining distribution) as a side finding.
+
+#### Variant 3 — layer-wise frozen probe (~$8 / 1 day), conditional on Variant 1 result
+
+Frozen Geneformer base, no fine-tuning. Pass each donor's pseudobulk through the model, extract activations at every transformer layer (1–12). Mean-pool per layer per donor; fit ridge per layer. Plot held-out R vs layer depth. Three diagnostic outcomes:
+- Monotonic-with-depth: standard pattern; fine-tune from last layer.
+- Peak at middle layers: age signal compressed out by deeper cell-type-specialization layers; fine-tune from middle.
+- Flat / near-zero at all layers: pretrained representation does not encode age-relevant structure.
+
+Most reviewer-defensible diagnostic.
+
+### Decision tree from Variant 1 result
+
+- **Variant 1 frozen-base ridge R ≥ 0.65 on AIDA CD4+T**: protocol diagnosis settled. Per-cell head was destroying signal that frozen embeddings actually contained. Run Variant 3 to localize where the signal lives, write up. Skip Variant 2.
+- **Variant 1 R = 0.45–0.60**: mixed; run Variant 2 (pseudobulk-input fine-tune) and Variant 3 (layer-wise probe) in parallel.
+- **Variant 1 R ≤ 0.40 even from frozen base**: signal genuinely absent in pretrained representation. Run Variant 3 first to bracket the negative, then pivot to FM-class diagnostic (below).
+
+### FM-class diagnostic (parallel or after Variant 1)
+
+If Variant 1 indicates Geneformer-specific weakness (or even if not, for completeness): build LoRA wrappers for scFoundation and scGPT, run a 3×3 matrix on CD4+T × loco_onek1k:
+- **3 FMs**: Geneformer (done), scFoundation, scGPT. Skip UCE (contrastive cell-identity objective likely opposite of what aging needs).
+- **3 protocols**: per-cell fine-tune (E5b config), Variant 1 frozen-mean-pool ridge, Variant 1 fine-tuned-mean-pool ridge.
+
+Outcome interpretation (per `scratchpad/geneformer_review.md`):
+- scFoundation per-cell ≫ Geneformer per-cell: rank-vs-magnitude objective is the bottleneck. scFoundation's read-depth-conditional reconstruction preserves quantitative magnitude; switch to it.
+- All FMs fail per-cell, all match gene-EN at frozen-mean-pool: unit-of-analysis dominates; FM class is irrelevant in this set.
+- All FMs fail at all protocols: structural negative — current single-cell FMs as a class don't encode salient adult-PBMC age signal at any reasonable readout.
+
+Pragmatic note: scFoundation × Stephenson is `overlapping` per leakage audit (HCA-Covid19PBMC ingestion). For diagnostic phase only, accept asymmetric cohort coverage and flag as methods limitation.
+
+### Tasks
+
+- [ ] Task D.1: Build `scripts/extract_embeddings.py` — takes Geneformer checkpoint (LoRA + head, or `--frozen-base` flag), cohort, cell type; runs inference; writes per-donor mean-pool 768-dim vectors to `results/phase3/embeddings/{cohort}_{cell_type}_{run_tag}.npz` (donor IDs + age + 768-vector).
+- [ ] Task D.2: Build `scripts/donor_ridge.py` — takes the .npz per-donor embeddings, fits ridge (nested 3-fold CV on train cohorts in `data/loco_folds.json`), evaluates Pearson R + MAE on holdout. Writes summary row to `results/phase3/ridge_summary.csv`.
+- [ ] Task D.3: Run Variant 1 across {frozen-base, all loco_onek1k checkpoints, all loco_terekhova checkpoints (CD4+T, B)} × {OneK1K, Terekhova, AIDA} × {CD4+T, B, NK}. Frozen-base extraction needs only 9 inference passes (3 cohorts × 3 cell types); fine-tuned needs ~18 passes. ~3h GPU.
+- [ ] Task D.4: Tabulate Variant 1 results in `notes/phase3_geneformer_convergence.md` § (next available); branch on the decision tree above; commit + push.
+- [ ] Task D.5 (conditional on D.4 branch): Variant 2 — `scripts/finetune_pseudobulk.py` modifying `train_loop.py` to accept per-donor pseudobulk inputs at per-donor MSE loss.
+- [ ] Task D.6 (conditional on D.4 branch): Variant 3 — extend `extract_embeddings.py` with `--all-layers` flag to capture activations from layers 1–12.
+- [ ] Task D.7 (parallel): scFoundation LoRA wrapper at `src/finetune/lora_wrappers/scfoundation.py` + a CLI hook in `src/finetune/cli.py`.
+- [ ] Task D.8 (parallel): scGPT LoRA wrapper at `src/finetune/lora_wrappers/scgpt.py` + CLI hook.
+
+### Compute envelope
+
+| Block | Compute | Wall |
+|---|---|---|
+| Variant 1 (D.1–D.4) | ~$3 | ~half-day |
+| Variant 3 (D.6) | ~$8 | ~1 day |
+| Variant 2 (D.5) | ~$15 | ~1 day |
+| scFoundation diagnostic (D.7 + 1 fine-tune + Variant 1) | ~$15 | ~1 day |
+| Total (full diagnostic) | ~$40 | ~3 days |
+
+### Cancelled from B+NK extension
+
+- ~~Task NK.2 (NK × loco_terekhova × E5b × seed 0)~~ — redundant with B × loco_terekhova for the chemistry-shift hypothesis; ~$6 compute redirected to Variant 1.
+- Task NK.4 partial — NK rows in tri-headline classification still updatable from the loco_onek1k + AIDA scoring already completed.
+
 ## References
 
 ```references
