@@ -52,7 +52,11 @@ The Terekhova bar is materially tighter than the original "beat LASSO 9.2y" gate
 
 The 4th comparator (LASSO-retrained-3cohort) is the **methodologically symmetric apples-to-apples baseline** to the FM fine-tunes — both see the same 3 cohorts. Including it in the gate directly addresses the "FM win is just from more training data" reviewer concern. Phase-2 data shows LASSO-retrained ≈ LASSO-pretrained for CD4+T/CD8+T, so the per-cell minimum bar is unchanged for those cells, but explicitly listing both LASSOs in the comparator panel pre-empts the criticism.
 
-### Phase-3-A status (updated 2026-04-26)
+### Phase-3-A status (updated 2026-04-28: ridge-readout WIN on OneK1K CD4+T)
+
+**MAJOR UPDATE 2026-04-28.** Variant 3 follow-up extracted per-layer mean-pool embeddings from `loco_onek1k_seed0_CD4p_T_e5b.pt` and `loco_terekhova_seed0_CD4p_T_e5b.pt` and refit ridge per layer. Previously-held-out OneK1K eval at layer 12 mean-pool achieves **R=0.631 / MAE=8.21y**, beating LASSO (9.45y) by 13.1% — clearing the kickoff §28 10%-win threshold (≤8.5y). The same recipe achieves R=0.611 / MAE=7.84 on AIDA (close-loss vs Pasta 6.32) and R=0.619 / MAE=8.63 on Terekhova layer-1 (match vs Pasta 8.04). **Revised tri-headline tally: 1 WIN + 1 MATCH + 1 CLOSE-LOSS** (was 0/3 wins under the original linear head readout). The "horse-race loss" verdict from §22.4 was attributable to the per-cell MSE linear head readout, not the LoRA fine-tune itself: same backbone + same LoRA weights + ridge readout produces the win. See memo §27.
+
+### Phase-3-A status (recorded 2026-04-26, superseded above)
 
 Phase-3-A smoke (single Geneformer LoRA fine-tune on `loco_onek1k` × CD4+T × seed 0) is in progress; **GATE 2 not yet cleared**. Investigation chain so far (full diagnosis in `notes/phase3_geneformer_convergence.md`; chronological summary in `notes/research_journal.md` 2026-04-26 entries):
 
