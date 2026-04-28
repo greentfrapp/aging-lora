@@ -177,6 +177,41 @@ Most reviewer-defensible diagnostic.
 - **Variant 1 R = 0.45–0.60**: mixed; run Variant 2 (pseudobulk-input fine-tune) and Variant 3 (layer-wise probe) in parallel.
 - **Variant 1 R ≤ 0.40 even from frozen base**: signal genuinely absent in pretrained representation. Run Variant 3 first to bracket the negative, then pivot to FM-class diagnostic (below).
 
+### Variant 1 results landed (2026-04-28) — three audit follow-ups required
+
+Phase 1 (CD4+T, memo §23) and Phase 2 (B + NK, memo §24) ran. Results:
+- CD4+T frozen-base R = 0.527–0.576 across 3 cohort/eval conditions → falls in the 0.45–0.60 *mixed* bracket.
+- B and NK frozen-base R in [−0.013, 0.260], with 3 of 6 conditions p > 0.10 → *cell-type-dependent failure mode*: CD4+T is protocol-negative (signal exists, fine-tune destroys it); B and NK look representation-negative.
+
+`scratchpad/variant_1_review.md` flags **three weaknesses in the §23/§24 framing that must be audited before invoking Variant 2 or 3**:
+
+1. **B/NK statistical claims are imprecise.** "3 of 6 conditions p > 0.1" doesn't characterize the other 3 — NK × OneK1K (R=0.260, p=1.2e-16) and NK × Terekhova (R=0.199, p=0.010) are *real but weak* signal, not absent. The "substrate contains no signal" wording overreaches; the correct claim is "substrate contains weak signal, materially less than LASSO extracts." Need exact R, 95% bootstrap CI, p for all 6 B/NK conditions before settling the framing.
+2. **CD4+T frozen-base does NOT match strong baselines.** Frozen R=0.527–0.576 vs LASSO 0.747 / Pasta 0.778 is a real gap. The §23 "smoking gun" framing accidentally suggested otherwise. Story should be **"frozen-base recovers what fine-tuning destroys"**, not "frozen-base matches the strong baseline."
+3. **AIDA cross-ancestry result needs a bias-variance audit.** R=0.527 on AIDA from a ridge trained on European cohorts is the most striking number in the table. Phase-3-A AIDA scoring already documented that fine-tune predictions get pulled toward the European training mean. A frozen-base ridge has a different bias profile, and the "ancestry generalization" might partly be that frozen-base predictions are compressed toward the global mean and get credit on AIDA's age distribution. Need pred_sd vs eval_sd, pred range vs eval range, before relying on the cross-ancestry headline.
+
+### Tasks (audit follow-ups before Variant 2/3)
+
+- [ ] Task D.9 — **Statistical characterization of all B/NK frozen-base conditions.** Re-load the 6 (cell × eval cohort) ridge predictions, compute exact R, 95% bootstrap CI (n=1000 resamples), p-value, and pred_sd vs eval_sd. Append a table to memo §24 distinguishing "weak signal" (e.g. NK × OneK1K R=0.260) from "absent signal" (e.g. B × OneK1K R=−0.013). Update §24.2 wording from "substrate is empty" to the more accurate "weak relative to LASSO." ~1h.
+- [ ] Task D.10 — **AIDA bias-variance audit.** For each of the three AIDA frozen-base ridge predictions (CD4+T, B, NK), compute (i) pred_sd vs AIDA-eval_sd, (ii) pred range vs eval range, (iii) regress pred on true age and report slope (slope < 1 = compression toward mean), (iv) compare AIDA pred mean to OneK1K train age mean (gap ≈ 0 = bias-toward-train-mean explanation). If CD4+T × AIDA pred slope is ≪ 1 and pred sd ≪ eval sd, the R=0.527 is a compression artifact and the cross-ancestry claim must be retracted. Append findings to memo §23 + §24. ~1h analysis-only.
+- [ ] Task D.11 — **Reframe §23/§24 narrative based on D.9 + D.10.** Update the convergence memo's claim hierarchy: replace any "frozen-base matches" or "FM signal absent" wording with calibrated equivalents. Add a comparison panel (frozen-base R vs LASSO R vs Pasta R) per cell type. Outcome: an honestly-bounded claim ladder that survives a hostile review. ~1h doc-only.
+
+These three audit tasks are blocking for Variants 2 and 3 because:
+- The Variant 3 (layer-wise probe) interpretation depends on whether B/NK is "no signal" or "weak signal" — the layer plot looks for a peak above frozen-mean-pool baseline, and the baseline value matters.
+- The Variant 2 (pseudobulk fine-tune) outcome interpretation depends on whether the CD4+T target is "match frozen R=0.55" or "match LASSO R=0.75" — different bars motivate different follow-ups.
+
+If D.10 finds the AIDA R=0.527 *is* a compression artifact, the §22.5 decision-tree branch (which placed AIDA in the [0.45, 0.60) "mixed" bracket) re-evaluates downward, possibly into the "Variant 3 first, FM-class diagnostic next" bucket — which would re-prioritize scFoundation/scGPT (D.7, D.8) ahead of Variant 2 (D.5).
+
+### Honestly-bounded claim ladder (post-D.9–D.11 target)
+
+Per critique #2 of `scratchpad/variant_1_review.md`, the Variant 1 result is a **diagnostic finding, not a competitive recipe**. The reframed claim ladder D.11 lands should look like:
+
+| Tier | Claim | Evidence required |
+|---|---|---|
+| Strongest | "Per-cell MSE LoRA fine-tuning destroys CD4+T age signal that the same Geneformer encoder already encodes." | Frozen R=0.527–0.576 vs fine-tune R=0.140–0.466; +0.436 R Terekhova uplift; D.9 sanity-check on CIs. |
+| Medium | "Geneformer's pretrained mean-pool representation captures CD4+T age signal *partially* — substantially below LASSO/Pasta on raw genes (0.527 vs 0.747–0.778)." | Side-by-side panel of frozen R vs LASSO R vs Pasta R per cell type. |
+| Weakest (conditional on D.10) | "Frozen-base ridge generalizes to AIDA at R=0.527 / MAE 11.76 — *if* predictions span the AIDA age range and pred_sd ≈ eval_sd." | D.10 bias-variance audit. If pred sd is compressed, retract to "AIDA MAE comparable to OneK1K but R inflated by central-tendency bias." |
+| Bounded null | "B and NK frozen-base ridge extracts measurably weak signal (NK × OneK1K R=0.260, p<1e-15) but materially less than LASSO on raw genes (LASSO 0.531–0.629). The representation gap is upstream of the encoder mean-pool, not protocol-induced." | D.9 exact R + 95% CI per condition; LASSO comparison row. |
+
 ### FM-class diagnostic (parallel or after Variant 1)
 
 If Variant 1 indicates Geneformer-specific weakness (or even if not, for completeness): build LoRA wrappers for scFoundation and scGPT, run a 3×3 matrix on CD4+T × loco_onek1k:
@@ -192,12 +227,12 @@ Pragmatic note: scFoundation × Stephenson is `overlapping` per leakage audit (H
 
 ### Tasks
 
-- [ ] Task D.1: Build `scripts/extract_embeddings.py` — takes Geneformer checkpoint (LoRA + head, or `--frozen-base` flag), cohort, cell type; runs inference; writes per-donor mean-pool 768-dim vectors to `results/phase3/embeddings/{cohort}_{cell_type}_{run_tag}.npz` (donor IDs + age + 768-vector).
-- [ ] Task D.2: Build `scripts/donor_ridge.py` — takes the .npz per-donor embeddings, fits ridge (nested 3-fold CV on train cohorts in `data/loco_folds.json`), evaluates Pearson R + MAE on holdout. Writes summary row to `results/phase3/ridge_summary.csv`.
-- [ ] Task D.3: Run Variant 1 across {frozen-base, all loco_onek1k checkpoints, all loco_terekhova checkpoints (CD4+T, B)} × {OneK1K, Terekhova, AIDA} × {CD4+T, B, NK}. Frozen-base extraction needs only 9 inference passes (3 cohorts × 3 cell types); fine-tuned needs ~18 passes. ~3h GPU.
-- [ ] Task D.4: Tabulate Variant 1 results in `notes/phase3_geneformer_convergence.md` § (next available); branch on the decision tree above; commit + push.
-- [ ] Task D.5 (conditional on D.4 branch): Variant 2 — `scripts/finetune_pseudobulk.py` modifying `train_loop.py` to accept per-donor pseudobulk inputs at per-donor MSE loss.
-- [ ] Task D.6 (conditional on D.4 branch): Variant 3 — extend `extract_embeddings.py` with `--all-layers` flag to capture activations from layers 1–12.
+- [x] Task D.1 (done 2026-04-28): Build `scripts/extract_embeddings.py` — takes Geneformer checkpoint (LoRA + head, or `--frozen-base` flag), cohort, cell type; runs inference; writes per-donor mean-pool 768-dim vectors to `results/phase3/embeddings/{cohort}_{cell_type}_{run_tag}.npz`.
+- [x] Task D.2 (done 2026-04-28): Build `scripts/donor_ridge.py` — `.npz` → ridge (nested 3-fold CV alpha selection) → Pearson R + MAE on holdout, optional `--also-eval-aida`. Writes to `results/phase3/ridge_summary.csv`.
+- [x] Task D.3 (done 2026-04-28, **frozen-base only**): Variant 1 Phase 1 (CD4+T) + Phase 2 (B + NK) frozen-base across 4 cohorts × {CD4+T, B, NK} + ridge fits on both LOCO folds with AIDA transfer. 12 ridge rows in `results/phase3/ridge_summary.csv`. **Fine-tuned-mean-pool extraction (originally part of D.3) is deferred** — the audit tasks D.9–D.11 must land first to confirm the bias-variance picture before paying the ~$3 to extract from each fine-tuned checkpoint.
+- [x] Task D.4 (done 2026-04-28): Tabulated in memo §23 (CD4+T) and §24 (B+NK). Branch landed in [0.45, 0.60) mixed bracket → Variants 2 + 3 in parallel — *but contingent on D.9–D.11 audit outcomes*.
+- [ ] Task D.5 (blocked by D.9–D.11): Variant 2 — `scripts/finetune_pseudobulk.py` modifying `train_loop.py` to accept per-donor pseudobulk inputs at per-donor MSE loss.
+- [ ] Task D.6 (blocked by D.9–D.11): Variant 3 — extend `extract_embeddings.py` with `--all-layers` flag to capture activations from layers 1–12.
 - [ ] Task D.7 (parallel): scFoundation LoRA wrapper at `src/finetune/lora_wrappers/scfoundation.py` + a CLI hook in `src/finetune/cli.py`.
 - [ ] Task D.8 (parallel): scGPT LoRA wrapper at `src/finetune/lora_wrappers/scgpt.py` + CLI hook.
 
@@ -205,11 +240,12 @@ Pragmatic note: scFoundation × Stephenson is `overlapping` per leakage audit (H
 
 | Block | Compute | Wall |
 |---|---|---|
-| Variant 1 (D.1–D.4) | ~$3 | ~half-day |
+| Variant 1 frozen-base (D.1–D.4) | **~$3 spent** | done 2026-04-28 |
+| Variant 1 audit (D.9–D.11) | $0 (analysis-only) | ~3h |
 | Variant 3 (D.6) | ~$8 | ~1 day |
 | Variant 2 (D.5) | ~$15 | ~1 day |
 | scFoundation diagnostic (D.7 + 1 fine-tune + Variant 1) | ~$15 | ~1 day |
-| Total (full diagnostic) | ~$40 | ~3 days |
+| Total (full diagnostic, remaining) | ~$38 | ~3 days |
 
 ### Cancelled from B+NK extension
 
