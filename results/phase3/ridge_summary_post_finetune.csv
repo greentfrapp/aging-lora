@@ -1,0 +1,118 @@
+label,fold,tag,eval_cohort,cell_type,layer,alpha,n_train_donors,n_eval_donors,pearson_r,pearson_p,mae_y
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,0,0.1,195,981,-0.0940166,0.00320395,18.8435
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,0,0.1,195,307,0.104821,0.066628,32.1198
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,1,1,195,981,-0.0805927,0.0115656,20.3577
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,1,1,195,307,0.0470117,0.411757,24.2858
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,2,1,195,981,0.00369809,0.907905,33.7766
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,2,1,195,307,0.0626163,0.274076,27.6823
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,3,1,195,981,0.0221154,0.489016,32.4181
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,3,1,195,307,-0.0235226,0.681421,26.4853
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,4,10,195,981,0.0899832,0.00479507,22.2058
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,4,10,195,307,-0.215297,0.000143769,16.2744
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,5,1,195,981,0.0690357,0.0306115,39.343
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,5,1,195,307,-0.163951,0.00397098,16.1547
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,6,1,195,981,0.0415401,0.193609,38.8408
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,6,1,195,307,-0.2102,0.000207666,14.8517
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,7,1,195,981,0.036373,0.255053,40.5791
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,7,1,195,307,-0.250595,8.83109e-06,14.8618
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,8,1,195,981,0.0226903,0.477787,45.4769
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,8,1,195,307,-0.233286,3.66039e-05,13.6418
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,9,1,195,981,-0.0317708,0.320187,46.2804
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,9,1,195,307,-0.294438,1.48131e-07,13.4249
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,10,1,195,981,-0.0441111,0.16743,43.7488
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,10,1,195,307,-0.316613,1.41594e-08,13.2756
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,11,1,195,981,-0.0537197,0.0926423,43.8629
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,11,1,195,307,-0.242077,1.80137e-05,12.0189
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,onek1k,B,12,1,195,981,0.0991176,0.0018826,63.7087
+B_loco_onek1k_s0,loco_onek1k,loco_onek1k_B_e5b_alllayers,aida,B,12,1,195,307,0.0391188,0.494682,14.4573
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,0,0.01,195,981,0.177859,2.04219e-08,11.3268
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,0,0.01,195,306,0.0790353,0.167879,17.5308
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,1,0.1,195,981,0.172597,5.33186e-08,11.6057
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,1,0.1,195,306,0.15846,0.00546698,17.5833
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,2,0.1,195,981,0.170334,7.98452e-08,31.5289
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,2,0.1,195,306,0.0950811,0.096875,19.8814
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,3,1,195,981,0.367794,8.71978e-33,24.1633
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,3,1,195,306,0.130435,0.0224836,18.3692
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,4,1,195,981,0.353516,2.98078e-30,25.4382
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,4,1,195,306,0.0885281,0.122272,18.4552
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,5,1,195,981,0.353132,3.47366e-30,24.7132
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,5,1,195,306,0.0724413,0.206345,18.2965
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,6,1,195,981,0.329434,2.90469e-26,20.9856
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,6,1,195,306,0.0506325,0.377427,16.5529
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,7,1,195,981,0.338256,1.10293e-27,21.8154
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,7,1,195,306,0.0543282,0.343554,14.8681
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,8,1,195,981,0.341506,3.21671e-28,22.7486
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,8,1,195,306,0.130546,0.0223686,14.5478
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,9,0.1,195,981,0.356007,1.10027e-30,41.7825
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,9,0.1,195,306,0.196876,0.000532629,8.97388
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,10,1,195,981,0.350814,8.69807e-30,21.2794
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,10,1,195,306,0.110363,0.0537865,13.0094
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,11,1,195,981,0.345168,7.88765e-29,19.5155
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,11,1,195,306,0.107928,0.0593275,12.7748
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,onek1k,NK,12,0.1,195,981,0.253491,7.53747e-16,15.119
+NK_loco_onek1k_s0,loco_onek1k,loco_onek1k_NK_e5b_alllayers,aida,NK,12,0.1,195,306,-0.128248,0.0248633,15.8287
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,0,0.1,1010,166,0.11479,0.140843,14.7638
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,1,1,1010,166,0.122399,0.116184,14.0685
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,2,10,1010,166,0.119572,0.124918,14.9324
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,3,10,1010,166,0.094242,0.227148,15.3444
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,4,10,1010,166,0.0746902,0.33888,15.5821
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,5,10,1010,166,0.0642635,0.410752,13.7382
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,6,10,1010,166,0.0409902,0.600034,15.343
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,7,10,1010,166,0.112583,0.148691,22.5718
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,8,10,1010,166,0.127237,0.102344,28.5906
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,9,10,1010,166,0.114521,0.14178,29.5235
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,10,1,1010,166,0.0475842,0.542663,36.4822
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,11,10,1010,166,0.0121158,0.876878,21.2942
+B_loco_terekhova_s0,loco_terekhova,loco_terekhova_B_e5b_alllayers,terekhova,B,12,100,1010,166,0.0447222,0.567229,13.2607
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,0,0.01,190,981,0.342238,2.43224e-28,28.4718
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,0,0.01,190,293,0.316525,3.0611e-08,10.7919
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,1,0.1,190,981,0.498146,0,30.382
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,1,0.1,190,293,0.472125,1.13446e-17,8.82243
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,2,1,190,981,0.518208,0,24.5314
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,2,1,190,293,0.454827,2.2965e-16,9.49263
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,3,1,190,981,0.557107,0,17.8797
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,3,1,190,293,0.493433,2.19067e-19,8.35001
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,4,1,190,981,0.541129,0,20.9455
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,4,1,190,293,0.497163,1.06661e-19,8.10486
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,5,1,190,981,0.617459,0,16.937
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,5,1,190,293,0.498669,7.95651e-20,8.17791
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,6,1,190,981,0.635361,0,12.9371
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,6,1,190,293,0.550708,1.23149e-24,8.15162
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,7,1,190,981,0.627952,0,14.4276
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,7,1,190,293,0.513581,4.03479e-21,8.30162
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,8,1,190,981,0.621473,0,19.4424
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,8,1,190,293,0.527365,2.24359e-22,7.79275
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,9,1,190,981,0.620172,0,19.312
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,9,1,190,293,0.490395,3.91181e-19,8.27409
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,10,1,190,981,0.62505,0,16.9357
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,10,1,190,293,0.520109,1.04392e-21,8.24513
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,11,1,190,981,0.62722,0,19.3835
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,11,1,190,293,0.531556,9.07611e-23,8.42645
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,onek1k,CD4+ T,12,10,190,981,0.629211,0,14.8276
+CD4pT_loco_onek1k_s1,loco_onek1k,loco_onek1k_CD4pT_e5b_seed1_alllayers,aida,CD4+ T,12,10,190,293,0.546443,3.28595e-24,8.56732
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,0,0.01,190,981,0.342238,2.43224e-28,28.4718
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,0,0.01,190,293,0.316525,3.0611e-08,10.7919
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,1,0.1,190,981,0.514762,0,27.5477
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,1,0.1,190,293,0.475079,6.67124e-18,9.22739
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,2,1,190,981,0.536267,0,20.2959
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,2,1,190,293,0.459801,9.83971e-17,11.475
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,3,1,190,981,0.568899,0,10.9932
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,3,1,190,293,0.475823,5.83106e-18,11.709
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,4,1,190,981,0.54627,0,14.1504
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,4,1,190,293,0.480333,2.5618e-18,8.99419
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,5,1,190,981,0.604558,0,13.7889
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,5,1,190,293,0.482326,1.77415e-18,9.36771
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,6,1,190,981,0.622547,0,11.0513
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,6,1,190,293,0.550028,1.4415e-24,8.31154
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,7,1,190,981,0.619601,0,12.8324
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,7,1,190,293,0.529298,1.48022e-22,8.29929
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,8,1,190,981,0.619517,0,13.9595
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,8,1,190,293,0.55128,1.07842e-24,8.22816
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,9,1,190,981,0.614276,0,14.4239
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,9,1,190,293,0.552314,8.477e-25,8.51669
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,10,1,190,981,0.613648,0,13.1081
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,10,1,190,293,0.573805,4.70123e-27,7.75243
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,11,1,190,981,0.601495,0,14.9457
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,11,1,190,293,0.570551,1.05797e-26,7.63094
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,onek1k,CD4+ T,12,100,190,981,0.564717,0,10.3589
+CD4pT_loco_onek1k_s2,loco_onek1k,loco_onek1k_CD4pT_e5b_seed2_alllayers,aida,CD4+ T,12,100,190,293,0.522711,6.04064e-22,8.53296

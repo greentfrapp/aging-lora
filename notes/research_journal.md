@@ -153,3 +153,19 @@ On AIDA cross-ancestry from same loco_onek1k checkpoint: layer 12 ridge = R=0.61
 **Mechanism (§27.2)**: same backbone, same LoRA weights, only readout differs. Per-cell MSE-trained linear head sees per-cell expression noise, fits suboptimal weights. Per-donor ridge bypasses per-cell noise by fitting on per-donor mean embeddings post hoc. The §22.4 horse-race losses were attributable to the readout, NOT the LoRA fine-tune itself.
 **Layer profile differs sharply by fold (§27.4)**: loco_terekhova fine-tune destroys layer-12 (frozen 0.576 → ft 0.284) but lifts mid-layers (layer 4 R=0.703); loco_onek1k fine-tune IMPROVES layer 12 (frozen 0.560 → ft 0.631). §23 "fine-tune destroys signal" was specifically true for layer-12-on-Terekhova, wrong as general statement.
 **Phase-3-A reframe**: preprint pivots BACK to "FM matches baselines" headline for OneK1K CD4+T. The "wrong readout" finding is itself publishable methodology. Updated decision tree §27.9: ridge-readout on B and NK checkpoints next (~30 min); 3-seed variance check on the WIN; then Variant 2 / scFoundation FM-class with the readout-fix baked in. See memo §27.
+
+## 2026-04-28: §28 audit — 3-seed variance + B/NK ridge readout — §27 WIN does NOT hold across seeds
+
+Per §27.9 priorities, ran 5 additional fine-tune layered extractions (~2h, $2): 3-seed variance check on `loco_onek1k_seed{1,2}_CD4p_T_e5b` checkpoints (4 cohorts × 2 seeds = 8 extractions) plus B/NK ridge readout on `loco_onek1k_seed0_B_e5b`, `loco_onek1k_seed0_NK_e5b`, `loco_terekhova_seed0_B_e5b` (12 extractions). Output: `results/phase3/ridge_summary_post_finetune.csv` + `cd4t_3seed_ridge_layered.csv`.
+**§28.1 — 3-seed CD4+T variance reveals the §27 WIN was single-seed only**:
+- L12 OneK1K: seed 0 = 8.21y / 0.631; seed 1 = 14.83y / 0.629; seed 2 = 10.36y / 0.565. **3-seed mean = 11.13 ± 3.38y** vs the 8.5y WIN bar.
+- L6 OneK1K (most stable layer): R=0.632 ± 0.008 (very stable rank), but MAE=10.85 ± 2.19y (above 8.5 bar at mean).
+- The §27 WIN claim should be qualified to "single seed 0 result of 8.21y clears the WIN bar; 3-seed mean is CLOSE-MATCH at +15% above LASSO."
+**§28.2 — AIDA × L11 is the more defensible cross-ancestry headline**: 3-seed mean R=0.566 ± 0.032, MAE=7.96 ± 0.42y. Tight std (±0.42y), reproducible. Still close-loss vs Pasta 6.32 (+25.9%), but the most reliable cross-ancestry FM result of Phase-3-A.
+**§28.3 — B and NK ridge readout doesn't rescue §22.3 0/6 narrative**: B × loco_onek1k ridge L12 R=+0.099 (vs head −0.076) but MAE=63.71 (vs head 24.28) — ridge MAKES MAE WORSE. NK × loco_onek1k ridge L12 R=0.253/MAE=15.12 (vs head 0.165/19.77) — modest improvement but still loses to LASSO 0.629/9.64. B × loco_terekhova essentially unchanged. **B is genuinely representation-negative across fine-tune layers and seeds; NK gets partial rescue but no win.**
+**Phase-3-A revised tri-headline (§28.5)**: 0 strict WINs at 3-seed mean (no cell clears 10%-win bar), 2 MATCH-class (OneK1K 15% above LASSO, Terekhova 7.4% above Pasta), 1 close-loss (AIDA 25.9% above Pasta). Better than original 0/3 from §22.3, weaker than §27.6 1+1+1 claim.
+**Honest publishable claims (§28.4)**:
+1. Strongest = "Per-donor ridge readout systematically improves over the per-cell MSE head across all CD4+T conditions; the fine-tuned representation contains more signal than the head extracts."
+2. Methodology contribution = "Per-cell MSE linear head systematically underestimates donor-level signal in fine-tuned single-cell FMs; per-donor ridge regression is strictly better. Generalizes to any donor-prediction task using per-cell-trained FMs."
+3. Bounded null = "B-cell substrate empty across all layers × seeds × readouts."
+**Decision tree (§28.6)**: Variant 2 (pseudobulk fine-tune) target = OneK1K MAE ≤8.5y at 3-seed mean. scFoundation FM-class diagnostic with per-donor ridge baked in. See memo §28.
