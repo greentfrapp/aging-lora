@@ -86,6 +86,58 @@ State-dict + per-donor analysis on Runs #2 and v2 reveals both runs are sitting 
 
 - [ ] Task: Prepare and submit bioRxiv preprint. Draft manuscript sections covering: (1) the LOCO split design and the full 20-row leakage audit (5 models × 4 cohorts; highlight the HCA/ArrayExpress mirror lesson — scFoundation × Stephenson was missed by direct-accession search and recovered via HCA Project ID cross-reference); (2) the **CD4+T tri-headline result** with per-cell win/match/loss classification — OneK1K (3-cohort vs 5-cohort training-data control), Terekhova (chemistry-shift headline), AIDA (cross-ancestry headline) — vs. the **min-of-4 baseline panel** (LASSO-pretrained, LASSO-retrained-3cohort, scAgeClock, Pasta-REG); (3) the 3×3 chemistry+ancestry robustness subfigure; (4) the bracketed detectability-ρ disclosure (Phase-1 ρ=0.8 → Phase-2 ρ=0.06–0.35 → Phase-3 measured); (5) GPU compute envelope and runtime calibration. Include the frozen split files (including the `post_phase3_override` block), the AIDA `ancestry_shift_mae` donor half used here, and checkpoint hashes as supplementary data. Submit preprint to bioRxiv. Done when the bioRxiv DOI is confirmed (within 10 weeks of project start).
 
+## Phase-3-A B-cell extension (added 2026-04-28 after CD4+T close-out)
+
+**Why pull B-cell forward from Phase 4.** The Phase-3-A CD4+T tri-headline closed 0/3 wins (memo §20–§21). The "FMs do not match published baselines" claim is bounded to the cell with the *strongest* baselines. B-cell is the inverse case: Pasta-REG R=0.28 (Terekhova) and 0.26 (AIDA) are very weak; LASSO collapses on Terekhova B (R=0.08, the chemistry-rescue cell originally framed as Phase 4's secondary headline). If the Phase-3-A negative result on CD4+T is to stand as a bounded null, B-cell numbers in the same window are required so the negative claim is "0/N across cells with strong AND weak baselines," not "0/3 on the cell with strongest baselines only." Conversely if FMs *win* on B-cell chemistry-rescue, that single cell flips the preprint headline from null to "FMs rescue chemistry-shift collapse where rank-norm bulk is the only competitive baseline" — exactly the kickoff §3 hypothesis.
+
+### Per-cell baseline floor (from `results/baselines/loco_baseline_table.csv`)
+
+| B-cell fold | Best baseline / MAE / R | Min-of-4 MAE | FM target (10% win) |
+|---|---|---|---|
+| OneK1K | LASSO 10.66y / R=0.531 | 10.66y | ≤ 9.59y |
+| Terekhova | Pasta-REG 10.86y / R=0.281 | 10.86y | ≤ 9.78y |
+| AIDA | scAgeClock 9.10y / R=0.218 (best MAE); Pasta R=0.265 (best R) | 9.10y | ≤ 8.19y |
+
+### Success criteria
+
+- Geneformer LoRA at the **Phase-3-A E5b config** (3 epochs, `--max-cells-per-donor 50`, `--pool mean`, `--lr 2e-4 --head-lr 2e-4`, seed 0) trained on `loco_onek1k` × B and `loco_terekhova` × B. Per-fold LOCO m.a.e. and Pearson R recorded in `results/baselines/fm_finetuned/geneformer/summary.csv`.
+- AIDA × B scoring of both checkpoints via `scripts/score_aida.py` against `data/cohorts/aida_eval/B.h5ad`, restricted to `ancestry_shift_mae` donors.
+- Per-cell win/match/loss classification appended to the tri-cell-tri-headline result. **Win threshold**: relative MAE reduction ≥ 10% vs the per-cell min-of-4 baseline; OR R clearly exceeding the best baseline R by > 0.10 (single-seed for now; multi-seed deferred to Phase-3-B).
+
+### Tasks
+
+- [ ] Task B.1: Train Geneformer LoRA at E5b config on `loco_onek1k` × B × seed 0. Train cohorts: Stephenson + Terekhova (~190 donors × 50 cells = 9,500 train cells). Eval: OneK1K B (~981 donors). Expected wall ~1.4h on A10g, $1.4 on-demand.
+- [ ] Task B.2: Train Geneformer LoRA at E5b config on `loco_terekhova` × B × seed 0. Train cohorts: OneK1K + Stephenson (~1,005 donors × 50 cells = 50,250 train cells). Eval: Terekhova B (~166 donors). Expected wall ~6h on A10g, $6 on-demand. **This is the chemistry-rescue cell** — Pasta R=0.28 vs LASSO R=0.08; sharpest test of "do FMs add chemistry-invariance on top of rank-norm bulk?"
+- [ ] Task B.3: AIDA-score both checkpoints on AIDA × B (293 ancestry_shift_mae donors). Inference only, ~10 min each. Done when both rows appear in `results/phase3/aida_summary.csv`.
+- [ ] Task B.4: Tri-headline classification updated to include B-cell rows; documented in `notes/phase3_geneformer_convergence.md` § (next available); committed with seed-0 caveat.
+
+## Phase-3-A NK-cell extension (added 2026-04-28 after CD4+T close-out)
+
+**Why pull NK-cell forward.** Same rationale as B: NK has weaker baselines than CD4+T and was originally part of the kickoff few-shot crossover panel (B + NK). Phase-1 chemistry-shift findings showed NK degrades on 5' chemistry (LASSO R=0.44, vs CD4T R=0.82) — a more moderate degradation than B's collapse but still a clearer FM-vs-baseline contrast than CD4+T.
+
+### Per-cell baseline floor
+
+| NK-cell fold | Best baseline / MAE / R | Min-of-4 MAE | FM target (10% win) |
+|---|---|---|---|
+| OneK1K | LASSO 9.64y / R=0.629 | 9.64y | ≤ 8.68y |
+| Terekhova | LASSO 12.48y / R=0.440 | 12.48y | ≤ 11.23y |
+| AIDA | scAgeClock 8.49y / R=0.204 (best MAE); Pasta R=0.258 (best R) | 8.49y | ≤ 7.64y |
+
+### Success criteria
+
+Same shape as B-cell extension: 2 LoRA fine-tunes + 2 AIDA inferences, win/match/loss classification per cell, single-seed for Phase-3-A scope.
+
+### Tasks
+
+- [ ] Task NK.1: Train Geneformer LoRA at E5b config on `loco_onek1k` × NK × seed 0. Expected wall ~1.4h, $1.4.
+- [ ] Task NK.2: Train Geneformer LoRA at E5b config on `loco_terekhova` × NK × seed 0. Expected wall ~6h, $6.
+- [ ] Task NK.3: AIDA-score both checkpoints on AIDA × NK (~293 donors). Inference only.
+- [ ] Task NK.4: Tri-headline classification updated to include NK-cell rows.
+
+### Combined budget for B + NK extension
+
+4 fine-tunes (~14.8h GPU, ~$15) + 4 AIDA inferences (~30 min, ~$0.5) = **~$15.5 / ~15.4h wall sequential** on g5.xlarge A10g. Total Phase-3-A spend with B + NK additions ≈ $36–37 (CD4+T spend was ~$21).
+
 ## References
 
 ```references
