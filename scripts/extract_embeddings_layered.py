@@ -25,7 +25,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from src.finetune.data_loader import GeneformerVocab, TokenizedAnnData, select_indices
-from src.finetune.lora_wrappers.geneformer import GeneformerRegressor
+from src.finetune.lora_wrappers.geneformer import GeneformerRegressor, build_geneformer_lora
 from src.finetune.train_loop import _collate
 
 
@@ -69,6 +69,11 @@ def _pool_all_layers(model, ids, mask, bf16: bool, device: torch.device) -> torc
 
 def main():
     p = argparse.ArgumentParser()
+    src_grp = p.add_mutually_exclusive_group()
+    src_grp.add_argument("--frozen-base", action="store_true", default=True,
+                         help="Use unmodified Geneformer V2-104M (default)")
+    src_grp.add_argument("--checkpoint", type=Path, default=None,
+                         help="Path to LoRA + head .pt for fine-tuned extraction")
     p.add_argument("--cohort", required=True, choices=["onek1k", "stephenson", "terekhova", "aida"])
     p.add_argument("--cell-type", required=True, choices=list(CELL_TYPE_TO_FILE.keys()))
     p.add_argument("--max-cells-per-donor", type=int, default=20)
@@ -80,6 +85,8 @@ def main():
     p.add_argument("--output-tag", default="frozen_base_alllayers")
     p.add_argument("--output-dir", default="results/phase3/embeddings_layered")
     args = p.parse_args()
+    if args.checkpoint is not None:
+        args.frozen_base = False
 
     if args.device in (None, "auto"):
         args.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -114,7 +121,18 @@ def main():
         collate_fn=_collate, pin_memory=device.type == "cuda",
     )
 
-    model = GeneformerRegressor(bias_init=0.0, pool="mean").to(device).eval()
+    if args.frozen_base or args.checkpoint is None:
+        print(f"[extract-L] mode=frozen-base")
+        model = GeneformerRegressor(bias_init=0.0, pool="mean")
+    else:
+        print(f"[extract-L] mode=fine-tuned ({args.checkpoint.name})")
+        model = build_geneformer_lora(gradient_checkpointing=False, head_bias_init=0.0, pool="mean")
+        sd = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
+        missing, unexpected = model.load_state_dict(sd, strict=False)
+        bad_missing = [k for k in missing if "lora_" in k or k.startswith("head.")]
+        if bad_missing:
+            raise SystemExit(f"checkpoint missing required LoRA/head keys: {bad_missing[:5]}")
+    model.to(device).eval()
 
     t0 = time.time()
     all_emb_per_layer: list[np.ndarray] = []  # each: (L, batch, H)
