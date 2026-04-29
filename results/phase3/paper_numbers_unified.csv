@@ -1,0 +1,95 @@
+method,cell_type,eval_cohort,fold,layer,seed,R,MAE,ci_lo,ci_hi,n_train,n_eval,notes
+gene_en_matched,CD4+ T,onek1k,loco_onek1k,,0,0.6118,14.1883,0.567743,0.65281,190,981,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,CD4+ T,aida,loco_onek1k,,0,0.6156,6.4210,0.545621,0.67896,190,293,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,CD4+ T,terekhova,loco_terekhova,,0,0.7757,10.5241,0.698579,0.837308,1005,166,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,CD4+ T,aida,loco_terekhova,,0,0.6507,6.6647,0.582281,0.711005,1005,293,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,B,onek1k,loco_onek1k,,0,0.1358,15.7000,0.0761781,0.184529,195,981,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,B,aida,loco_onek1k,,0,0.1263,11.7691,0.0198969,0.237835,195,307,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,B,terekhova,loco_terekhova,,0,0.3210,15.0709,0.187439,0.439623,1010,166,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,NK,onek1k,loco_onek1k,,0,0.3661,19.0756,0.310893,0.415758,195,981,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,NK,aida,loco_onek1k,,0,0.2363,12.2437,0.135739,0.331315,195,306,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,NK,terekhova,loco_terekhova,,0,0.4216,12.9512,0.292685,0.546008,1010,166,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,NK,aida,loco_terekhova,,0,0.2444,16.0169,0.141489,0.347431,1010,306,ElasticNetCV top-5000 HVG StandardScaler
+gene_en_matched,B,aida,loco_terekhova,,0,0.1683,16.5143,0.0546648,0.273222,1010,307,ElasticNetCV top-5000 HVG StandardScaler
+geneformer_frozen_per_cell_ridge_best_layer,B,aida,loco_onek1k,11,0,0.1201,20.6630,,,195,307,"frozen base, best-R layer; alpha=0.1"
+geneformer_frozen_per_cell_ridge_best_layer,B,onek1k,loco_onek1k,7,0,0.0377,25.1470,,,195,981,"frozen base, best-R layer; alpha=1.0"
+geneformer_frozen_per_cell_ridge_best_layer,CD4+ T,aida,loco_onek1k,12,0,0.5275,11.7569,,,190,293,"frozen base, best-R layer; alpha=1.0"
+geneformer_frozen_per_cell_ridge_best_layer,CD4+ T,onek1k,loco_onek1k,12,0,0.5603,16.5173,,,190,981,"frozen base, best-R layer; alpha=1.0"
+geneformer_frozen_per_cell_ridge_best_layer,NK,aida,loco_onek1k,5,0,0.1685,13.2992,,,195,306,"frozen base, best-R layer; alpha=0.1"
+geneformer_frozen_per_cell_ridge_best_layer,NK,onek1k,loco_onek1k,3,0,0.3045,62.2845,,,195,981,"frozen base, best-R layer; alpha=0.1"
+geneformer_frozen_per_cell_ridge_best_layer,B,terekhova,loco_terekhova,9,0,0.2278,14.8222,,,1010,166,"frozen base, best-R layer; alpha=0.1"
+geneformer_frozen_per_cell_ridge_best_layer,CD4+ T,terekhova,loco_terekhova,5,0,0.6209,18.2364,,,1005,166,"frozen base, best-R layer; alpha=0.1"
+geneformer_frozen_per_cell_ridge_best_layer,NK,terekhova,loco_terekhova,2,0,0.2659,14.4117,,,1010,166,"frozen base, best-R layer; alpha=1.0"
+geneformer_pseudobulk_input_ridge_best_layer,B,aida,loco_onek1k,10,0,0.1539,10.9303,0.0388679,0.264907,195,307,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,B,onek1k,loco_onek1k,11,0,0.1985,43.9865,0.142034,0.253476,195,981,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,CD4+ T,aida,loco_onek1k,4,0,0.6233,17.6094,0.560418,0.68419,190,293,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,CD4+ T,onek1k,loco_onek1k,1,0,0.4594,10.2549,0.404615,0.511789,190,981,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,NK,aida,loco_onek1k,0,0,0.0908,12.0214,-0.0168145,0.184951,195,306,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,NK,onek1k,loco_onek1k,3,0,0.3177,19.3663,0.260476,0.369058,195,981,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,B,aida,loco_terekhova,3,0,0.2443,15.1517,0.137958,0.349689,1010,307,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,B,terekhova,loco_terekhova,2,0,0.2503,15.4474,0.123927,0.37591,1010,166,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,CD4+ T,aida,loco_terekhova,2,0,0.6306,12.2257,0.562572,0.693628,1005,293,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,CD4+ T,terekhova,loco_terekhova,1,0,0.6876,11.3440,0.607292,0.758301,1005,166,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,NK,aida,loco_terekhova,3,0,0.2758,11.1474,0.181707,0.388072,1010,306,"pseudobulk-input, frozen base, best-R layer"
+geneformer_pseudobulk_input_ridge_best_layer,NK,terekhova,loco_terekhova,2,0,0.3247,13.5742,0.170621,0.457659,1010,166,"pseudobulk-input, frozen base, best-R layer"
+scfoundation_frozen_pool_all,CD4+ T,onek1k,loco_onek1k,,0,0.4752,12.7868,0.420036,0.526574,190,981,"scFoundation 3B, pool=concat(T+S+max+mean)"
+scfoundation_frozen_pool_all,CD4+ T,aida,loco_onek1k,,0,0.4417,20.9187,0.359593,0.516762,190,293,"scFoundation 3B, pool=concat(T+S+max+mean)"
+scfoundation_frozen_pool_all,CD4+ T,terekhova,loco_terekhova,,0,0.5194,17.9079,0.402347,0.617247,1005,166,"scFoundation 3B, pool=concat(T+S+max+mean)"
+scfoundation_frozen_pool_all,CD4+ T,aida,loco_terekhova,,0,0.5650,9.4554,0.485208,0.637136,1005,293,"scFoundation 3B, pool=concat(T+S+max+mean)"
+scfoundation_frozen_pool_all,B,onek1k,loco_onek1k,,0,-0.0493,19.3170,-0.108775,0.00297496,195,981,"scFoundation 3B, pool=concat(T+S+max+mean)"
+scfoundation_frozen_pool_all,B,aida,loco_onek1k,,0,0.0306,25.2244,-0.0798324,0.14001,195,307,"scFoundation 3B, pool=concat(T+S+max+mean)"
+scfoundation_frozen_pool_all,B,terekhova,loco_terekhova,,0,0.1215,15.4158,-0.0483322,0.263116,1010,166,"scFoundation 3B, pool=concat(T+S+max+mean)"
+scfoundation_frozen_pool_all,NK,onek1k,loco_onek1k,,0,0.1524,18.4338,0.089482,0.213931,195,981,"scFoundation 3B, pool=concat(T+S+max+mean)"
+scfoundation_frozen_pool_all,NK,aida,loco_onek1k,,0,0.3114,21.9004,0.210602,0.403632,195,306,"scFoundation 3B, pool=concat(T+S+max+mean)"
+geneformer_rank16_lora_3seed_layer0,CD4+ T,aida,loco_onek1k,0,,0.3165,10.7919,,,,,"rank-16 LoRA 3-seed mean (R_std=0.000, MAE_std=0.00)"
+geneformer_rank16_lora_3seed_layer1,CD4+ T,aida,loco_onek1k,1,,0.4808,8.9232,,,,,"rank-16 LoRA 3-seed mean (R_std=0.013, MAE_std=0.27)"
+geneformer_rank16_lora_3seed_layer2,CD4+ T,aida,loco_onek1k,2,,0.4697,10.3848,,,,,"rank-16 LoRA 3-seed mean (R_std=0.022, MAE_std=1.01)"
+geneformer_rank16_lora_3seed_layer3,CD4+ T,aida,loco_onek1k,3,,0.4870,10.7486,,,,,"rank-16 LoRA 3-seed mean (R_std=0.010, MAE_std=2.09)"
+geneformer_rank16_lora_3seed_layer4,CD4+ T,aida,loco_onek1k,4,,0.4849,9.0503,,,,,"rank-16 LoRA 3-seed mean (R_std=0.011, MAE_std=0.97)"
+geneformer_rank16_lora_3seed_layer5,CD4+ T,aida,loco_onek1k,5,,0.4858,8.8526,,,,,"rank-16 LoRA 3-seed mean (R_std=0.012, MAE_std=0.61)"
+geneformer_rank16_lora_3seed_layer6,CD4+ T,aida,loco_onek1k,6,,0.5354,8.2431,,,,,"rank-16 LoRA 3-seed mean (R_std=0.026, MAE_std=0.08)"
+geneformer_rank16_lora_3seed_layer7,CD4+ T,aida,loco_onek1k,7,,0.5027,8.3908,,,,,"rank-16 LoRA 3-seed mean (R_std=0.033, MAE_std=0.16)"
+geneformer_rank16_lora_3seed_layer8,CD4+ T,aida,loco_onek1k,8,,0.5425,8.0848,,,,,"rank-16 LoRA 3-seed mean (R_std=0.013, MAE_std=0.25)"
+geneformer_rank16_lora_3seed_layer9,CD4+ T,aida,loco_onek1k,9,,0.5199,8.3596,,,,,"rank-16 LoRA 3-seed mean (R_std=0.031, MAE_std=0.14)"
+geneformer_rank16_lora_3seed_layer10,CD4+ T,aida,loco_onek1k,10,,0.5458,8.0740,,,,,"rank-16 LoRA 3-seed mean (R_std=0.027, MAE_std=0.28)"
+geneformer_rank16_lora_3seed_layer11,CD4+ T,aida,loco_onek1k,11,,0.5659,7.9598,,,,,"rank-16 LoRA 3-seed mean (R_std=0.032, MAE_std=0.42)"
+geneformer_rank16_lora_3seed_layer12,CD4+ T,aida,loco_onek1k,12,,0.5599,8.3151,,,,,"rank-16 LoRA 3-seed mean (R_std=0.045, MAE_std=0.41)"
+geneformer_rank16_lora_3seed_layer0,CD4+ T,onek1k,loco_onek1k,0,,0.3422,28.4718,,,,,"rank-16 LoRA 3-seed mean (R_std=0.000, MAE_std=0.00)"
+geneformer_rank16_lora_3seed_layer1,CD4+ T,onek1k,loco_onek1k,1,,0.5102,28.0661,,,,,"rank-16 LoRA 3-seed mean (R_std=0.011, MAE_std=2.11)"
+geneformer_rank16_lora_3seed_layer2,CD4+ T,onek1k,loco_onek1k,2,,0.5321,20.8642,,,,,"rank-16 LoRA 3-seed mean (R_std=0.012, MAE_std=3.42)"
+geneformer_rank16_lora_3seed_layer3,CD4+ T,onek1k,loco_onek1k,3,,0.5653,12.9449,,,,,"rank-16 LoRA 3-seed mean (R_std=0.007, MAE_std=4.30)"
+geneformer_rank16_lora_3seed_layer4,CD4+ T,onek1k,loco_onek1k,4,,0.5466,16.1077,,,,,"rank-16 LoRA 3-seed mean (R_std=0.006, MAE_std=4.21)"
+geneformer_rank16_lora_3seed_layer5,CD4+ T,onek1k,loco_onek1k,5,,0.6157,14.1347,,,,,"rank-16 LoRA 3-seed mean (R_std=0.010, MAE_std=2.65)"
+geneformer_rank16_lora_3seed_layer6,CD4+ T,onek1k,loco_onek1k,6,,0.6320,10.8541,,,,,"rank-16 LoRA 3-seed mean (R_std=0.008, MAE_std=2.19)"
+geneformer_rank16_lora_3seed_layer7,CD4+ T,onek1k,loco_onek1k,7,,0.6288,12.4078,,,,,"rank-16 LoRA 3-seed mean (R_std=0.010, MAE_std=2.26)"
+geneformer_rank16_lora_3seed_layer8,CD4+ T,onek1k,loco_onek1k,8,,0.6246,16.9836,,,,,"rank-16 LoRA 3-seed mean (R_std=0.007, MAE_std=2.78)"
+geneformer_rank16_lora_3seed_layer9,CD4+ T,onek1k,loco_onek1k,9,,0.6208,16.5361,,,,,"rank-16 LoRA 3-seed mean (R_std=0.007, MAE_std=2.51)"
+geneformer_rank16_lora_3seed_layer10,CD4+ T,onek1k,loco_onek1k,10,,0.6248,14.7402,,,,,"rank-16 LoRA 3-seed mean (R_std=0.011, MAE_std=1.98)"
+geneformer_rank16_lora_3seed_layer11,CD4+ T,onek1k,loco_onek1k,11,,0.6148,16.6608,,,,,"rank-16 LoRA 3-seed mean (R_std=0.013, MAE_std=2.38)"
+geneformer_rank16_lora_3seed_layer12,CD4+ T,onek1k,loco_onek1k,12,,0.6082,11.1330,,,,,"rank-16 LoRA 3-seed mean (R_std=0.038, MAE_std=3.37)"
+geneformer_rank32_lora_seed0_layer0,CD4+ T,onek1k,loco_onek1k,0,0,0.3422,28.4718,0.283834,0.399843,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer0,CD4+ T,aida,loco_onek1k,0,0,0.3165,10.7919,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer1,CD4+ T,onek1k,loco_onek1k,1,0,0.5057,27.2594,0.459303,0.553723,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer1,CD4+ T,aida,loco_onek1k,1,0,0.4770,9.1729,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer2,CD4+ T,onek1k,loco_onek1k,2,0,0.4710,31.9753,0.424361,0.516711,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer2,CD4+ T,aida,loco_onek1k,2,0,0.4943,8.3561,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer3,CD4+ T,onek1k,loco_onek1k,3,0,0.5386,22.4322,0.493537,0.582487,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer3,CD4+ T,aida,loco_onek1k,3,0,0.4335,8.7607,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer4,CD4+ T,onek1k,loco_onek1k,4,0,0.5007,39.6569,0.452899,0.549692,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer4,CD4+ T,aida,loco_onek1k,4,0,0.4515,8.2568,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer5,CD4+ T,onek1k,loco_onek1k,5,0,0.5837,25.2229,0.53765,0.626179,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer5,CD4+ T,aida,loco_onek1k,5,0,0.4272,10.0456,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer6,CD4+ T,onek1k,loco_onek1k,6,0,0.6121,25.6940,0.569278,0.653428,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer6,CD4+ T,aida,loco_onek1k,6,0,0.5584,8.1326,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer7,CD4+ T,onek1k,loco_onek1k,7,0,0.5925,22.8088,0.548824,0.635751,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer7,CD4+ T,aida,loco_onek1k,7,0,0.5403,7.6815,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer8,CD4+ T,onek1k,loco_onek1k,8,0,0.6069,34.3404,0.560712,0.647247,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer8,CD4+ T,aida,loco_onek1k,8,0,0.6118,7.6211,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer9,CD4+ T,onek1k,loco_onek1k,9,0,0.6165,29.8907,0.569207,0.658395,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer9,CD4+ T,aida,loco_onek1k,9,0,0.6167,6.9208,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer10,CD4+ T,onek1k,loco_onek1k,10,0,0.6298,25.2196,0.585992,0.669746,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer10,CD4+ T,aida,loco_onek1k,10,0,0.6149,7.8199,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer11,CD4+ T,onek1k,loco_onek1k,11,0,0.5618,35.2298,0.510742,0.604893,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer11,CD4+ T,aida,loco_onek1k,11,0,0.6280,8.8602,,,,,rank-32 single-seed AIDA cross-ancestry
+geneformer_rank32_lora_seed0_layer12,CD4+ T,onek1k,loco_onek1k,12,0,0.6359,11.0030,0.590794,0.673886,,,rank-32 single-seed
+geneformer_rank32_lora_seed0_layer12,CD4+ T,aida,loco_onek1k,12,0,0.6134,8.0235,,,,,rank-32 single-seed AIDA cross-ancestry
