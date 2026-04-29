@@ -84,6 +84,8 @@ def main():
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--output-tag", default="frozen_base_alllayers")
     p.add_argument("--output-dir", default="results/phase3/embeddings_layered")
+    p.add_argument("--lora-rank", type=int, default=16,
+                   help="Must match the rank used to train the checkpoint (default 16 = e5b config).")
     args = p.parse_args()
     if args.checkpoint is not None:
         args.frozen_base = False
@@ -126,7 +128,8 @@ def main():
         model = GeneformerRegressor(bias_init=0.0, pool="mean")
     else:
         print(f"[extract-L] mode=fine-tuned ({args.checkpoint.name})")
-        model = build_geneformer_lora(gradient_checkpointing=False, head_bias_init=0.0, pool="mean")
+        model = build_geneformer_lora(gradient_checkpointing=False, head_bias_init=0.0, pool="mean",
+                                       lora_rank=args.lora_rank)
         sd = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
         missing, unexpected = model.load_state_dict(sd, strict=False)
         bad_missing = [k for k in missing if "lora_" in k or k.startswith("head.")]

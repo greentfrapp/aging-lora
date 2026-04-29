@@ -1154,3 +1154,59 @@ This **strengthens the methodology contribution** at the cost of the WIN ladder:
 2. **Per-layer scFoundation probe** (~3h compute) is the cheap way to check whether scFoundation has an analogous "layer-1 wins" finding (Geneformer §26). Worth doing if the methodology paper claims layer-wise readout is a recipe contribution.
 3. **scFoundation LoRA fine-tune** ($24 on g5) is the apples-to-apples test for FM-class fine-tune + ridge readout. Defer to Phase-4 unless higher-rank LoRA on Geneformer doesn't unlock a strict WIN.
 4. **Preprint headline (revised)**: "Per-donor ridge readout reduces median age error by 1.7–9.2y across CD4+T conditions on a fine-tuned single-cell foundation model, converting a Phase-3 0/3 horse-race loss into 2 close-MATCH-class results within 15% of the strongest published baselines. The same readout improvement does NOT bridge frozen FMs of either Geneformer-scale (110M) or scFoundation-scale (3B) to bulk-trained baselines, indicating that fine-tuning — not model scale — drives the per-cell signal that ridge regression extracts. B-cell and NK-cell substrates remain representation-negative across both FMs and across all readouts tested, suggesting an FM-class limitation rather than a recipe issue."
+
+## 30. Rank-32 LoRA smoke (Phase-3-B Task D.12, 2026-04-29)
+
+Smoke test of the §28 hypothesis: is the 3-seed std=3.38y on OneK1K MAE *capacity-limited* (rank-16 LoRA isn't expressive enough → some seeds find sub-optimal basins) or *optimization-limited* (3 epochs isn't enough convergence regardless of capacity)?
+
+Single-seed (seed 0) rank-32 LoRA on CD4+T × loco_onek1k. **All other hyperparameters held to e5b** (`--epochs 3 --batch-size 8 --grad-accum 4 --lr 2e-4 --head-lr 2e-4 --pool mean --max-cells-per-donor 50 --eval-max-cells-per-donor 20`). Wall ~100 min; rank doubling doesn't change wall time at this rank scale. Output: `results/baselines/fm_finetuned/geneformer/checkpoints/loco_onek1k_seed0_CD4p_T_e5b_r32.pt`, embeddings + ridge in `results/phase3/embeddings_layered/*r32_alllayers.npz` and `results/phase3/ridge_summary_r32_smoke.csv`.
+
+### 30.1 Headline L12 OneK1K — rank doesn't help
+
+| Run | R | MAE | Notes |
+|---|---|---|---|
+| rank-16 seed 0 (e5b) | 0.631 | **8.21** | §27.1 single-seed WIN claim |
+| **rank-32 seed 0** | **0.636** | **11.00** | this run — single-seed L12 OneK1K |
+| rank-16 3-seed mean | 0.608 ± 0.038 | 11.13 ± 3.38 | §28.1 |
+
+**Rank-32 single-seed lands almost exactly on the rank-16 3-seed mean (11.00 vs 11.13 ± 3.38).** Per the pre-stated decision rule (≤ 8.0y → promote to 3-seed bracket; ≥ 8.5y or worse than rank-16 → pivot), this is a **PIVOT signal**.
+
+### 30.2 Per-layer rank-32 ridge results
+
+| Layer | OneK1K R (95% CI) | OneK1K MAE | AIDA R | AIDA MAE | OneK1K bias (pred-eval) | AIDA bias |
+|---|---|---|---|---|---|---|
+| L0 | 0.342 (0.28–0.40) | 28.47 | 0.317 | 10.79 | −27.9y | +6.3y |
+| L1 | 0.506 (0.46–0.55) | 27.26 | 0.477 | 9.17 | −25.8y | +3.0y |
+| L3 | 0.539 (0.49–0.58) | 22.43 | 0.433 | 8.76 | −21.4y | −0.4y |
+| L6 | 0.612 (0.57–0.65) | 25.69 | 0.558 | 8.13 | −24.5y | −1.4y |
+| L7 | 0.592 (0.55–0.64) | 22.81 | 0.540 | 7.68 | −21.4y | +1.5y |
+| L9 | 0.617 (0.57–0.66) | 29.89 | **0.617** | **6.92** | −28.0y | +0.1y |
+| L10 | 0.630 (0.59–0.67) | 25.22 | 0.615 | 7.82 | −23.3y | −3.1y |
+| L11 | 0.562 (0.51–0.60) | 35.23 | 0.628 | 8.86 | −33.6y | −6.8y |
+| **L12** | **0.636 (0.59–0.67)** | **11.00** | 0.613 | 8.02 | −5.7y | −1.5y |
+
+Two patterns stand out:
+1. **L12 is the only OneK1K-calibrated layer.** All other layers under-predict OneK1K by 20–34y because the train cohorts (Stephenson + Terekhova) have mean age ~49y vs OneK1K's 64y — ridge on non-final-layer reps can't separate the bias. Only L12 (after the regression head's gradient flow) recovers calibration.
+2. **AIDA generalization is layer-broad and well-calibrated.** L9 R=0.617 / MAE=6.92 with pred_mean=41.88 vs eval_mean=41.76 (essentially zero bias). Comparable to Pasta-REG (R=0.659 / MAE=6.32). This is the most interesting incidental finding — AIDA cross-ancestry signal lives in mid-layers.
+
+### 30.3 Interpretation — capacity isn't the bottleneck
+
+The §28 hypothesis tested:
+- **(a) Capacity-limited**: rank-16 LoRA is too small → rank-32 should reduce variance.
+- **(b) Optimization-limited**: 3 epochs / 875 steps isn't enough → rank doubling doesn't help.
+
+**The data favors (b).** Rank-32 single-seed L12 OneK1K MAE = 11.00 lands on the rank-16 3-seed *mean*, not below it. R is essentially unchanged (0.636 vs 0.631). The 27% MAE degradation vs rank-16 seed 0 (8.21) tells us seed 0 of rank-16 happened to land in a *better-than-mean* basin, and rank-32 seed 0 lands in a *typical* basin. Capacity didn't unlock a new floor.
+
+This is a meaningful negative — it tells us where NOT to spend compute next: don't run 3-seed of rank-32, don't try rank-64. Remaining levers:
+
+1. **Longer training** (5–6 epochs vs 3) — directly tests (b). Cost ~$3 for one seed; if the seed std collapses, promote to 3-seed.
+2. **AIDA-focused L9 3-seed bracket** — the AIDA L9 finding (R=0.617 / MAE=6.92, well-calibrated) is the most likely-to-WIN remaining cross-ancestry result.
+3. **Accept the close-MATCH and write up.** §28 already characterizes the close-MATCH carefully.
+
+### 30.4 Decision tree update
+
+- D.12 (rank-32 smoke) — **DONE, NEGATIVE**. Rank doubling doesn't lift the §28 close-MATCH floor.
+- D.13 (scFoundation 3-seed bracket) — still defensible if writing up §29.
+- D.14 (scFoundation LoRA × 3 seeds × 2 folds) — still on the table, lower priority given §29.3's strong negative.
+- D.15 (Geneformer full FT) — separate hypothesis from rank; risk of overfitting on 9500 cells × 190 donors.
+- **New D.16 (proposed)**: Geneformer LoRA + longer training (rank-16 × 5 or 6 epochs × 1 seed smoke). Direct test of (b). If R=0.631 / MAE=8.21 from rank-16 seed-0 was under-converged, longer training tightens std. If not, MAE=10.85 ± 2.19 is a real ceiling and we write up Phase-3-A.
