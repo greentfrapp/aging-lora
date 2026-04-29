@@ -1,0 +1,145 @@
+=== D.22 frozen NK × onek1k × seed=1 ===
+[extract-L] cohort=onek1k cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[extract-L] cells=19598 donors=981
+[extract-L] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3361.59it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 981 donors × 13 layers × 768-dim in 2070.6s
+[extract-L] wrote results/phase3/embeddings_layered/onek1k_NK_frozen_base_seed1_alllayers.npz (shape (13, 981, 768))
+=== D.22 frozen NK × stephenson × seed=1 ===
+[extract-L] cohort=stephenson cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[extract-L] cells=580 donors=29
+[extract-L] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3530.89it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 29 donors × 13 layers × 768-dim in 62.2s
+[extract-L] wrote results/phase3/embeddings_layered/stephenson_NK_frozen_base_seed1_alllayers.npz (shape (13, 29, 768))
+=== D.22 frozen NK × terekhova × seed=1 ===
+[extract-L] cohort=terekhova cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[extract-L] cells=3309 donors=166
+[extract-L] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3676.53it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 166 donors × 13 layers × 768-dim in 350.9s
+[extract-L] wrote results/phase3/embeddings_layered/terekhova_NK_frozen_base_seed1_alllayers.npz (shape (13, 166, 768))
+=== D.22 frozen NK × aida × seed=1 ===
+[extract-L] cohort=aida cell_type=NK h5ad=data/cohorts/aida_eval/NK.h5ad
+[extract-L] cells=6091 donors=306
+[extract-L] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3691.03it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 306 donors × 13 layers × 768-dim in 616.7s
+[extract-L] wrote results/phase3/embeddings_layered/aida_NK_frozen_base_seed1_alllayers.npz (shape (13, 306, 768))
+=== D.22 frozen NK × onek1k × seed=2 ===
+[extract-L] cohort=onek1k cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[extract-L] cells=19598 donors=981
+[extract-L] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3689.04it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 981 donors × 13 layers × 768-dim in 2066.2s
+[extract-L] wrote results/phase3/embeddings_layered/onek1k_NK_frozen_base_seed2_alllayers.npz (shape (13, 981, 768))
+=== D.22 frozen NK × stephenson × seed=2 ===
+[extract-L] cohort=stephenson cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[extract-L] cells=580 donors=29
+[extract-L] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3812.32it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 29 donors × 13 layers × 768-dim in 57.8s
+[extract-L] wrote results/phase3/embeddings_layered/stephenson_NK_frozen_base_seed2_alllayers.npz (shape (13, 29, 768))
+=== D.22 frozen NK × terekhova × seed=2 ===
+[extract-L] cohort=terekhova cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[extract-L] cells=3309 donors=166
+[extract-L] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3722.59it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 166 donors × 13 layers × 768-dim in 327.2s
+[extract-L] wrote results/phase3/embeddings_layered/terekhova_NK_frozen_base_seed2_alllayers.npz (shape (13, 166, 768))
+=== D.22 frozen NK × aida × seed=2 ===
+[extract-L] cohort=aida cell_type=NK h5ad=data/cohorts/aida_eval/NK.h5ad
+[extract-L] cells=6091 donors=306
+[extract-L] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 4195.82it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 306 donors × 13 layers × 768-dim in 573.3s
+[extract-L] wrote results/phase3/embeddings_layered/aida_NK_frozen_base_seed2_alllayers.npz (shape (13, 306, 768))
+=== D.22 NK frozen seeds 1,2 extractions done ===
