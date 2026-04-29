@@ -1,0 +1,10 @@
+fold,eval_cohort,cell_type,L_best,L_best_R,L12_R,delta_R_median,delta_R_ci_lo,delta_R_ci_hi,ci_excludes_zero,n_eval_donors
+loco_onek1k,onek1k,CD4+ T,12,0.56027,0.56027,0,0,0,False,981
+loco_onek1k,aida,CD4+ T,12,0.527458,0.527458,0,0,0,False,293
+loco_terekhova,terekhova,CD4+ T,5,0.620862,0.576414,0.0460254,-0.0244839,0.118937,False,166
+loco_onek1k,onek1k,B,7,0.0376964,-0.0126323,0.0505215,0.00915541,0.0995258,True,981
+loco_onek1k,aida,B,11,0.1201,0.09859,0.0225573,-0.0314917,0.0809334,False,307
+loco_terekhova,terekhova,B,9,0.227804,0.10244,0.121646,0.0136422,0.247243,True,166
+loco_onek1k,onek1k,NK,3,0.304463,0.260169,0.0430091,-0.00621364,0.0917777,False,981
+loco_onek1k,aida,NK,5,0.16853,0.0472254,0.123728,0.0549806,0.184285,True,306
+loco_terekhova,terekhova,NK,2,0.265911,0.198876,0.0664323,-0.0168631,0.156355,False,166

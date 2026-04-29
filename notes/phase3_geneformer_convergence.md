@@ -1394,3 +1394,87 @@ Update this list (33.1) when:
 - A new finding is added to the writeup (add to Tier-A if <3 seeds, with risk-if-collapses)
 - A 3-seed bracket completes (move from Tier-A to Tier-B with verified mean ± std)
 - A single-seed finding is judged not-headline-relevant (move to Tier-C with reasoning)
+
+## 34. D.24 + D.25 + D.26 results (Phase-3-B reframed-review Tier 2 analyses, 2026-04-29)
+
+The reframed-review Tier 1 verification's analysis-only sub-tasks landed first (D.24 partial, D.25, D.26 — all from existing data). Three results, two of which sharpen previous claims and one of which weakens them.
+
+### 34.1 D.24 (extension): pseudobulk-input layer profile is universally early, not cell-type-conditional
+
+D.18 ran pseudobulk-input ridge on 9/12 conditions. D.24 extends to the missing 3 (NK × Terekhova, NK × AIDA loco_terekhova, B × AIDA loco_terekhova) using existing embeddings. Now 12/12 pseudobulk conditions characterized.
+
+**Best layer per condition (all 12)**:
+| Cell × eval | Pseudobulk best layer | R | MAE |
+|---|---|---|---|
+| CD4+T × OneK1K | L1 | 0.459 | 10.25 |
+| CD4+T × Terekhova | L1 | 0.688 | 11.34 |
+| CD4+T × AIDA loco_onek1k | L4 | 0.623 | 17.61 |
+| CD4+T × AIDA loco_terekhova | L2 | 0.631 | 12.23 |
+| **NK × OneK1K** | **L3** | 0.318 | 19.37 |
+| **NK × Terekhova** | **L2** | 0.325 | 13.57 |
+| **NK × AIDA loco_onek1k** | **L0** | 0.091 | 12.02 |
+| **NK × AIDA loco_terekhova** | **L3** | 0.276 | 11.15 |
+| B × OneK1K | L11 | 0.198 | 43.99 |
+| B × Terekhova | L2 | 0.250 | 15.45 |
+| B × AIDA loco_onek1k | L10 | 0.154 | 10.93 |
+| B × AIDA loco_terekhova | L3 | 0.244 | 15.15 |
+
+**Refined two-axis principle**: pseudobulk-input drives the best layer toward *early* layers (L0–L4) for both CD4+T and NK across all 4 conditions each (8/8). For B (substrate-weak), the layer choice scatters across L2–L11 with low R. The principle now reads as:
+> **Pseudobulk-input → early layers regardless of cell type. Per-cell mean-pool layer choice is cell-type-conditional (CD4+T late, NK early, B noisy).**
+
+This is a cleaner finding than the original "two-axis" framing. The interaction is one-directional: pseudobulk-input flattens the cell-type-specific layer pattern that per-cell mean-pool reveals.
+
+### 34.2 D.25: matched-splits parity is Geneformer-specific, scFoundation lags by 0.08–0.10 R-units
+
+Three-way comparison (gene-EN matched | Geneformer per-cell ridge best layer | scFoundation frozen+ridge) on CD4+T:
+
+| Cell × eval | gene-EN R | Geneformer Δ vs gene-EN | scFoundation Δ vs gene-EN |
+|---|---|---|---|
+| CD4+T × OneK1K | 0.612 | -0.052 | **-0.137** |
+| CD4+T × AIDA loco_onek1k | 0.616 | -0.088 | **-0.174** |
+| CD4+T × Terekhova | 0.776 | -0.155 | **-0.256** |
+| CD4+T × AIDA loco_terekhova | 0.651 | n/a (fold mismatch) | **-0.086** |
+
+scFoundation at frozen+ridge is consistently 0.08–0.10 R-units worse than Geneformer at matched splits across CD4+T conditions. The §32 "matched-splits parity" finding is **Geneformer-specific**, not pan-FM. This closes scFoundation-LoRA from the Tier-3 queue: a frozen-base 0.08–0.10 R-unit gap is unlikely to be closed by LoRA fine-tuning at the data scale we have, and the lift would need to be enormous to make scFoundation competitive with gene-EN matched.
+
+**Implication for the writeup**: the claim shifts from "FMs match bulk at matched splits" to "Geneformer specifically matches bulk at matched splits; scFoundation does not." This is a *more specific* claim, which makes for a stronger paper if Geneformer is positioned as the working FM rather than FMs as a class.
+
+### 34.3 D.26: bootstrap CIs narrow the cell-type-conditional layer claim to AIDA cross-ancestry only
+
+For each condition, refit ridge per layer; identify L_best on full eval data; bootstrap-resample donors (n=1000) and compute ΔR(L_best vs L12) per resample.
+
+| Cell × Cohort | L_best | L_best R | L12 R | ΔR median | 95% CI | Excludes 0? |
+|---|---|---|---|---|---|---|
+| CD4+T × OneK1K | 12 | 0.560 | 0.560 | 0.000 | [0, 0] | (degenerate — L_best == L12) |
+| CD4+T × AIDA loco_onek1k | 12 | 0.527 | 0.527 | 0.000 | [0, 0] | (degenerate — L_best == L12) |
+| CD4+T × Terekhova | 5 | 0.621 | 0.576 | +0.046 | [-0.024, 0.119] | False |
+| B × OneK1K | 7 | 0.038 | -0.013 | +0.051 | [+0.009, 0.100] | **TRUE** |
+| B × AIDA loco_onek1k | 11 | 0.120 | 0.099 | +0.023 | [-0.031, 0.081] | False |
+| B × Terekhova | 9 | 0.228 | 0.102 | +0.122 | [+0.014, 0.247] | **TRUE** |
+| NK × OneK1K | 3 | 0.304 | 0.260 | +0.043 | [-0.006, 0.092] | False |
+| **NK × AIDA loco_onek1k** | **5** | **0.169** | **0.047** | **+0.124** | **[+0.055, 0.184]** | **TRUE** |
+| NK × Terekhova | 2 | 0.266 | 0.199 | +0.066 | [-0.017, 0.156] | False |
+
+**Headline-affecting outcomes**:
+1. **CD4+T at L12 is statistically robust** in 2/3 cohorts (the ΔR is degenerate at zero because L_best literally is L12). On Terekhova, L5 is non-significantly better than L12 (CI includes 0).
+2. **NK early-layer advantage is statistically robust ONLY on AIDA cross-ancestry**. On OneK1K and Terekhova, the ΔR is positive but CI includes 0. The "NK at L3.3 across all 3 cohorts" claim from §31 has weaker statistical support than the median values suggested.
+3. **B substrate is NOT entirely empty**. B × Terekhova (L9 R=0.228, CI [0.014, 0.247]) and B × OneK1K (L7 R=0.038, CI [0.009, 0.100]) both have CIs that exclude zero. The "B substrate-empty" claim weakens — there is a small but statistically robust signal at mid-late layers.
+
+**Decision-rule check (D.22 pre-commit)**: NK ΔR > +0.05 across all 3 cohorts is required for the cell-type-conditional finding to be anchor-ready. Bootstrap medians are: OneK1K +0.043 (fails the +0.05 threshold), Terekhova +0.066, AIDA +0.124. So even before the seed-1/seed-2 verification, the strict threshold isn't met on OneK1K. The 3-seed mean (D.22) becomes critical.
+
+### 34.4 What changes for the paper outlines
+
+Outline (a) (methodology-led with cell-type-conditional layer selection as headline) is **weaker than yesterday**. The finding now reads: "NK shows robust early-layer advantage on AIDA cross-ancestry; on within-cohort settings, the advantage is in the median direction but not statistically significant." That's a less commanding lead than "NK reads at early layers across all cohorts."
+
+Outline (b) (comparison-led with matched-splits as headline) is **strengthened by D.25**: the Geneformer-specific finding is more specific than a pan-FM claim, which is a more defensible contribution. The "FM-vs-bulk" headline now reads: "Geneformer matches bulk at matched splits on CD4+T; scFoundation does not. The matched-splits methodology is essential to this characterization."
+
+Two-axis layer-selection principle (refined version from §34.1) is supported across all 8 CD4+T+NK pseudobulk conditions and survives as a methodology contribution either way.
+
+### 34.5 Updated load-bearing single-seed numbers (updates §33.1)
+
+After D.24/D.25/D.26 land:
+- **NK best-layer L3.3 across 3 cohorts** (from §31): ΔR statistically robust only on 1/3 cohorts at single-seed bootstrap. 3-seed verification (D.22) is essential.
+- **L9 AIDA rank-32 R=0.617/MAE=6.92** (from §30): still single-seed; D.21 in progress.
+- **Pseudobulk-input CD4+T layer L1–L4** (from §32): now extended to NK (D.24); cross-cell-type confirmation eases the single-seed concern but doesn't fully replace 3-seed verification.
+
+Updated Tier-A queue: D.21 (in progress), D.22 (NK 3-seed of cell sampling) — both still essential, despite the analysis-only Tier-2 work landing first.
