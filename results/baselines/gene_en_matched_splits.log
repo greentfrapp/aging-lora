@@ -1,0 +1,121 @@
+
+=== loco_onek1k × CD4+ T (eval=onek1k) ===
+  [stephenson × CD4+ T] 2400 cells, 24 donors
+  [terekhova × CD4+ T] 16600 cells, 166 donors
+  [onek1k × CD4+ T] 98052 cells, 981 donors
+  train: (190, 5000), eval: (981, 5000) (after HVG-5000 + standardization)
+  fitting ElasticNetCV (3-fold, alphas=8, l1_ratios=[0.3, 0.5, 0.7, 0.9])...
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 6.485e+00, tolerance: 5.255e+00
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 6.486e+00, tolerance: 5.255e+00
+  model = cd_fast.enet_coordinate_descent(
+  HOLDOUT  R=+0.612 (+0.568, +0.653)  MAE=14.19  alpha=0.01 l1_ratio=0.5 n_nonzero=511  (254s)
+  [aida × CD4+ T] 29083 cells, 293 donors
+  AIDA     R=+0.616 (+0.546, +0.679)  MAE=6.42  pred_mean=39.61 eval_mean=41.76
+
+=== loco_terekhova × CD4+ T (eval=terekhova) ===
+  [onek1k × CD4+ T] 98052 cells, 981 donors
+  [stephenson × CD4+ T] 2400 cells, 24 donors
+  [terekhova × CD4+ T] 16600 cells, 166 donors
+  train: (1005, 5000), eval: (166, 5000) (after HVG-5000 + standardization)
+  fitting ElasticNetCV (3-fold, alphas=8, l1_ratios=[0.3, 0.5, 0.7, 0.9])...
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 9.626e+01, tolerance: 1.784e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 3.825e+01, tolerance: 1.844e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 8.552e+01, tolerance: 1.997e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 7.228e+01, tolerance: 1.844e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.069e+02, tolerance: 1.784e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 4.593e+01, tolerance: 1.997e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 8.750e+01, tolerance: 1.844e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 2.992e+01, tolerance: 1.784e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 4.480e+01, tolerance: 1.844e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 5.333e+01, tolerance: 1.844e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 7.134e+01, tolerance: 1.997e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 6.709e+01, tolerance: 1.784e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.076e+02, tolerance: 1.844e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 3.544e+01, tolerance: 1.997e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 3.712e+01, tolerance: 1.997e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 4.195e+01, tolerance: 1.844e+01
+  model = cd_fast.enet_coordinate_descent(
+  HOLDOUT  R=+0.776 (+0.699, +0.837)  MAE=10.52  alpha=0.5 l1_ratio=0.7 n_nonzero=470  (459s)
+  [aida × CD4+ T] 29083 cells, 293 donors
+  AIDA     R=+0.651 (+0.582, +0.711)  MAE=6.66  pred_mean=39.77 eval_mean=41.76
+
+=== loco_onek1k × B (eval=onek1k) ===
+  [stephenson × B] 2774 cells, 29 donors
+  [terekhova × B] 16297 cells, 166 donors
+  [onek1k × B] 84104 cells, 981 donors
+  train: (195, 5000), eval: (981, 5000) (after HVG-5000 + standardization)
+  fitting ElasticNetCV (3-fold, alphas=8, l1_ratios=[0.3, 0.5, 0.7, 0.9])...
+  HOLDOUT  R=+0.136 (+0.076, +0.185)  MAE=15.70  alpha=1 l1_ratio=0.3 n_nonzero=822  (103s)
+  [aida × B] 25621 cells, 307 donors
+  AIDA     R=+0.126 (+0.020, +0.238)  MAE=11.77  pred_mean=49.02 eval_mean=41.07
+
+=== loco_terekhova × B (eval=terekhova) ===
+  [onek1k × B] 84104 cells, 981 donors
+  [stephenson × B] 2774 cells, 29 donors
+  [terekhova × B] 16297 cells, 166 donors
+  train: (1010, 5000), eval: (166, 5000) (after HVG-5000 + standardization)
+  fitting ElasticNetCV (3-fold, alphas=8, l1_ratios=[0.3, 0.5, 0.7, 0.9])...
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 3.652e+01, tolerance: 1.846e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 3.688e+01, tolerance: 1.903e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.253e+02, tolerance: 1.846e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 8.151e+01, tolerance: 1.971e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 9.947e+01, tolerance: 1.903e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.543e+02, tolerance: 1.846e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 3.505e+01, tolerance: 1.846e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 5.902e+01, tolerance: 1.846e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 5.487e+01, tolerance: 1.903e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 5.607e+01, tolerance: 1.971e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 5.351e+01, tolerance: 1.846e+01
+  model = cd_fast.enet_coordinate_descent(
+/home/ubuntu/aging-lora/.venv/lib/python3.12/site-packages/sklearn/linear_model/_coordinate_descent.py:716: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 4.041e+01, tolerance: 1.971e+01
+  model = cd_fast.enet_coordinate_descent(
+  HOLDOUT  R=+0.321 (+0.187, +0.440)  MAE=15.07  alpha=1 l1_ratio=0.3 n_nonzero=1010  (290s)
+
+=== loco_onek1k × NK (eval=onek1k) ===
+  [stephenson × NK] 2836 cells, 29 donors
+  [terekhova × NK] 16464 cells, 166 donors
+  [onek1k × NK] 91315 cells, 981 donors
+  train: (195, 5000), eval: (981, 5000) (after HVG-5000 + standardization)
+  fitting ElasticNetCV (3-fold, alphas=8, l1_ratios=[0.3, 0.5, 0.7, 0.9])...
+  HOLDOUT  R=+0.366 (+0.311, +0.416)  MAE=19.08  alpha=2 l1_ratio=0.9 n_nonzero=70  (145s)
+  [aida × NK] 29351 cells, 306 donors
+  AIDA     R=+0.236 (+0.136, +0.331)  MAE=12.24  pred_mean=50.83 eval_mean=41.10
+
+[gene-EN] wrote 9 rows to results/baselines/gene_en_matched_splits.csv
+
+          fold eval_cohort cell_type  n_train_donors  n_eval_donors  pearson_r  pearson_ci_lo  pearson_ci_hi     mae_y  n_nonzero_genes
+   loco_onek1k      onek1k    CD4+ T             190            981   0.611795       0.567743       0.652810 14.188255              511
+   loco_onek1k        aida    CD4+ T             190            293   0.615630       0.545621       0.678960  6.421028              511
+loco_terekhova   terekhova    CD4+ T            1005            166   0.775749       0.698579       0.837308 10.524149              470
+loco_terekhova        aida    CD4+ T            1005            293   0.650681       0.582281       0.711005  6.664749              470
+   loco_onek1k      onek1k         B             195            981   0.135763       0.076178       0.184529 15.699963              822
+   loco_onek1k        aida         B             195            307   0.126269       0.019897       0.237835 11.769115              822
+loco_terekhova   terekhova         B            1010            166   0.320989       0.187439       0.439623 15.070890             1010
+   loco_onek1k      onek1k        NK             195            981   0.366064       0.310893       0.415758 19.075626               70
+   loco_onek1k        aida        NK             195            306   0.236278       0.135739       0.331315 12.243668               70

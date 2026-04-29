@@ -1,0 +1,73 @@
+=== stephenson × CD4+ T × loco_onek1k_CD4pT_e5b_r32_alllayers ===
+[extract-L] cohort=stephenson cell_type=CD4+ T h5ad=data/cohorts/integrated/CD4p_T.h5ad
+[extract-L] cells=480 donors=24
+[extract-L] mode=fine-tuned (loco_onek1k_seed0_CD4p_T_e5b_r32.pt)
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3714.51it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 24 donors × 13 layers × 768-dim in 48.8s
+[extract-L] wrote results/phase3/embeddings_layered/stephenson_CD4p_T_loco_onek1k_CD4pT_e5b_r32_alllayers.npz (shape (13, 24, 768))
+=== terekhova × CD4+ T × loco_onek1k_CD4pT_e5b_r32_alllayers ===
+[extract-L] cohort=terekhova cell_type=CD4+ T h5ad=data/cohorts/integrated/CD4p_T.h5ad
+[extract-L] cells=3320 donors=166
+[extract-L] mode=fine-tuned (loco_onek1k_seed0_CD4p_T_e5b_r32.pt)
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3767.02it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 166 donors × 13 layers × 768-dim in 326.4s
+[extract-L] wrote results/phase3/embeddings_layered/terekhova_CD4p_T_loco_onek1k_CD4pT_e5b_r32_alllayers.npz (shape (13, 166, 768))
+=== aida × CD4+ T × loco_onek1k_CD4pT_e5b_r32_alllayers ===
+[extract-L] cohort=aida cell_type=CD4+ T h5ad=data/cohorts/aida_eval/CD4p_T.h5ad
+[extract-L] cells=5848 donors=293
+[extract-L] mode=fine-tuned (loco_onek1k_seed0_CD4p_T_e5b_r32.pt)
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3689.02it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 293 donors × 13 layers × 768-dim in 416.9s
+[extract-L] wrote results/phase3/embeddings_layered/aida_CD4p_T_loco_onek1k_CD4pT_e5b_r32_alllayers.npz (shape (13, 293, 768))
+=== onek1k × CD4+ T × loco_onek1k_CD4pT_e5b_r32_alllayers ===
+[extract-L] cohort=onek1k cell_type=CD4+ T h5ad=data/cohorts/integrated/CD4p_T.h5ad
+[extract-L] cells=19620 donors=981
+[extract-L] mode=fine-tuned (loco_onek1k_seed0_CD4p_T_e5b_r32.pt)
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3352.54it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[extract-L] aggregated 981 donors × 13 layers × 768-dim in 1919.3s
+[extract-L] wrote results/phase3/embeddings_layered/onek1k_CD4p_T_loco_onek1k_CD4pT_e5b_r32_alllayers.npz (shape (13, 981, 768))
+=== EXTRACT DONE ===

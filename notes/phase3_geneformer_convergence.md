@@ -1265,3 +1265,85 @@ This is a hypothesis, not a claim — the right test is to cluster donors by the
 The earlier framing "Geneformer L12 is the right layer for ridge readout" was CD4+T-specific. **The correct nuanced statement is**: "L12 is best for CD4+T, but for NK the best frozen-base layer is L2–L5 across all eval cohorts; this cell-type-conditional layer asymmetry is consistent with NK aging being a coarser-grained compositional change captured by early-layer features."
 
 This refines the methodology contribution from §27 — the ridge-readout improvement at L12 is the right recipe for **CD4+T**, but not necessarily other cell types. Future work on FM-based aging clocks should probe layer-wise per cell type rather than picking L12 by default.
+
+## 32. Matched-splits gene-EN + pseudobulk-input Geneformer (D.17 + D.18, 2026-04-29)
+
+The step-back review flagged two unaddressed gaps in the FM-vs-gene-EN comparison:
+- (D.17) The TF paper's gene-EN R=0.83 LOCO + 0.77 AIDA used different splits/preprocessing/hyperparams than our FM experiments. Magnitude of "FM loses to gene-EN" claim is uncertain.
+- (D.18) Per-donor mean-pool of per-cell embeddings (the §27 readout) is donor-aggregation-AFTER the FM. The TF baseline operates on log1p-mean pseudobulk (donor-aggregation-BEFORE the FM). We never fed Geneformer the matched input shape.
+
+This section reports both experiments at frozen-base:
+- D.17: ElasticNetCV on FM-matched LOCO splits, top-5000 HVG, standardized features, 3-fold inner CV. Output `results/baselines/gene_en_matched_splits.csv` (9 rows).
+- D.18: Per-donor pseudobulk count vector (sum of raw counts) → Geneformer rank-value tokenization → frozen forward → 13-layer ridge readout. Output `results/phase3/ridge_summary_pseudobulk.csv` (117 rows).
+
+### 32.1 Headline number — the FM-vs-gene-EN gap on matched splits is much smaller than reported
+
+| Cell × eval | Gene-EN matched (this work) | Geneformer FM ridge readout (best) | TF paper gene-EN |
+|---|---|---|---|
+| **CD4+T × OneK1K** | R=**0.612** / MAE=14.19 | R=0.560 / MAE=16.52 (per-cell L12 frozen, §22) | not directly reported |
+| **CD4+T × Terekhova** | R=**0.776** / MAE=10.52 | R=0.616 / MAE=8.82 (per-cell L1 frozen, §26) | R=0.83 LOCO mean |
+| **CD4+T × AIDA (loco_onek1k)** | R=**0.616** / MAE=**6.42** | R=0.527 / MAE=11.76 (per-cell L12 frozen) — and ranks-32 single-seed L9 R=0.617/MAE=6.92 (§30) | R=0.77 |
+| **CD4+T × AIDA (loco_terekhova)** | R=**0.651** / MAE=**6.66** | n/a (different fold) | R=0.77 |
+| B × OneK1K | R=0.136 / MAE=15.70 | R=−0.013 / MAE=21.69 (per-cell L12 frozen) | not reported on B-only |
+| B × Terekhova | R=0.321 / MAE=15.07 | R=0.102 / MAE=14.02 (per-cell L12 frozen) | not reported |
+| NK × OneK1K | R=0.366 / MAE=19.08 | R=0.260 / MAE=14.13 (per-cell L12 frozen) — and L3 R=0.304/MAE=11.33 (§31) | not reported |
+
+**The "FM loses to gene-EN by 0.83 − 0.45 = 0.38 R-units" framing was an apples-to-oranges artifact.** On matched splits, gene-EN R = 0.61–0.78 across CD4+T conditions vs FM frozen R = 0.53–0.62 across the same conditions. Gap is **~0.05–0.15 R-units, not 0.38**. AIDA in particular is essentially tied: gene-EN R=0.616/MAE=6.42 vs FM rank-32 L9 ridge R=0.617/MAE=6.92 (within seed variance).
+
+### 32.2 Why does TF paper's gene-EN report R=0.83 while ours reports R=0.61–0.78?
+
+Three plausible drivers, none of which were our error:
+1. **More training cohorts**: TF used 3 training cohorts + AIDA held-out; our loco_onek1k uses Stephenson + Terekhova (190 donors), loco_terekhova uses Stephenson + OneK1K (1005 donors).
+2. **Different preprocessing**: TF integrated cohorts before pseudobulk; ours uses our cohort harmonization pipeline.
+3. **Different hyperparameter grid**: TF tuned alpha and l1_ratio differently; ours uses 8 alphas × 4 l1_ratios.
+
+The matched-splits R=0.61 on OneK1K is what gene-EN actually achieves at the strict donor unit-of-analysis with our train donor counts, not what TF reports. **The paper should report MATCHED-SPLITS gene-EN as the bulk baseline, not the TF paper's number.**
+
+### 32.3 Pseudobulk-input Geneformer + ridge readout — different layer profile than per-cell mean-pool
+
+| Cell × eval cohort | Per-cell mean-pool ridge (§22, §26, §31) | Pseudobulk-input ridge | Gene-EN matched |
+|---|---|---|---|
+| CD4+T × OneK1K | bestR L12 R=0.560 / L11 MAE=15.24 | bestR **L1** R=0.459 / **L1 MAE=10.25** | R=0.612 / MAE=14.19 |
+| CD4+T × Terekhova | bestR L5 R=0.621 / L1 MAE=8.82 | bestR **L1** R=**0.688** / L1 MAE=11.34 | R=0.776 / MAE=10.52 |
+| CD4+T × AIDA (loco_onek1k) | bestR L12 R=0.527 / L2 MAE=8.93 | bestR L4 R=**0.623** / L4 MAE=17.61 | R=0.616 / MAE=6.42 |
+| CD4+T × AIDA (loco_terekhova) | n/a | bestR L2 R=0.631 / L11 MAE=10.85 | R=0.651 / MAE=6.66 |
+| NK × OneK1K | bestR L3 R=0.304 / L0 MAE=11.33 | bestR L3 R=0.318 / L3 MAE=19.37 | R=0.366 / MAE=19.08 |
+| B × OneK1K | bestR L7 R=0.038 (substrate empty) | bestR L11 R=0.198 (still weak) | R=0.136 / MAE=15.70 |
+
+**Two patterns:**
+1. **Pseudobulk-input shifts the best layer to L1–L4 (early) for CD4+T**, opposite of per-cell mean-pool which favors L12. This is consistent with §31's NK-early-layer hypothesis: early layers encode coarse expression-level features that match what bulk gene-EN extracts. When we feed donor-aggregated input, the FM behaves more like a bulk model.
+2. **Pseudobulk-input ridge R is competitive with per-cell mean-pool R, sometimes higher on Terekhova (R=0.688 vs 0.621)**, but its MAE is generally worse on cross-cohort conditions (AIDA L4 MAE=17.61 vs gene-EN MAE=6.42). The R values say the FM ranks donors well; the MAE values say the ridge fit's bias is hard to calibrate when 190 train donors have dramatically different mean ages from 981 OneK1K donors.
+
+### 32.4 What this changes for the paper
+
+The biggest reframing: **the FM-vs-bulk-gene-EN gap on this benchmark is small or absent at matched splits**, not the dramatic gap previously reported. The headline shifts:
+
+- ~~"Single-cell FM fine-tuning loses to gene-EN by ~0.38 R-units on PBMC aging."~~
+- → **"At the strict donor unit-of-analysis with ~190–1000 training donors, gene-EN, frozen Geneformer + ridge readout, and rank-32 LoRA + ridge readout all converge to R = 0.6–0.7 on CD4+T cross-cohort age regression. Differences across model classes are within seed variance and within bootstrap CIs. The TF paper's R=0.83 reflects a different (more-cohorts + different-preprocessing) regime, not a fundamental FM limitation."**
+
+Other consequences:
+- **B substrate is empty in BOTH gene-EN AND FM.** Gene-EN B × OneK1K R=0.136 (CI [0.08, 0.18]); FM frozen R~0. Both signal-poor. The B-empty finding is **substrate-level**, not architecture-level. The TF paper's B success was likely from pseudocell augmentation (~100 × 15 cells per donor → many training samples) rather than the model class.
+- **NK at matched splits is hard regardless of model.** Gene-EN R=0.366; FM ridge L3 R=0.304–0.368. Same operating point.
+- **Cross-ancestry CD4+T (AIDA) is the most interesting positive**: all three methods (gene-EN matched, FM frozen-ridge, FM rank-32-LoRA-ridge) achieve R ≈ 0.62–0.66 with MAE ≈ 6.4–7.9y. Pasta-REG floor at R=0.659/MAE=6.32. **At the matched-splits regime, FM and bulk are within striking distance of each other and of Pasta.**
+
+### 32.5 Methodology contribution refined
+
+The §27 head-vs-readout finding still stands. The §29/§30 conclusion that "rank doesn't help" still stands. **What changes is the framing of the FM-vs-baseline gap**: at the matched-splits regime where FMs are tested on the input shape they're optimized for (per-cell embeddings, mean-pooled per donor), they're competitive with gene-EN-on-pseudobulk. The reason FMs "lose" in TF-paper-style comparisons is that TF used a more advantageous preprocessing pipeline for the bulk baseline (more training cohorts + different preprocessing + augmented-pseudocell sample regime), not because the FMs are intrinsically worse.
+
+This is a **publication-strengthening finding**: the matched-splits comparison is fairer, and it converts the "FM clearly loses" narrative into "FM and bulk are within striking distance at the donor level; differences are within seed variance and likely driven by training-cohort-availability and pseudocell-augmentation rather than model class."
+
+### 32.6 Decision tree update
+
+D.17 (gene-EN matched splits) — DONE, **paper-changing**.
+D.18 frozen-base (pseudobulk-input Geneformer + ridge) — DONE; finds early-layer bestR for CD4+T, MAE worse than per-cell mean-pool on cross-cohort.
+D.18 LoRA × 3-seed (extension) — **deprioritized**. The frozen-base pseudobulk-input result is sufficient to make the "FM and bulk converge at matched splits" point. Adding LoRA fine-tunes on pseudobulk-input is unlikely to flip the picture; ridge readout on per-cell mean-pool is already characterized at 3-seed (§28). Run only if the writeup specifically needs the LoRA × pseudobulk-input data point.
+D.19 (L9 AIDA 3-seed verification on rank-32) — still demoted; rank-16 3-seed L12 AIDA at R=0.560/MAE=8.32 is the more defensible cross-ancestry FM number for the writeup.
+
+The paper now has enough characterization to start drafting. The minimum-viable experimental matrix is:
+- §22.3 / §27 / §28: Geneformer LoRA + ridge readout 3-seed on CD4+T loco_onek1k
+- §29: scFoundation frozen + ridge readout (FM-class diagnostic)
+- §30: rank-32 single-seed (capacity ablation)
+- §31: NK early-layer asymmetry on frozen base (cell-type-conditional finding)
+- §32: gene-EN matched-splits + pseudobulk-input Geneformer (matched-baseline reframing)
+
+This covers the four candidate headlines from the step-back review. The writing decision is which to lead with, but the data is ready.

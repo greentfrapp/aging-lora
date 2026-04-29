@@ -218,3 +218,25 @@ Per §27.9 priorities, ran 5 additional fine-tune layered extractions (~2h, $2):
 4. Doesn't weaken §22.3 0/6 narrative — even NK best-layer R=0.169 on AIDA loses to LASSO/Pasta.
 
 **Cost**: $0, ~30 min analysis + writeup. No new compute. The pattern was already in data we collected for §26 in March; took the step-back review to surface it as a distinct finding rather than buried in the layered CSV.
+
+## 2026-04-29 — §32 matched-splits gene-EN + pseudobulk-input Geneformer (D.17 + D.18 frozen-base)
+
+**Step-back review actions D.17 + D.18**: closed the two unaddressed apples-to-oranges concerns in the FM-vs-bulk comparison.
+
+**D.17 (gene-EN matched splits)**: ElasticNetCV (top-5000 HVG, StandardScaler, 4 l1_ratios × 8 alphas × 3-fold inner CV) on the same `data/loco_folds.json` splits, same per-cell normalization, same donor caps as the FM experiments. Output `results/baselines/gene_en_matched_splits.csv` (9 rows). Script: `scripts/gene_en_matched_splits.py`.
+
+**D.18 frozen-base (pseudobulk-input Geneformer)**: per donor, sum raw counts across selected cells → Geneformer rank-value tokenize as a single pseudo-cell → frozen forward → 13-layer mean-pool → ridge readout. Output `results/phase3/ridge_summary_pseudobulk.csv` (117 rows = 9 conditions × 13 layers), `results/phase3/embeddings_pseudobulk/*.npz`. Script: `scripts/extract_embeddings_pseudobulk.py`.
+
+**§32.1 PAPER-CHANGING headline**: Gene-EN matched-splits R = 0.612 (CD4+T × OneK1K), 0.776 (Terekhova), 0.616 (AIDA loco_onek1k), 0.651 (AIDA loco_terekhova). FM frozen ridge readout R = 0.527–0.621 across the same conditions. Gap is **~0.05–0.15 R-units, not 0.38**. The "FM loses to gene-EN by 0.38 R-units" framing was an apples-to-oranges artifact — TF paper used more cohorts + different preprocessing + different hyperparams. AIDA cross-ancestry is essentially tied: gene-EN R=0.616/MAE=6.42 vs FM rank-32 L9 ridge R=0.617/MAE=6.92.
+
+**§32.3 pseudobulk-input layer profile**: Best-R layer for CD4+T shifts to L1–L4 (early) when fed donor-aggregated input, opposite of per-cell mean-pool which favors L12. Consistent with §31's NK-early-layer hypothesis: early layers encode coarse expression-level features that match what bulk gene-EN extracts. R is competitive with per-cell mean-pool (Terekhova R=0.688 vs 0.621 — actually higher), but MAE is worse on cross-cohort conditions because the ridge fit's bias is hard to calibrate across very different mean ages.
+
+**§32.4 reframing for the writeup**:
+- ~~"Single-cell FM fine-tuning loses to gene-EN by ~0.38 R-units."~~
+- → **"At the strict donor unit-of-analysis with ~190–1000 training donors, gene-EN, frozen Geneformer + ridge readout, and rank-32 LoRA + ridge readout all converge to R = 0.6–0.7 on CD4+T cross-cohort age regression."**
+- B substrate empty in BOTH gene-EN AND FM (gene-EN B × OneK1K R=0.136; FM frozen R~0). B-empty is **substrate-level**, not architecture-level.
+- NK at matched splits is hard regardless of model (gene-EN R=0.366; FM ridge L3 R=0.304–0.368).
+
+**§32.5 next-step decision**: D.18 LoRA × 3-seed extension **deprioritized** — frozen-base pseudobulk-input result is sufficient to make the "FM and bulk converge at matched splits" point. Adding LoRA fine-tunes on pseudobulk-input is unlikely to flip the picture. The paper now has enough characterization across 5 sections (§22/§27/§28, §29, §30, §31, §32) to start drafting; remaining decision is which finding to lead with.
+
+**Cost**: ~$3 D.18 frozen-base + $0 D.17 (CPU sklearn) = ~$3 total. Wall ~1 day with dev. Memo §32 (full table). Both experiments delivered the predicted-most-likely outcome (matched gap is small, pseudobulk-input shifts layer profile) — diagnostic value high regardless of whether the result was a WIN.

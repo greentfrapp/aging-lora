@@ -1,0 +1,245 @@
+skip existing results/phase3/embeddings_scfoundation/stephenson_CD4p_T_scfoundation_t4.npz
+skip existing results/phase3/embeddings_scfoundation/terekhova_CD4p_T_scfoundation_t4.npz
+skip existing results/phase3/embeddings_scfoundation/aida_CD4p_T_scfoundation_t4.npz
+skip existing results/phase3/embeddings_scfoundation/onek1k_CD4p_T_scfoundation_t4.npz
+skip existing results/phase3/embeddings_scfoundation/stephenson_B_scfoundation_t4.npz
+skip existing results/phase3/embeddings_scfoundation/terekhova_B_scfoundation_t4.npz
+skip existing results/phase3/embeddings_scfoundation/aida_B_scfoundation_t4.npz
+=== onek1k × B → scfoundation_t4 ===
+[scf-extract] cohort=onek1k cell_type=B h5ad=data/cohorts/integrated/B.h5ad
+[scf-extract] cells=19546 donors=981
+[scf-extract] gene-symbol -> scFoundation panel: 19,124 / 19,264 mapped (h5ad has 48,968 cols)
+{'mask_gene_name': False, 'gene_num': 19266, 'seq_len': 19266, 'encoder': {'hidden_dim': 768, 'depth': 12, 'heads': 12, 'dim_head': 64, 'seq_len': 19266, 'module_type': 'transformer', 'norm_first': False}, 'decoder': {'hidden_dim': 512, 'depth': 6, 'heads': 8, 'dim_head': 64, 'module_type': 'performer', 'seq_len': 19266, 'norm_first': False}, 'n_class': 104, 'pad_token_id': 103, 'mask_token_id': 102, 'bin_num': 100, 'bin_alpha': 1.0, 'rawcount': True, 'model': 'mae_autobin', 'test_valid_train_idx_dict': '/nfs_beijing/minsheng/data/os10000w-new/global_shuffle/meta.csv.train_set_idx_dict.pt', 'valid_data_path': '/nfs_beijing/minsheng/data/valid_count_10w.npz', 'num_tokens': 13, 'train_data_path': None, 'isPanA': False, 'isPlanA1': False, 'max_files_to_load': 5, 'bin_type': 'auto_bin', 'value_mask_prob': 0.3, 'zero_mask_prob': 0.03, 'replace_prob': 0.8, 'random_token_prob': 0.1, 'mask_ignore_token_ids': [0], 'decoder_add_zero': True, 'mae_encoder_max_seq_len': 15000, 'isPlanA': False, 'mask_prob': 0.3, 'model_type': 'mae_autobin', 'pos_embed': False, 'device': 'cuda'}
+[scf-extract] model loaded: depth=12 hidden=768 pad_token_id=103
+[scf-extract] 2/19546 cells | 0.7s elapsed | rate 2.8 cells/s
+[scf-extract] 892/19546 cells | 30.8s elapsed | rate 29.0 cells/s
+[scf-extract] 1802/19546 cells | 60.8s elapsed | rate 29.6 cells/s
+[scf-extract] 2722/19546 cells | 90.8s elapsed | rate 30.0 cells/s
+[scf-extract] 3594/19546 cells | 120.9s elapsed | rate 29.7 cells/s
+[scf-extract] 4540/19546 cells | 150.9s elapsed | rate 30.1 cells/s
+[scf-extract] 5432/19546 cells | 180.9s elapsed | rate 30.0 cells/s
+[scf-extract] 6298/19546 cells | 210.9s elapsed | rate 29.9 cells/s
+[scf-extract] 7132/19546 cells | 240.9s elapsed | rate 29.6 cells/s
+[scf-extract] 8028/19546 cells | 271.0s elapsed | rate 29.6 cells/s
+[scf-extract] 8930/19546 cells | 301.0s elapsed | rate 29.7 cells/s
+[scf-extract] 9880/19546 cells | 331.0s elapsed | rate 29.8 cells/s
+[scf-extract] 10814/19546 cells | 361.1s elapsed | rate 29.9 cells/s
+[scf-extract] 11724/19546 cells | 391.1s elapsed | rate 30.0 cells/s
+[scf-extract] 12626/19546 cells | 421.1s elapsed | rate 30.0 cells/s
+[scf-extract] 13448/19546 cells | 451.2s elapsed | rate 29.8 cells/s
+[scf-extract] 14240/19546 cells | 481.2s elapsed | rate 29.6 cells/s
+[scf-extract] 15040/19546 cells | 511.2s elapsed | rate 29.4 cells/s
+[scf-extract] 15858/19546 cells | 541.3s elapsed | rate 29.3 cells/s
+[scf-extract] 16666/19546 cells | 571.4s elapsed | rate 29.2 cells/s
+[scf-extract] 17526/19546 cells | 601.5s elapsed | rate 29.1 cells/s
+[scf-extract] 18362/19546 cells | 631.5s elapsed | rate 29.1 cells/s
+[scf-extract] 19218/19546 cells | 661.5s elapsed | rate 29.1 cells/s
+[scf-extract] aggregated 981 donors × 3072-dim in 674.0s (29.0 cells/s)
+[scf-extract] wrote results/phase3/embeddings_scfoundation/onek1k_B_scfoundation_t4.npz (shape (981, 3072))
+=== stephenson × NK → scfoundation_t4 ===
+[scf-extract] cohort=stephenson cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[scf-extract] cells=580 donors=29
+[scf-extract] gene-symbol -> scFoundation panel: 19,124 / 19,264 mapped (h5ad has 48,968 cols)
+{'mask_gene_name': False, 'gene_num': 19266, 'seq_len': 19266, 'encoder': {'hidden_dim': 768, 'depth': 12, 'heads': 12, 'dim_head': 64, 'seq_len': 19266, 'module_type': 'transformer', 'norm_first': False}, 'decoder': {'hidden_dim': 512, 'depth': 6, 'heads': 8, 'dim_head': 64, 'module_type': 'performer', 'seq_len': 19266, 'norm_first': False}, 'n_class': 104, 'pad_token_id': 103, 'mask_token_id': 102, 'bin_num': 100, 'bin_alpha': 1.0, 'rawcount': True, 'model': 'mae_autobin', 'test_valid_train_idx_dict': '/nfs_beijing/minsheng/data/os10000w-new/global_shuffle/meta.csv.train_set_idx_dict.pt', 'valid_data_path': '/nfs_beijing/minsheng/data/valid_count_10w.npz', 'num_tokens': 13, 'train_data_path': None, 'isPanA': False, 'isPlanA1': False, 'max_files_to_load': 5, 'bin_type': 'auto_bin', 'value_mask_prob': 0.3, 'zero_mask_prob': 0.03, 'replace_prob': 0.8, 'random_token_prob': 0.1, 'mask_ignore_token_ids': [0], 'decoder_add_zero': True, 'mae_encoder_max_seq_len': 15000, 'isPlanA': False, 'mask_prob': 0.3, 'model_type': 'mae_autobin', 'pos_embed': False, 'device': 'cuda'}
+[scf-extract] model loaded: depth=12 hidden=768 pad_token_id=103
+[scf-extract] 2/580 cells | 0.7s elapsed | rate 2.8 cells/s
+[scf-extract] aggregated 29 donors × 3072-dim in 24.1s (24.0 cells/s)
+[scf-extract] wrote results/phase3/embeddings_scfoundation/stephenson_NK_scfoundation_t4.npz (shape (29, 3072))
+=== terekhova × NK → scfoundation_t4 ===
+[scf-extract] cohort=terekhova cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[scf-extract] cells=3309 donors=166
+[scf-extract] gene-symbol -> scFoundation panel: 19,124 / 19,264 mapped (h5ad has 48,968 cols)
+{'mask_gene_name': False, 'gene_num': 19266, 'seq_len': 19266, 'encoder': {'hidden_dim': 768, 'depth': 12, 'heads': 12, 'dim_head': 64, 'seq_len': 19266, 'module_type': 'transformer', 'norm_first': False}, 'decoder': {'hidden_dim': 512, 'depth': 6, 'heads': 8, 'dim_head': 64, 'module_type': 'performer', 'seq_len': 19266, 'norm_first': False}, 'n_class': 104, 'pad_token_id': 103, 'mask_token_id': 102, 'bin_num': 100, 'bin_alpha': 1.0, 'rawcount': True, 'model': 'mae_autobin', 'test_valid_train_idx_dict': '/nfs_beijing/minsheng/data/os10000w-new/global_shuffle/meta.csv.train_set_idx_dict.pt', 'valid_data_path': '/nfs_beijing/minsheng/data/valid_count_10w.npz', 'num_tokens': 13, 'train_data_path': None, 'isPanA': False, 'isPlanA1': False, 'max_files_to_load': 5, 'bin_type': 'auto_bin', 'value_mask_prob': 0.3, 'zero_mask_prob': 0.03, 'replace_prob': 0.8, 'random_token_prob': 0.1, 'mask_ignore_token_ids': [0], 'decoder_add_zero': True, 'mae_encoder_max_seq_len': 15000, 'isPlanA': False, 'mask_prob': 0.3, 'model_type': 'mae_autobin', 'pos_embed': False, 'device': 'cuda'}
+[scf-extract] model loaded: depth=12 hidden=768 pad_token_id=103
+[scf-extract] 2/3309 cells | 0.7s elapsed | rate 2.8 cells/s
+[scf-extract] 714/3309 cells | 30.8s elapsed | rate 23.2 cells/s
+[scf-extract] 1526/3309 cells | 60.8s elapsed | rate 25.1 cells/s
+[scf-extract] 2254/3309 cells | 90.9s elapsed | rate 24.8 cells/s
+[scf-extract] 3080/3309 cells | 120.9s elapsed | rate 25.5 cells/s
+[scf-extract] aggregated 166 donors × 3072-dim in 130.5s (25.4 cells/s)
+[scf-extract] wrote results/phase3/embeddings_scfoundation/terekhova_NK_scfoundation_t4.npz (shape (166, 3072))
+=== aida × NK → scfoundation_t4 ===
+[scf-extract] cohort=aida cell_type=NK h5ad=data/cohorts/aida_eval/NK.h5ad
+[scf-extract] cells=6091 donors=306
+[scf-extract] gene-symbol -> scFoundation panel: 18,957 / 19,264 mapped (h5ad has 35,477 cols)
+{'mask_gene_name': False, 'gene_num': 19266, 'seq_len': 19266, 'encoder': {'hidden_dim': 768, 'depth': 12, 'heads': 12, 'dim_head': 64, 'seq_len': 19266, 'module_type': 'transformer', 'norm_first': False}, 'decoder': {'hidden_dim': 512, 'depth': 6, 'heads': 8, 'dim_head': 64, 'module_type': 'performer', 'seq_len': 19266, 'norm_first': False}, 'n_class': 104, 'pad_token_id': 103, 'mask_token_id': 102, 'bin_num': 100, 'bin_alpha': 1.0, 'rawcount': True, 'model': 'mae_autobin', 'test_valid_train_idx_dict': '/nfs_beijing/minsheng/data/os10000w-new/global_shuffle/meta.csv.train_set_idx_dict.pt', 'valid_data_path': '/nfs_beijing/minsheng/data/valid_count_10w.npz', 'num_tokens': 13, 'train_data_path': None, 'isPanA': False, 'isPlanA1': False, 'max_files_to_load': 5, 'bin_type': 'auto_bin', 'value_mask_prob': 0.3, 'zero_mask_prob': 0.03, 'replace_prob': 0.8, 'random_token_prob': 0.1, 'mask_ignore_token_ids': [0], 'decoder_add_zero': True, 'mae_encoder_max_seq_len': 15000, 'isPlanA': False, 'mask_prob': 0.3, 'model_type': 'mae_autobin', 'pos_embed': False, 'device': 'cuda'}
+[scf-extract] model loaded: depth=12 hidden=768 pad_token_id=103
+[scf-extract] 2/6091 cells | 0.7s elapsed | rate 2.8 cells/s
+[scf-extract] 654/6091 cells | 30.7s elapsed | rate 21.3 cells/s
+[scf-extract] 1284/6091 cells | 60.8s elapsed | rate 21.1 cells/s
+[scf-extract] 1900/6091 cells | 90.8s elapsed | rate 20.9 cells/s
+[scf-extract] 2510/6091 cells | 120.9s elapsed | rate 20.8 cells/s
+[scf-extract] 3136/6091 cells | 150.9s elapsed | rate 20.8 cells/s
+[scf-extract] 3730/6091 cells | 181.0s elapsed | rate 20.6 cells/s
+[scf-extract] 4318/6091 cells | 211.1s elapsed | rate 20.5 cells/s
+[scf-extract] 4950/6091 cells | 241.1s elapsed | rate 20.5 cells/s
+[scf-extract] 5474/6091 cells | 271.2s elapsed | rate 20.2 cells/s
+[scf-extract] 6034/6091 cells | 301.3s elapsed | rate 20.0 cells/s
+[scf-extract] aggregated 306 donors × 3072-dim in 304.6s (20.0 cells/s)
+[scf-extract] wrote results/phase3/embeddings_scfoundation/aida_NK_scfoundation_t4.npz (shape (306, 3072))
+=== onek1k × NK → scfoundation_t4 ===
+[scf-extract] cohort=onek1k cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[scf-extract] cells=19598 donors=981
+[scf-extract] gene-symbol -> scFoundation panel: 19,124 / 19,264 mapped (h5ad has 48,968 cols)
+{'mask_gene_name': False, 'gene_num': 19266, 'seq_len': 19266, 'encoder': {'hidden_dim': 768, 'depth': 12, 'heads': 12, 'dim_head': 64, 'seq_len': 19266, 'module_type': 'transformer', 'norm_first': False}, 'decoder': {'hidden_dim': 512, 'depth': 6, 'heads': 8, 'dim_head': 64, 'module_type': 'performer', 'seq_len': 19266, 'norm_first': False}, 'n_class': 104, 'pad_token_id': 103, 'mask_token_id': 102, 'bin_num': 100, 'bin_alpha': 1.0, 'rawcount': True, 'model': 'mae_autobin', 'test_valid_train_idx_dict': '/nfs_beijing/minsheng/data/os10000w-new/global_shuffle/meta.csv.train_set_idx_dict.pt', 'valid_data_path': '/nfs_beijing/minsheng/data/valid_count_10w.npz', 'num_tokens': 13, 'train_data_path': None, 'isPanA': False, 'isPlanA1': False, 'max_files_to_load': 5, 'bin_type': 'auto_bin', 'value_mask_prob': 0.3, 'zero_mask_prob': 0.03, 'replace_prob': 0.8, 'random_token_prob': 0.1, 'mask_ignore_token_ids': [0], 'decoder_add_zero': True, 'mae_encoder_max_seq_len': 15000, 'isPlanA': False, 'mask_prob': 0.3, 'model_type': 'mae_autobin', 'pos_embed': False, 'device': 'cuda'}
+[scf-extract] model loaded: depth=12 hidden=768 pad_token_id=103
+[scf-extract] 2/19598 cells | 0.8s elapsed | rate 2.6 cells/s
+[scf-extract] 666/19598 cells | 30.8s elapsed | rate 21.6 cells/s
+[scf-extract] 1330/19598 cells | 60.8s elapsed | rate 21.9 cells/s
+[scf-extract] 2046/19598 cells | 90.8s elapsed | rate 22.5 cells/s
+[scf-extract] 2774/19598 cells | 120.8s elapsed | rate 23.0 cells/s
+[scf-extract] 3504/19598 cells | 150.9s elapsed | rate 23.2 cells/s
+[scf-extract] 4232/19598 cells | 180.9s elapsed | rate 23.4 cells/s
+[scf-extract] 4974/19598 cells | 210.9s elapsed | rate 23.6 cells/s
+[scf-extract] 5670/19598 cells | 240.9s elapsed | rate 23.5 cells/s
+[scf-extract] 6360/19598 cells | 271.0s elapsed | rate 23.5 cells/s
+[scf-extract] 7044/19598 cells | 301.0s elapsed | rate 23.4 cells/s
+[scf-extract] 7774/19598 cells | 331.1s elapsed | rate 23.5 cells/s
+[scf-extract] 8444/19598 cells | 361.1s elapsed | rate 23.4 cells/s
+[scf-extract] 9136/19598 cells | 391.2s elapsed | rate 23.4 cells/s
+[scf-extract] 9860/19598 cells | 421.2s elapsed | rate 23.4 cells/s
+[scf-extract] 10580/19598 cells | 451.2s elapsed | rate 23.4 cells/s
+[scf-extract] 11304/19598 cells | 481.3s elapsed | rate 23.5 cells/s
+[scf-extract] 12000/19598 cells | 511.3s elapsed | rate 23.5 cells/s
+[scf-extract] 12708/19598 cells | 541.3s elapsed | rate 23.5 cells/s
+[scf-extract] 13384/19598 cells | 571.3s elapsed | rate 23.4 cells/s
+[scf-extract] 14050/19598 cells | 601.4s elapsed | rate 23.4 cells/s
+[scf-extract] 14904/19598 cells | 631.4s elapsed | rate 23.6 cells/s
+[scf-extract] 15672/19598 cells | 661.5s elapsed | rate 23.7 cells/s
+[scf-extract] 16428/19598 cells | 691.6s elapsed | rate 23.8 cells/s
+[scf-extract] 17236/19598 cells | 721.6s elapsed | rate 23.9 cells/s
+[scf-extract] 18056/19598 cells | 751.6s elapsed | rate 24.0 cells/s
+[scf-extract] 18936/19598 cells | 781.7s elapsed | rate 24.2 cells/s
+[scf-extract] aggregated 981 donors × 3072-dim in 806.4s (24.3 cells/s)
+[scf-extract] wrote results/phase3/embeddings_scfoundation/onek1k_NK_scfoundation_t4.npz (shape (981, 3072))
+
+=== ridge fits ===
+
+[scf_CD4pT_loco_onek1k] fold=loco_onek1k cell=CD4+ T | 190 train, 981 eval
+  HOLDOUT  R=+0.475 (+0.420, +0.527)  MAE=12.79  alpha=1e+02  pred_mean=55.97 eval_mean=63.91
+  AIDA     R=+0.442 (+0.360, +0.517)  MAE=20.92  pred_mean=62.18 eval_mean=41.76
+
+[scf_CD4pT_loco_terekhova] fold=loco_terekhova cell=CD4+ T | 1005 train, 166 eval
+  HOLDOUT  R=+0.519 (+0.402, +0.617)  MAE=17.91  alpha=10  pred_mean=32.45 eval_mean=49.43
+  AIDA     R=+0.565 (+0.485, +0.637)  MAE=9.46  pred_mean=48.08 eval_mean=41.76
+
+[scf_B_loco_onek1k] fold=loco_onek1k cell=B | 195 train, 981 eval
+  HOLDOUT  R=-0.049 (-0.109, +0.003)  MAE=19.32  alpha=1e+02  pred_mean=50.82 eval_mean=63.91
+  AIDA     R=+0.031 (-0.080, +0.140)  MAE=25.22  pred_mean=65.78 eval_mean=41.07
+
+[scf_B_loco_terekhova] fold=loco_terekhova cell=B | 1010 train, 166 eval
+  HOLDOUT  R=+0.122 (-0.048, +0.263)  MAE=15.42  alpha=1e+02  pred_mean=57.83 eval_mean=49.42
+
+[scf_NK_loco_onek1k] fold=loco_onek1k cell=NK | 195 train, 981 eval
+  HOLDOUT  R=+0.152 (+0.089, +0.214)  MAE=18.43  alpha=1e+02  pred_mean=50.10 eval_mean=63.91
+  AIDA     R=+0.311 (+0.211, +0.404)  MAE=21.90  pred_mean=61.18 eval_mean=41.10
+
+[ridge-scf] wrote 9 rows to results/phase3/ridge_summary_scfoundation.csv
+
+=== summary by (label × eval_cohort) ===
+                   label eval_cohort  n_train_donors  n_eval_donors  pearson_r  pearson_ci_lo  pearson_ci_hi     mae_y
+   scf_CD4pT_loco_onek1k      onek1k             190            981   0.475224       0.420036       0.526574 12.786774
+   scf_CD4pT_loco_onek1k        aida             190            293   0.441669       0.359593       0.516762 20.918713
+scf_CD4pT_loco_terekhova   terekhova            1005            166   0.519416       0.402347       0.617247 17.907925
+scf_CD4pT_loco_terekhova        aida            1005            293   0.564994       0.485208       0.637136  9.455364
+       scf_B_loco_onek1k      onek1k             195            981  -0.049317      -0.108775       0.002975 19.317001
+       scf_B_loco_onek1k        aida             195            307   0.030585      -0.079832       0.140010 25.224449
+    scf_B_loco_terekhova   terekhova            1010            166   0.121529      -0.048332       0.263116 15.415770
+      scf_NK_loco_onek1k      onek1k             195            981   0.152382       0.089482       0.213931 18.433842
+      scf_NK_loco_onek1k        aida             195            306   0.311398       0.210602       0.403632 21.900398
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          [scf-extract] 3800/19546 cells | 150.6s elapsed | rate 25.2 cells/s
+[scf-extract] 4558/19546 cells | 180.7s elapsed | rate 25.2 cells/s
+[scf-extract] 5252/19546 cells | 210.8s elapsed | rate 24.9 cells/s
+[scf-extract] 5772/19546 cells | 240.8s elapsed | rate 24.0 cells/s
+[scf-extract] 6342/19546 cells | 270.8s elapsed | rate 23.4 cells/s
+[scf-extract] 6938/19546 cells | 300.8s elapsed | rate 23.1 cells/s
+[scf-extract] 7550/19546 cells | 330.9s elapsed | rate 22.8 cells/s
+[scf-extract] 8122/19546 cells | 361.0s elapsed | rate 22.5 cells/s
+[scf-extract] 8674/19546 cells | 391.2s elapsed | rate 22.2 cells/s
+[scf-extract] 9396/19546 cells | 421.2s elapsed | rate 22.3 cells/s
+[scf-extract] 10096/19546 cells | 451.2s elapsed | rate 22.4 cells/s
+[scf-extract] 10774/19546 cells | 481.3s elapsed | rate 22.4 cells/s
+[scf-extract] 11452/19546 cells | 511.5s elapsed | rate 22.4 cells/s
+[scf-extract] 12138/19546 cells | 541.5s elapsed | rate 22.4 cells/s
+[scf-extract] 12738/19546 cells | 571.6s elapsed | rate 22.3 cells/s
+[scf-extract] 13230/19546 cells | 601.7s elapsed | rate 22.0 cells/s
+[scf-extract] 13738/19546 cells | 631.7s elapsed | rate 21.7 cells/s
+[scf-extract] 14256/19546 cells | 661.7s elapsed | rate 21.5 cells/s
+[scf-extract] 14776/19546 cells | 691.8s elapsed | rate 21.4 cells/s
+[scf-extract] 15276/19546 cells | 721.9s elapsed | rate 21.2 cells/s
+[scf-extract] 15828/19546 cells | 751.9s elapsed | rate 21.1 cells/s
+[scf-extract] 16406/19546 cells | 782.0s elapsed | rate 21.0 cells/s
+[scf-extract] 16972/19546 cells | 812.0s elapsed | rate 20.9 cells/s
+[scf-extract] 17610/19546 cells | 842.1s elapsed | rate 20.9 cells/s
+[scf-extract] 18082/19546 cells | 872.1s elapsed | rate 20.7 cells/s
+[scf-extract] 18790/19546 cells | 902.1s elapsed | rate 20.8 cells/s
+[scf-extract] 19312/19546 cells | 932.1s elapsed | rate 20.7 cells/s
+[scf-extract] aggregated 981 donors × 3072-dim in 945.5s (20.7 cells/s)
+[scf-extract] wrote results/phase3/embeddings_scfoundation/onek1k_B_scfoundation_t4.npz (shape (981, 3072))
+skip existing results/phase3/embeddings_scfoundation/stephenson_NK_scfoundation_t4.npz
+=== terekhova × NK → scfoundation_t4 ===
+[scf-extract] cohort=terekhova cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[scf-extract] cells=3309 donors=166
+[scf-extract] gene-symbol -> scFoundation panel: 19,124 / 19,264 mapped (h5ad has 48,968 cols)
+{'mask_gene_name': False, 'gene_num': 19266, 'seq_len': 19266, 'encoder': {'hidden_dim': 768, 'depth': 12, 'heads': 12, 'dim_head': 64, 'seq_len': 19266, 'module_type': 'transformer', 'norm_first': False}, 'decoder': {'hidden_dim': 512, 'depth': 6, 'heads': 8, 'dim_head': 64, 'module_type': 'performer', 'seq_len': 19266, 'norm_first': False}, 'n_class': 104, 'pad_token_id': 103, 'mask_token_id': 102, 'bin_num': 100, 'bin_alpha': 1.0, 'rawcount': True, 'model': 'mae_autobin', 'test_valid_train_idx_dict': '/nfs_beijing/minsheng/data/os10000w-new/global_shuffle/meta.csv.train_set_idx_dict.pt', 'valid_data_path': '/nfs_beijing/minsheng/data/valid_count_10w.npz', 'num_tokens': 13, 'train_data_path': None, 'isPanA': False, 'isPlanA1': False, 'max_files_to_load': 5, 'bin_type': 'auto_bin', 'value_mask_prob': 0.3, 'zero_mask_prob': 0.03, 'replace_prob': 0.8, 'random_token_prob': 0.1, 'mask_ignore_token_ids': [0], 'decoder_add_zero': True, 'mae_encoder_max_seq_len': 15000, 'isPlanA': False, 'mask_prob': 0.3, 'model_type': 'mae_autobin', 'pos_embed': False, 'device': 'cuda'}
+[scf-extract] model loaded: depth=12 hidden=768 pad_token_id=103
+[scf-extract] 2/3309 cells | 0.3s elapsed | rate 6.8 cells/s
+[scf-extract] 476/3309 cells | 30.4s elapsed | rate 15.7 cells/s
+[scf-extract] 872/3309 cells | 60.5s elapsed | rate 14.4 cells/s
+[scf-extract] 1264/3309 cells | 90.5s elapsed | rate 14.0 cells/s
+[scf-extract] 1712/3309 cells | 120.6s elapsed | rate 14.2 cells/s
+[scf-extract] 2106/3309 cells | 150.6s elapsed | rate 14.0 cells/s
+[scf-extract] 2484/3309 cells | 180.8s elapsed | rate 13.7 cells/s
+[scf-extract] 2878/3309 cells | 210.8s elapsed | rate 13.7 cells/s
+[scf-extract] 3270/3309 cells | 241.0s elapsed | rate 13.6 cells/s
+[scf-extract] aggregated 166 donors × 3072-dim in 244.0s (13.6 cells/s)
+[scf-extract] wrote results/phase3/embeddings_scfoundation/terekhova_NK_scfoundation_t4.npz (shape (166, 3072))
+=== aida × NK → scfoundation_t4 ===
+[scf-extract] cohort=aida cell_type=NK h5ad=data/cohorts/aida_eval/NK.h5ad
+[scf-extract] cells=6091 donors=306
+[scf-extract] gene-symbol -> scFoundation panel: 18,957 / 19,264 mapped (h5ad has 35,477 cols)
+{'mask_gene_name': False, 'gene_num': 19266, 'seq_len': 19266, 'encoder': {'hidden_dim': 768, 'depth': 12, 'heads': 12, 'dim_head': 64, 'seq_len': 19266, 'module_type': 'transformer', 'norm_first': False}, 'decoder': {'hidden_dim': 512, 'depth': 6, 'heads': 8, 'dim_head': 64, 'module_type': 'performer', 'seq_len': 19266, 'norm_first': False}, 'n_class': 104, 'pad_token_id': 103, 'mask_token_id': 102, 'bin_num': 100, 'bin_alpha': 1.0, 'rawcount': True, 'model': 'mae_autobin', 'test_valid_train_idx_dict': '/nfs_beijing/minsheng/data/os10000w-new/global_shuffle/meta.csv.train_set_idx_dict.pt', 'valid_data_path': '/nfs_beijing/minsheng/data/valid_count_10w.npz', 'num_tokens': 13, 'train_data_path': None, 'isPanA': False, 'isPlanA1': False, 'max_files_to_load': 5, 'bin_type': 'auto_bin', 'value_mask_prob': 0.3, 'zero_mask_prob': 0.03, 'replace_prob': 0.8, 'random_token_prob': 0.1, 'mask_ignore_token_ids': [0], 'decoder_add_zero': True, 'mae_encoder_max_seq_len': 15000, 'isPlanA': False, 'mask_prob': 0.3, 'model_type': 'mae_autobin', 'pos_embed': False, 'device': 'cuda'}
+[scf-extract] model loaded: depth=12 hidden=768 pad_token_id=103
+[scf-extract] 2/6091 cells | 0.3s elapsed | rate 6.2 cells/s
+[scf-extract] 316/6091 cells | 30.4s elapsed | rate 10.4 cells/s
+[scf-extract] 564/6091 cells | 60.5s elapsed | rate 9.3 cells/s
+[scf-extract] 874/6091 cells | 90.5s elapsed | rate 9.7 cells/s
+[scf-extract] 1154/6091 cells | 120.5s elapsed | rate 9.6 cells/s
+[scf-extract] 1406/6091 cells | 150.6s elapsed | rate 9.3 cells/s
+[scf-extract] 1688/6091 cells | 180.7s elapsed | rate 9.3 cells/s
+[scf-extract] 1952/6091 cells | 210.9s elapsed | rate 9.3 cells/s
+[scf-extract] 2218/6091 cells | 240.9s elapsed | rate 9.2 cells/s
+[scf-extract] 2492/6091 cells | 270.9s elapsed | rate 9.2 cells/s
+[scf-extract] 2788/6091 cells | 301.1s elapsed | rate 9.3 cells/s
+[scf-extract] 3084/6091 cells | 331.2s elapsed | rate 9.3 cells/s
+[scf-extract] 3370/6091 cells | 361.3s elapsed | rate 9.3 cells/s
+[scf-extract] 3616/6091 cells | 391.3s elapsed | rate 9.2 cells/s
+[scf-extract] 3864/6091 cells | 421.5s elapsed | rate 9.2 cells/s
+[scf-extract] 4104/6091 cells | 451.5s elapsed | rate 9.1 cells/s
+[scf-extract] 4344/6091 cells | 481.7s elapsed | rate 9.0 cells/s
+[scf-extract] 4580/6091 cells | 511.9s elapsed | rate 8.9 cells/s
+[scf-extract] 4832/6091 cells | 542.0s elapsed | rate 8.9 cells/s
+[scf-extract] 5068/6091 cells | 572.1s elapsed | rate 8.9 cells/s
+[scf-extract] 5302/6091 cells | 602.2s elapsed | rate 8.8 cells/s
+[scf-extract] 5538/6091 cells | 632.3s elapsed | rate 8.8 cells/s
+[scf-extract] 5820/6091 cells | 662.5s elapsed | rate 8.8 cells/s
+[scf-extract] 6064/6091 cells | 692.6s elapsed | rate 8.8 cells/s
+[scf-extract] aggregated 306 donors × 3072-dim in 696.0s (8.8 cells/s)
+[scf-extract] wrote results/phase3/embeddings_scfoundation/aida_NK_scfoundation_t4.npz (shape (306, 3072))
+=== onek1k × NK → scfoundation_t4 ===
+[scf-extract] cohort=onek1k cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[scf-extract] cells=19598 donors=981
+[scf-extract] gene-symbol -> scFoundation panel: 19,124 / 19,264 mapped (h5ad has 48,968 cols)
+{'mask_gene_name': False, 'gene_num': 19266, 'seq_len': 19266, 'encoder': {'hidden_dim': 768, 'depth': 12, 'heads': 12, 'dim_head': 64, 'seq_len': 19266, 'module_type': 'transformer', 'norm_first': False}, 'decoder': {'hidden_dim': 512, 'depth': 6, 'heads': 8, 'dim_head': 64, 'module_type': 'performer', 'seq_len': 19266, 'norm_first': False}, 'n_class': 104, 'pad_token_id': 103, 'mask_token_id': 102, 'bin_num': 100, 'bin_alpha': 1.0, 'rawcount': True, 'model': 'mae_autobin', 'test_valid_train_idx_dict': '/nfs_beijing/minsheng/data/os10000w-new/global_shuffle/meta.csv.train_set_idx_dict.pt', 'valid_data_path': '/nfs_beijing/minsheng/data/valid_count_10w.npz', 'num_tokens': 13, 'train_data_path': None, 'isPanA': False, 'isPlanA1': False, 'max_files_to_load': 5, 'bin_type': 'auto_bin', 'value_mask_prob': 0.3, 'zero_mask_prob': 0.03, 'replace_prob': 0.8, 'random_token_prob': 0.1, 'mask_ignore_token_ids': [0], 'decoder_add_zero': True, 'mae_encoder_max_seq_len': 15000, 'isPlanA': False, 'mask_prob': 0.3, 'model_type': 'mae_autobin', 'pos_embed': False, 'device': 'cuda'}
+[scf-extract] model loaded: depth=12 hidden=768 pad_token_id=103
+[scf-extract] 2/19598 cells | 0.4s elapsed | rate 5.4 cells/s
+[scf-extract] 496/19598 cells | 30.4s elapsed | rate 16.3 cells/s
+[scf-extract] 1000/19598 cells | 60.5s elapsed | rate 16.5 cells/s
+[scf-extract] 1526/19598 cells | 90.5s elapsed | rate 16.9 cells/s
+[scf-extract] 2172/19598 cells | 120.5s elapsed | rate 18.0 cells/s
+[scf-extract] 2900/19598 cells | 150.6s elapsed | rate 19.3 cells/s
+[scf-extract] 3596/19598 cells | 180.6s elapsed | rate 19.9 cells/s
+[scf-extract] 4336/19598 cells | 210.6s elapsed | rate 20.6 cells/s
+[scf-extract] 5186/19598 cells | 240.7s elapsed | rate 21.5 cells/s
+[scf-extract] 5824/19598 cells | 270.8s elapsed | rate 21.5 cells/s
+[scf-extract] 6534/19598 cells | 300.8s elapsed | rate 21.7 cells/s

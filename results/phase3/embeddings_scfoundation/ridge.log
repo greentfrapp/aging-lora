@@ -1,0 +1,33 @@
+
+[scf_CD4pT_loco_onek1k] fold=loco_onek1k cell=CD4+ T | 190 train, 981 eval
+  HOLDOUT  R=+0.475 (+0.420, +0.527)  MAE=12.79  alpha=1e+02  pred_mean=55.97 eval_mean=63.91
+  AIDA     R=+0.442 (+0.360, +0.517)  MAE=20.92  pred_mean=62.18 eval_mean=41.76
+
+[scf_CD4pT_loco_terekhova] fold=loco_terekhova cell=CD4+ T | 1005 train, 166 eval
+  HOLDOUT  R=+0.519 (+0.402, +0.617)  MAE=17.91  alpha=10  pred_mean=32.45 eval_mean=49.43
+  AIDA     R=+0.565 (+0.485, +0.637)  MAE=9.46  pred_mean=48.08 eval_mean=41.76
+
+[scf_B_loco_onek1k] fold=loco_onek1k cell=B | 195 train, 981 eval
+  HOLDOUT  R=-0.049 (-0.109, +0.003)  MAE=19.32  alpha=1e+02  pred_mean=50.82 eval_mean=63.91
+  AIDA     R=+0.031 (-0.080, +0.140)  MAE=25.22  pred_mean=65.78 eval_mean=41.07
+
+[scf_B_loco_terekhova] fold=loco_terekhova cell=B | 1010 train, 166 eval
+  HOLDOUT  R=+0.122 (-0.048, +0.263)  MAE=15.42  alpha=1e+02  pred_mean=57.83 eval_mean=49.42
+
+[scf_NK_loco_onek1k] fold=loco_onek1k cell=NK | 195 train, 981 eval
+  HOLDOUT  R=+0.152 (+0.089, +0.214)  MAE=18.43  alpha=1e+02  pred_mean=50.10 eval_mean=63.91
+  AIDA     R=+0.311 (+0.211, +0.404)  MAE=21.90  pred_mean=61.18 eval_mean=41.10
+
+[ridge-scf] wrote 9 rows to results/phase3/ridge_summary_scfoundation.csv
+
+=== summary by (label × eval_cohort) ===
+                   label eval_cohort  n_train_donors  n_eval_donors  pearson_r  pearson_ci_lo  pearson_ci_hi     mae_y
+   scf_CD4pT_loco_onek1k      onek1k             190            981   0.475224       0.420036       0.526574 12.786774
+   scf_CD4pT_loco_onek1k        aida             190            293   0.441669       0.359593       0.516762 20.918713
+scf_CD4pT_loco_terekhova   terekhova            1005            166   0.519416       0.402347       0.617247 17.907925
+scf_CD4pT_loco_terekhova        aida            1005            293   0.564994       0.485208       0.637136  9.455364
+       scf_B_loco_onek1k      onek1k             195            981  -0.049317      -0.108775       0.002975 19.317001
+       scf_B_loco_onek1k        aida             195            307   0.030585      -0.079832       0.140010 25.224449
+    scf_B_loco_terekhova   terekhova            1010            166   0.121529      -0.048332       0.263116 15.415770
+      scf_NK_loco_onek1k      onek1k             195            981   0.152382       0.089482       0.213931 18.433842
+      scf_NK_loco_onek1k        aida             195            306   0.311398       0.210602       0.403632 21.900398

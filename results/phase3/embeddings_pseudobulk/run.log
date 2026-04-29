@@ -1,0 +1,288 @@
+=== stephenson × CD4+ T ===
+[pb-extract] cohort=stephenson cell_type=CD4+ T h5ad=data/cohorts/integrated/CD4p_T.h5ad
+[pb-extract] 10835 cells across 24 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,264 / 48,968 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 5.7s; counts shape (24, 19264)
+[pb-extract] tokenized 24 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 8506.66it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 24, 768), elapsed 1.1s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/stephenson_CD4p_T_pseudobulk_frozen_alllayers.npz
+=== stephenson × B ===
+[pb-extract] cohort=stephenson cell_type=B h5ad=data/cohorts/integrated/B.h5ad
+[pb-extract] 7054 cells across 29 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,264 / 48,968 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 2.7s; counts shape (29, 19264)
+[pb-extract] tokenized 29 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 4993.40it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 29, 768), elapsed 1.3s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/stephenson_B_pseudobulk_frozen_alllayers.npz
+=== stephenson × NK ===
+[pb-extract] cohort=stephenson cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[pb-extract] 10125 cells across 29 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,264 / 48,968 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 4.7s; counts shape (29, 19264)
+[pb-extract] tokenized 29 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3637.99it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 29, 768), elapsed 1.3s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/stephenson_NK_pseudobulk_frozen_alllayers.npz
+=== terekhova × CD4+ T ===
+[pb-extract] cohort=terekhova cell_type=CD4+ T h5ad=data/cohorts/integrated/CD4p_T.h5ad
+[pb-extract] 82867 cells across 166 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,264 / 48,968 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 152.8s; counts shape (166, 19264)
+[pb-extract] tokenized 166 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3456.01it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 166, 768), elapsed 6.9s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/terekhova_CD4p_T_pseudobulk_frozen_alllayers.npz
+=== terekhova × B ===
+[pb-extract] cohort=terekhova cell_type=B h5ad=data/cohorts/integrated/B.h5ad
+[pb-extract] 57728 cells across 166 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,264 / 48,968 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 38.0s; counts shape (166, 19264)
+[pb-extract] tokenized 166 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3657.04it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 166, 768), elapsed 6.9s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/terekhova_B_pseudobulk_frozen_alllayers.npz
+=== terekhova × NK ===
+[pb-extract] cohort=terekhova cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[pb-extract] 76104 cells across 166 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,264 / 48,968 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 108.5s; counts shape (166, 19264)
+[pb-extract] tokenized 166 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3859.42it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 166, 768), elapsed 6.9s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/terekhova_NK_pseudobulk_frozen_alllayers.npz
+=== aida × CD4+ T ===
+[pb-extract] cohort=aida cell_type=CD4+ T h5ad=data/cohorts/aida_eval/CD4p_T.h5ad
+[pb-extract] 131822 cells across 293 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,257 / 35,477 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 316.1s; counts shape (293, 19257)
+[pb-extract] tokenized 293 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3642.35it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 293, 768), elapsed 12.2s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/aida_CD4p_T_pseudobulk_frozen_alllayers.npz
+=== aida × B ===
+[pb-extract] cohort=aida cell_type=B h5ad=data/cohorts/aida_eval/B.h5ad
+[pb-extract] 37781 cells across 307 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,257 / 35,477 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 31.8s; counts shape (307, 19257)
+[pb-extract] tokenized 307 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 4708.54it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 307, 768), elapsed 12.8s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/aida_B_pseudobulk_frozen_alllayers.npz
+=== aida × NK ===
+[pb-extract] cohort=aida cell_type=NK h5ad=data/cohorts/aida_eval/NK.h5ad
+[pb-extract] 81148 cells across 306 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,257 / 35,477 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 89.7s; counts shape (306, 19257)
+[pb-extract] tokenized 306 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3643.31it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 306, 768), elapsed 12.8s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/aida_NK_pseudobulk_frozen_alllayers.npz
+=== onek1k × CD4+ T ===
+[pb-extract] cohort=onek1k cell_type=CD4+ T h5ad=data/cohorts/integrated/CD4p_T.h5ad
+[pb-extract] 454897 cells across 981 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,264 / 48,968 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 734.6s; counts shape (981, 19264)
+[pb-extract] tokenized 981 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3620.25it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 981, 768), elapsed 40.5s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/onek1k_CD4p_T_pseudobulk_frozen_alllayers.npz
+=== onek1k × B ===
+[pb-extract] cohort=onek1k cell_type=B h5ad=data/cohorts/integrated/B.h5ad
+[pb-extract] 125388 cells across 981 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,264 / 48,968 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 73.9s; counts shape (981, 19264)
+[pb-extract] tokenized 981 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3414.34it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 981, 768), elapsed 40.7s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/onek1k_B_pseudobulk_frozen_alllayers.npz
+=== onek1k × NK ===
+[pb-extract] cohort=onek1k cell_type=NK h5ad=data/cohorts/integrated/NK.h5ad
+[pb-extract] 170999 cells across 981 donors → 1 pseudobulk vector per donor
+[pb-extract] 19,264 / 48,968 h5ad genes have Geneformer tokens + medians
+[pb-extract] aggregating donor pseudobulk vectors...
+[pb-extract] aggregated in 116.5s; counts shape (981, 19264)
+[pb-extract] tokenized 981 donor pseudobulks
+[pb-extract] mode=frozen-base
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3477.60it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 981, 768), elapsed 40.6s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/onek1k_NK_pseudobulk_frozen_alllayers.npz
+=== EXTRACT DONE ===
+ctions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pb-extract] forward in batches of 8...
+[pb-extract] embeddings shape (13, 981, 768), elapsed 40.6s
+[pb-extract] wrote results/phase3/embeddings_pseudobulk/onek1k_NK_pseudobulk_frozen_alllayers.npz
