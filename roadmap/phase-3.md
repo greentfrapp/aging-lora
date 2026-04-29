@@ -256,6 +256,31 @@ Pragmatic note: scFoundation × Stephenson is `overlapping` per leakage audit (H
 - [ ] Task D.15 (conditional, far): Geneformer full FT (no LoRA) × 3 seeds × 2 folds × CD4+T. The "more parameters, careful regularization" ceiling test. ~$30–50, ~1.5 days wall. Last resort if neither rank-32 nor longer training closes the §28 close-MATCH to a strict WIN.
 - [ ] Task D.16 (proposed 2026-04-29, post-D.12 pivot): Geneformer LoRA + longer training (rank-16 × 5–6 epochs × 1 seed smoke). Direct test of the optimization-limited hypothesis from §30.3. If R=0.631 / MAE=8.21 from rank-16 seed-0 was an under-converged seed, longer training tightens std across seeds and lifts the floor. If not, MAE=10.85 ± 2.19 is a real ceiling and we write up Phase-3-A. Compute ~$3, ~2h wall. Same hyperparams as e5b except `--epochs 5` or `--epochs 6`, run-tag `_e5b_e6` or similar.
 
+### Phase-3-B step-back review (2026-04-29, see scratchpad/step_back_review.md)
+
+After §30's PIVOT we re-read existing layered-ridge CSVs (`ridge_summary_layered.csv`, `ridge_summary_post_finetune.csv`, `ridge_summary_layered_finetune.csv`, `ridge_summary_r32_smoke.csv`) and discovered:
+
+1. **The L9-beats-L12-on-AIDA finding from §30.2 is rank-32 seed-0 specific, not structural.** Frozen-base CD4+T → AIDA: L12 wins R (0.527 vs L9 0.466) and MAE (11.76 vs 13.09). Rank-16 3-seed mean: L12 wins R (0.560 vs L9 0.520), L12 ≈ L9 on MAE (8.32 vs 8.36). The single-seed rank-32 L9 MAE=6.92 is the outlier. Candidate-3 headline (cross-layer asymmetry as paper lead) is *not supported* without a 3-seed verification on rank-32 — and indirect evidence suggests it would regress.
+2. **Real cross-layer finding emerges**: NK-relevant signal lives in EARLY frozen-base layers (L2-L5 win R across all 3 cohorts; L0 wins MAE on OneK1K) while CD4+T-relevant signal lives at L12. B substrate empty everywhere. This is a cell-type-specific layer asymmetry visible *without fine-tuning*, supported by existing data, and writeup-worthy as a small panel.
+3. **§22 / §23 numbers are slightly outdated**: §26's frozen L1 on Terekhova (R=0.616, MAE=8.82) sets the upper end of frozen-base CD4+T; previous "0.527–0.576" range underweights this.
+4. **Apples-to-oranges concern with TF-paper gene-EN baseline**: their gene-EN R=0.83 LOCO + 0.77 AIDA used different splits, preprocessing, hyperparams. Our FM-loses-by-X-R-units claim's *magnitude* is uncertain until gene-EN runs on matched splits.
+5. **Pseudobulk-input was skipped in §29** with the argument that ridge-readout already enforces donor objective post-hoc. The step-back review correctly notes this is *not* the same comparison: ridge-after-mean-pool aggregates *after* the FM; pseudobulk-input feeds aggregated input *to* the FM. The TF gene-EN baseline operates on log1p-mean pseudobulk — apples-to-apples requires matching that input shape.
+
+### New Tier-1 tasks (load-bearing for writeup)
+
+- [ ] Task D.17 (Tier 1, "C" in step-back review): **Re-run gene-EN baseline on FM-matched splits and preprocessing.** Use the same `data/loco_folds.json` splits, same per-cell normalization, same donor caps as the FM experiments. Output `results/baselines/gene_en_matched/` with R + MAE per (cell × eval_cohort). Removes the apples-to-oranges concern from every comparison in the paper. ~$0 (CPU-only sklearn), ~2h dev + ~1h compute.
+- [ ] Task D.18 (Tier 1, "B" in step-back review): **Variant 2 — pseudobulk-input Geneformer + ridge readout on CD4+T.** Aggregate cells per donor → log1p-mean pseudobulk → tokenize as one "pseudo-cell" through Geneformer's rank-value pipeline → forward (frozen + fine-tuned) → ridge fit at donor level. The single highest-information experiment we haven't run. Either result is paper-improving: if gap closes, headline shifts to "match the input shape and FM is competitive"; if not, structural-negative claim strengthens because comparison is now apples-to-apples. Run frozen-base first (~$3), then rank-16 LoRA × 3 seeds (~$15) only if frozen-base shows promise.
+- [ ] Task D.19 (Tier 1 → Tier 2 after step-back update, "A"): **L9 AIDA 3-seed verification on rank-32.** Re-run rank-32 LoRA at seeds 1, 2 + extract layered + ridge. Tests whether single-seed rank-32 L9 AIDA MAE=6.92 holds at 3-seed mean. **Demoted to Tier 2** after step-back review found rank-16 3-seed L12 AIDA already at MAE=8.32 ± small (per `ridge_summary_post_finetune.csv`); the §30 L9 finding is likely an outlier, and the rank-16 3-seed L12 number is the more defensible cross-ancestry headline. Run only if writeup needs to defend the L9 claim. ~$10, half a day.
+- [ ] Task D.20 (Tier 2, **writeup-only**, no new compute): **NK-early-layer asymmetry analysis + writeup panel.** Document from existing `ridge_summary_layered.csv` that NK-relevant signal lives in L2-L5 of frozen Geneformer across all 3 eval cohorts (loco_onek1k → OneK1K, loco_onek1k → AIDA, loco_terekhova → Terekhova), while CD4+T-relevant signal lives at L12. Cell-type-specific layer asymmetry in the *pretrained* representation, visible without fine-tuning. Update memo with §31 + add a panel to the paper outline. ~$0, ~2h analysis + writeup.
+
+### Phase-3-B priority order (revised post-step-back review)
+
+1. **D.17 / D.20 first** (no compute, ~3h total) — removes apples-to-oranges from every comparison; locks in the new cross-layer finding.
+2. **D.18 frozen-base** (~$3, 1 day with dev) — the unaddressed pseudobulk-input gap. Can be extended to LoRA × 3-seed if frozen-base shows promise.
+3. **D.19** if writeup leans on L9 AIDA (likely demoted after step-back).
+4. **D.13–D.16** as defensibility ablations only if reviewers would predictably ask. After D.17/D.18/D.20, the paper has enough characterization for the most likely headline.
+5. **D.14 (scFoundation LoRA) and D.15 (full FT)** remain on the back burner — see scratchpad/full_finetune_suggestion.md for an alternative argument (full FT is high-value as a diagnostic if the predicted overfitting curve is the result), and scratchpad/step_back_review.md for the counter-argument that the paper has enough characterization without full FT once D.18 lands. Decision deferred to post-D.18.
+
 ### Compute envelope
 
 | Block | Compute | Wall |
@@ -263,9 +288,11 @@ Pragmatic note: scFoundation × Stephenson is `overlapping` per leakage audit (H
 | Variant 1 frozen-base (D.1–D.4) | **~$3 spent** | done 2026-04-28 |
 | Variant 1 audit (D.9–D.11) | $0 (analysis-only) | done 2026-04-28 |
 | Variant 3 frozen + post-finetune (D.6) | **~$5 spent** | done 2026-04-28 |
-| ~~Variant 2 (D.5)~~ | ~~$15~~ | **skipped 2026-04-29 — §29** |
-| scFoundation diagnostic (D.7, frozen-base + ridge readout only — no LoRA) | ~$3 (extract only, no fine-tune) | ~6h |
-| Total remaining | **~$3** | <1 day |
+| ~~Variant 2 (D.5)~~ | ~~$15~~ | **skipped 2026-04-29 — §29; resurrected as D.18 with corrected protocol after step-back review** |
+| scFoundation diagnostic (D.7) | **~$3 spent** | done 2026-04-29 |
+| Rank-32 smoke (D.12) | **~$3 spent** | done 2026-04-29 |
+| Step-back review tasks (D.17, D.18, D.20) | ~$3–18 | ~2 days |
+| Phase-3-B defensibility ablations (D.13–D.16, D.19) | ~$15–60 conditional | ~2–4 days conditional |
 
 ### Cancelled from B+NK extension
 
