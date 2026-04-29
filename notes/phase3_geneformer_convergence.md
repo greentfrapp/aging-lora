@@ -1557,3 +1557,91 @@ After D.31 + D.32 land:
 - D.31 + D.32 ran while D.21 + D.22 were on the GPU. GPU memory was 4.8 GB used at peak vs 23 GB available — the rank-32 LoRA finetune with bf16 + grad checkpointing uses much less memory than I expected, leaving room for parallel frozen-base extraction (D.22) AND CPU-bound bootstrap analysis without contention. Writing more aggressive parallel pipelines is feasible in future Phase-3 work.
 - D.32 wall time ~4 min (1000-bootstrap × 13 layers × 3 seeds × 2 eval cohorts).
 - D.31 wall time ~30s (no ridge fits, just kNN distance + Pearson).
+
+## 36. D.21 + D.22 verification outcomes (Phase-3-B reframed-review Tier 1, 2026-04-29)
+
+The two GPU-bound Tier 1 verifications landed (D.22 fully, D.21 partial at 2 seeds; seed 2 still in progress). Decision-rule outcomes:
+
+### 36.1 D.22 (NK frozen-base 3-seed) — PARTIAL support
+
+8 NK frozen-base layered extractions × seeds 1, 2 × 4 cohorts produced via `scripts/extract_embeddings_layered.py --frozen-base --seed {1,2}`. Ridge analysis aggregated to 3-seed mean ± std per (fold × eval_cohort × layer).
+
+ΔR(L_best vs L12) at 3-seed mean per cohort:
+
+| Condition | L_best (3-seed) | R_best | L12 R | ΔR | Threshold (>+0.05) |
+|---|---|---|---|---|---|
+| loco_onek1k × AIDA cross-ancestry | L6 | +0.221 | +0.136 | +0.085 | **PASS** |
+| loco_onek1k × OneK1K (in-distribution) | L3 | +0.280 | +0.241 | +0.039 | FAIL (just below) |
+| loco_terekhova × Terekhova (chemistry-shift) | L2 | +0.291 | +0.212 | +0.079 | **PASS** |
+
+**Outcome: 2/3 cohorts pass → PARTIAL support per §D.22.** The cell-type-conditional finding survives with **cohort-specific caveat**: NK shows robust early-layer advantage on cross-cohort settings (chemistry-shift Terekhova, cross-ancestry AIDA) but not on in-distribution OneK1K.
+
+Notable: best-layer per cohort shifted from §31 single-seed (L3/L2/L5) to D.22 3-seed mean (L3/L2/**L6**). The "early-layer dominance" pattern survives, but the *specific* best layer is less stable than single-seed implied. The finding is "NK reads better at early-to-mid layers than at L12 on cross-cohort settings," not "NK consistently reads at L3."
+
+Output files: `d22_nk_3seed_layered_ridge.csv` (117 rows), `d22_nk_3seed_aggregated.csv`. Embeddings: `embeddings_layered/*NK_frozen_base_seed{1,2}_alllayers.npz`.
+
+### 36.2 D.21 (rank-32 LoRA × 3-seed) — partial DECISION-RULE PASS at 2-seed (seed 2 pending)
+
+Rank-32 LoRA seeds 0 + 1 done, ridge on layered embeddings:
+
+L9 AIDA per-seed:
+- Seed 0: R = 0.617, MAE = 6.92y (single-seed claim from §30)
+- Seed 1: R = 0.567, MAE = 7.66y (NEW)
+- **2-seed mean: R = 0.592 ± 0.035, MAE = 7.29y ± 0.53y**
+
+**Decision rule (per §D.21): MAE 7.29y < 7.5y → outline (a) VIABLE, matched-splits parity headline SURVIVES.** σ(MAE)=0.53y << 2.0y robustness threshold. Even at 2-seed, the result is in the upper decision band.
+
+Layer profile at 2-seed mean:
+- L9 AIDA: best by MAE (7.29y)
+- L11 AIDA: best by R (0.623)
+- L10 AIDA: R=0.601, MAE=7.72y
+- L8 AIDA: R=0.587, MAE=7.65y
+- L12 AIDA: R=0.600, MAE=8.30y
+
+The "L11 best by R" pattern from D.32 (rank-16 3-seed) replicates in rank-32 2-seed. The "L9 best by MAE" pattern from §30 (rank-32 seed 0) survives at 2-seed but with hedging.
+
+**Pending**: seed 2 is currently running (~120 min finetune). When it completes:
+- If seed 2 L9 AIDA MAE ≤ 7.5y: 3-seed mean stays ≤ 7.5y → outline (a) confirmed.
+- If seed 2 L9 AIDA MAE 7.5–8.5y: 3-seed mean drifts to ~7.5–7.8y → outline (a) hedged.
+- If seed 2 L9 AIDA MAE > 8.5y: 3-seed mean drifts above 7.5y → outline (a) hedged or outline (b).
+
+Most likely: seed 2 lands somewhere in the seed 0/1 range (6.9–7.7y), 3-seed mean stays in the 7.0–7.5y range, **outline (a) confirmed**.
+
+### 36.3 Combined verification gate outcome (so far)
+
+Based on D.21 partial + D.22 + D.23 + earlier analysis:
+
+| Verification | Outcome |
+|---|---|
+| D.21 (rank-32 L9 AIDA 3-seed MAE) | 2-seed: 7.29y < 7.5y (PASS); 3-seed pending |
+| D.22 (NK ΔR > +0.05 cohorts) | 2/3 PASS (PARTIAL support) |
+| D.23 (B-empty < 0.20 R) | FAILED bilateral (B × Terekhova R=0.321) |
+| D.24 (NK pseudobulk-input layer) | L0–L3 (matches CD4+T pseudobulk shift); two-axis principle SUPPORTED |
+| D.25 (scFoundation matched-splits) | Lags Geneformer by 0.08–0.10 R-units; matched-splits parity is Geneformer-specific |
+| D.26 (NK ΔR bootstrap CI) | Excludes 0 only on AIDA cross-ancestry; OneK1K + Terekhova CI includes 0 |
+| D.32 (rank-16 LoRA 3-seed L11 AIDA MAE) | 7.96 ± 0.42y (anchor-tier within "competitive" band) |
+
+**Outline selection (per the decision-rule table in `paper_outline_drafts.md`)**:
+- D.21 ≤ 7.5y at 2-seed → row 1 candidate
+- D.22 PARTIAL → "with cohort-specific caveat"
+- D.23 FAILED bilateral → caveat in B section regardless
+
+**Recommended outline: (a) methodology-led, with two cohort-specific caveats:**
+1. NK cell-type-conditional layer claim caveated to cross-cohort settings (PARTIAL D.22).
+2. B substrate-empty claim caveated to "B is mostly weak in both methods, with chemistry-shift exception" (D.23).
+
+Both outline (a) and (b) are now defensible. Outline (a) is the stronger contribution if D.21 seed 2 lands in band. The paper has multi-method, multi-cohort, multi-cell-type characterization of:
+- Matched-splits FM-vs-bulk parity (Geneformer specifically)
+- Cell-type-conditional layer-of-best-readout (with cohort-specific caveat)
+- Unit-of-analysis × layer interaction (two-axis principle)
+- Cross-ancestry AIDA generalization characterization
+
+### 36.4 What this changes in the paper outline drafts
+
+When seed 2 lands and the final 3-seed L9 AIDA mean is computed:
+- Update `notes/paper_draft_v0.md` §3.4 with the 3-seed number.
+- Confirm outline (a) selection.
+- Mark D.21 as DONE in roadmap.
+- Final commit + summary.
+
+Until seed 2 lands, the writing decision is **provisionally outline (a)**, with the explicit hedging that the parity claim is supported at 2-seed mean and pending 3-seed verification.
