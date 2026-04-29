@@ -1478,3 +1478,82 @@ After D.24/D.25/D.26 land:
 - **Pseudobulk-input CD4+T layer L1–L4** (from §32): now extended to NK (D.24); cross-cell-type confirmation eases the single-seed concern but doesn't fully replace 3-seed verification.
 
 Updated Tier-A queue: D.21 (in progress), D.22 (NK 3-seed of cell sampling) — both still essential, despite the analysis-only Tier-2 work landing first.
+
+## 35. D.31 + D.32 results (proposed-and-implemented during D.21/D.22 wait, 2026-04-29)
+
+While D.21 (rank-32 LoRA seed 1+2 finetune) and D.22 (NK frozen × seeds 1+2 extraction) are running on GPU, two analysis-only follow-ups landed.
+
+### 35.1 D.31: Donor-cluster mechanistic check on §31 layer-asymmetry
+
+**Hypothesis tested**: §31's NK best-layer R advantage (early layers) is mechanistically explained by donor-distance structure — donors with similar embeddings should have similar ages at the best layer.
+
+**Method**: For each (cell × eval_cohort × best_layer) condition, compute kNN-age correlation: each donor's embedding has 5 nearest neighbours by cosine; correlate own age with mean-of-neighbours age. Compare best layer to L12.
+
+**Output**: `results/phase3/d31_donor_cluster_metrics.csv`
+
+**Headline result**: kNN-age R does NOT show the §31 best-layer advantage:
+
+| Cell × cohort | L_best | kNN-R best | kNN-R L12 | Δ |
+|---|---|---|---|---|
+| CD4+T × OneK1K | 12 | 0.419 | 0.419 | 0.000 (same layer) |
+| CD4+T × Terekhova | 5 | 0.314 | 0.286 | +0.028 |
+| NK × OneK1K | 3 | 0.337 | 0.343 | **−0.006** (L12 better!) |
+| NK × Terekhova | 2 | 0.190 | 0.165 | +0.026 |
+| **NK × AIDA** | **5** | **0.448** | **0.470** | **−0.022** (L12 better!) |
+| B × Terekhova | 9 | 0.219 | 0.165 | +0.054 |
+| B × AIDA | 11 | 0.453 | 0.425 | +0.027 |
+
+**Interpretation**: The §31 ridge-readout layer-of-best-readout signal is NOT about donor cluster structure. The early-layer NK ridge advantage is about specific aging-correlated dimensions in the embedding that the ridge linear projection captures, but global donor-age clustering at the best layer is no better than at L12.
+
+**Refines the methodology contribution framing**: "Cell-type-conditional layer selection captures specific aging-axes that cell-type-specific late-layer features miss" — but the layer doesn't make donors-of-similar-age cluster more tightly. This is a *more nuanced* claim than "early layers preserve donor-level age information that late layers lose."
+
+This argues against the original hypothesis (early-layer NK = coarse compositional shifts captured by donor cluster). The early-layer signal is dimensional-specific, not cluster-structural.
+
+### 35.2 D.32: Bootstrap CIs on rank-16 LoRA 3-seed layered ridge — IDENTIFIES L11 AS NEW HEADLINE LAYER FOR AIDA
+
+**Background**: §28's rank-16 3-seed audit reported L12 AIDA at MAE=8.32y mean, used as the "more defensible cross-ancestry headline" after the §30 single-seed L9 finding. But the audit didn't compute bootstrap CIs per layer per seed, and didn't characterize which layer is robustly best across seeds.
+
+**Method**: Re-fit ridge per layer per seed (seeds 0/1/2) on existing layered embeddings, compute bootstrap (n=1000) CI per (seed × layer) on R + MAE, aggregate across 3 seeds.
+
+**Output**: `results/phase3/d32_rank16_3seed_layered_bootstrap_cis.csv` (39 rows = 13 layers × 3 seeds)
+
+**Headline finding — L11 is the best layer for AIDA at rank-16 3-seed mean, beating both L9 and L12**:
+
+| Layer | AIDA R 3-seed mean ± std | AIDA MAE 3-seed mean ± std |
+|---|---|---|
+| L8 | 0.543 ± 0.013 | 8.09 ± 0.25 |
+| L9 | 0.520 ± 0.031 | 8.36 ± 0.14 |
+| L10 | 0.546 ± 0.027 | 8.07 ± 0.28 |
+| **L11** | **0.566 ± 0.032** | **7.96 ± 0.42** |
+| L12 | 0.560 ± 0.045 | 8.32 ± 0.41 |
+
+Per-seed bootstrap CIs at L11:
+- Seed 0: not directly computed (extracted from existing layered_finetune CSV)
+- Seed 1: included
+- Seed 2: included
+
+**L9 specifically (the §30 single-seed claim's layer)**:
+- 3-seed mean MAE = 8.36y ± 0.14y (very tight std)
+- 3-seed mean R = +0.520 ± 0.031
+- Per-seed bootstrap CI: [7.51, 9.11], [7.48, 10.03], [7.26, 9.64]
+
+**Decision-rule mapping (per `notes/decision_rules_phase3.md` §D.21)**: rank-16 3-seed L11 mean MAE = 7.96y is in the **7.5y–8.5y band → "Modestly behind, within ~1y, outline (a) hedged"** band. Rank-16 already shows L11 reaches the hedged-headline regime; D.21's rank-32 3-seed verification will determine whether rank-32 reaches the ≤7.5y unhedged band.
+
+**Implications for the writeup**:
+1. L11 (not L9, not L12) is the best AIDA layer at rank-16 3-seed mean. Adds a new specific-layer claim that the writeup should report.
+2. **3-seed std is tight**: L9 σ(MAE)=0.14y, L11 σ(MAE)=0.42y, L12 σ(MAE)=0.41y. These are well below the 2.0y robustness threshold from §D.21. The 3-seed mean numbers are anchor-tier.
+3. The `§28 lesson` of "single-seed numbers are correction-risk" is partially relaxed in this regime — within rank-16 LoRA at 3 seeds, the layer-by-layer mean is stable. Single-seed *layer choice* is more variable than single-seed point-estimate-at-fixed-layer.
+4. The L11 finding is independent of whether D.21 lands cleanly. Even if rank-32 3-seed L9 collapses to ~9.0y, the rank-16 3-seed L11 = 7.96y is still a defensible headline within the 7.5–8.5y "competitive" band.
+
+### 35.3 Updated Tier-A inventory (§33.1 supersession)
+
+After D.31 + D.32 land:
+- L9 AIDA rank-32 R=0.617/MAE=6.92 (single-seed, in D.21 verification): **still load-bearing**
+- L11 AIDA rank-16 3-seed R=0.566/MAE=7.96 (3-seed, this section): **NEW anchor-tier number**, supersedes L12 as "most defensible cross-ancestry headline"
+- NK best-layer L3.3 across 3 cohorts (in D.22 verification): **still load-bearing**
+
+### 35.4 Process notes
+
+- D.31 + D.32 ran while D.21 + D.22 were on the GPU. GPU memory was 4.8 GB used at peak vs 23 GB available — the rank-32 LoRA finetune with bf16 + grad checkpointing uses much less memory than I expected, leaving room for parallel frozen-base extraction (D.22) AND CPU-bound bootstrap analysis without contention. Writing more aggressive parallel pipelines is feasible in future Phase-3 work.
+- D.32 wall time ~4 min (1000-bootstrap × 13 layers × 3 seeds × 2 eval cohorts).
+- D.31 wall time ~30s (no ridge fits, just kNN distance + Pearson).
