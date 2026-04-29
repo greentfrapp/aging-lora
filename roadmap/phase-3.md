@@ -243,21 +243,21 @@ Pragmatic note: scFoundation × Stephenson is `overlapping` per leakage audit (H
 - [x] Task D.2 (done 2026-04-28): Build `scripts/donor_ridge.py` — `.npz` → ridge (nested 3-fold CV alpha selection) → Pearson R + MAE on holdout, optional `--also-eval-aida`. Writes to `results/phase3/ridge_summary.csv`.
 - [x] Task D.3 (done 2026-04-28, **frozen-base only**): Variant 1 Phase 1 (CD4+T) + Phase 2 (B + NK) frozen-base across 4 cohorts × {CD4+T, B, NK} + ridge fits on both LOCO folds with AIDA transfer. 12 ridge rows in `results/phase3/ridge_summary.csv`. **Fine-tuned-mean-pool extraction (originally part of D.3) is deferred** — the audit tasks D.9–D.11 must land first to confirm the bias-variance picture before paying the ~$3 to extract from each fine-tuned checkpoint.
 - [x] Task D.4 (done 2026-04-28): Tabulated in memo §23 (CD4+T) and §24 (B+NK). Branch landed in [0.45, 0.60) mixed bracket → Variants 2 + 3 in parallel — *but contingent on D.9–D.11 audit outcomes*.
-- [ ] Task D.5 (blocked by D.9–D.11): Variant 2 — `scripts/finetune_pseudobulk.py` modifying `train_loop.py` to accept per-donor pseudobulk inputs at per-donor MSE loss.
-- [ ] Task D.6 (blocked by D.9–D.11): Variant 3 — extend `extract_embeddings.py` with `--all-layers` flag to capture activations from layers 1–12.
-- [ ] Task D.7 (parallel): scFoundation LoRA wrapper at `src/finetune/lora_wrappers/scfoundation.py` + a CLI hook in `src/finetune/cli.py`.
-- [ ] Task D.8 (parallel): scGPT LoRA wrapper at `src/finetune/lora_wrappers/scgpt.py` + CLI hook.
+- [~] Task D.5 (**SKIPPED 2026-04-29**, see §29 pivot): Variant 2 (pseudobulk fine-tune) was originally elevated by §28.6 but is subsumed by §27's ridge-readout finding — per-donor ridge on the fine-tuned representation already enforces a donor-level objective post-hoc. Pseudobulk would force ~1 example/donor at training time, which likely *worsens* the §28 seed-variance problem (std=3.38y on the 8.5y bar) rather than fixing it. Compute redirected to D.7.
+- [x] Task D.6 (done 2026-04-28): Variant 3 — `scripts/extract_embeddings_layered.py` + `donor_ridge_layered.py` + `donor_ridge_layered_finetune.py` + `donor_ridge_layered_post_finetune.py`. Outputs in `results/phase3/ridge_summary_layered*.csv`. See memo §26 / §27 / §28.
+- [x] Task D.7 (done 2026-04-29, see §29.3): scFoundation FM-class diagnostic at frozen-base + per-donor ridge readout. **Result: 0/6 is FM-class, NOT Geneformer-specific.** scFoundation 3B params at canonical pool='all' (3072-d) loses to LASSO/Pasta on every CD4+T condition (MAE 30–100% above bulk baselines), and is *worse than Geneformer §28 3-seed mean* on CD4+T × OneK1K (R=0.475 vs 0.632, MAE=12.79 vs 10.85). B substrate empty across both FMs (R near zero, CIs cross zero); NK weak across both. Fine-tune + ridge readout (Geneformer §27/§28) is the recipe contribution; frozen FMs of any tested scale lose 30–100% to bulk baselines on donor-level age. Output: `results/phase3/ridge_summary_scfoundation.csv` (9 rows), embeddings in `results/phase3/embeddings_scfoundation/`. ~$2.5 compute, ~2.5h wall.
+- [~] Task D.8 (deprioritized): scGPT LoRA wrapper. Run only if scFoundation diagnostic returns an interesting (positive or negative) signal that benefits from triangulation.
 
 ### Compute envelope
 
 | Block | Compute | Wall |
 |---|---|---|
 | Variant 1 frozen-base (D.1–D.4) | **~$3 spent** | done 2026-04-28 |
-| Variant 1 audit (D.9–D.11) | $0 (analysis-only) | ~3h |
-| Variant 3 (D.6) | ~$8 | ~1 day |
-| Variant 2 (D.5) | ~$15 | ~1 day |
-| scFoundation diagnostic (D.7 + 1 fine-tune + Variant 1) | ~$15 | ~1 day |
-| Total (full diagnostic, remaining) | ~$38 | ~3 days |
+| Variant 1 audit (D.9–D.11) | $0 (analysis-only) | done 2026-04-28 |
+| Variant 3 frozen + post-finetune (D.6) | **~$5 spent** | done 2026-04-28 |
+| ~~Variant 2 (D.5)~~ | ~~$15~~ | **skipped 2026-04-29 — §29** |
+| scFoundation diagnostic (D.7, frozen-base + ridge readout only — no LoRA) | ~$3 (extract only, no fine-tune) | ~6h |
+| Total remaining | **~$3** | <1 day |
 
 ### Cancelled from B+NK extension
 

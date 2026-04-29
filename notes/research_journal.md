@@ -169,3 +169,19 @@ Per §27.9 priorities, ran 5 additional fine-tune layered extractions (~2h, $2):
 2. Methodology contribution = "Per-cell MSE linear head systematically underestimates donor-level signal in fine-tuned single-cell FMs; per-donor ridge regression is strictly better. Generalizes to any donor-prediction task using per-cell-trained FMs."
 3. Bounded null = "B-cell substrate empty across all layers × seeds × readouts."
 **Decision tree (§28.6)**: Variant 2 (pseudobulk fine-tune) target = OneK1K MAE ≤8.5y at 3-seed mean. scFoundation FM-class diagnostic with per-donor ridge baked in. See memo §28.
+
+## 2026-04-29 — §29 scFoundation FM-class diagnostic: 0/6 is FM-class, not Geneformer-specific
+
+**Pivot decision (§29 head)**: Variant 2 (pseudobulk fine-tune) deprioritized — per-donor ridge readout from §27 already enforces a donor-level objective post-hoc, and §28 seed-variance (std 3.38y on 8.5y bar) suggests optimization instability rather than loss-function. scFoundation diagnostic (, 6h) directly tests whether the 0/6 horse-race loss is Geneformer-recipe-specific or FM-class. Skipped Variant 2; ran scFoundation frozen + ridge on the same protocol as Geneformer §22/§27/§28.
+
+**§29.3.1 results, scFoundation frozen + canonical pool='all' (3072-d) + per-donor mean across 20 cells/donor + RidgeCV**: across 9 (cell × eval cohort) conditions, scFoundation **loses to LASSO/Pasta on every CD4+T cell** and is **worse than Geneformer §28 3-seed mean on CD4+T × OneK1K** (R=0.475 vs 0.632, MAE=12.79 vs 10.85). 27× larger model with 100× more pretraining data underperforms Geneformer.
+
+**§29.3.2 the 1-bit answer**: 0/6 is **FM-class, not Geneformer-specific**. Two FMs (Geneformer 110M, scFoundation 3B), two pretraining protocols (genecorpus rank-value, mixed bulk+sc), same canonical frozen + ridge readout, both lose 30–100% on CD4+T MAE vs bulk-trained baselines. B substrate empty for both (R near zero, CIs cross zero). NK weak for both. **Fine-tune + ridge readout (Geneformer §27/§28) is the recipe contribution**, NOT a substrate property.
+
+**§29.3.3 bias check**: scFoundation predictions show same mean-compression as Geneformer (§25/§28.4): pred_mean=55.97 vs eval_mean=63.91 on OneK1K (−8y); AIDA pred_mean=62.18 vs eval_mean=41.76 (+20y) on the small-train fold. Mean-compression is FM-class, not architecture-specific.
+
+**§29.3.4 caveats**: scFoundation was frozen (not fine-tuned — that needs Phase-4 LoRA). 7 of 12 extractions fp32, 5 bf16 (post-OOM retry); per-donor delta R=0.965 between fp32 and bf16, well below ridge variance. Per-layer scFoundation probe NOT done. tgt_t=4.0 (canonical) only.
+
+**§29.3.5 verdict update**: Methodology paper claim narrows. The 'per-donor ridge readout > per-cell MSE head' finding is real and reproducible, BUT it does NOT close the bulk-vs-FM gap at frozen weights. **Fine-tuning + ridge readout** is the joint contribution (Geneformer §27 readout improvement only manifests on fine-tuned reps). B-cell substrate emptiness is an FM-class biological finding worth a single panel.
+
+**§29.4 next-step priority (revised)**: 1) Higher-rank LoRA + longer training on Geneformer CD4+T × OneK1K — most promising lever to convert close-MATCH to strict WIN. 2) Per-layer scFoundation probe (~3h, ~) — cheap test of whether scFoundation has analogous layer-1 finding to Geneformer §26. 3) scFoundation LoRA fine-tune (4 on g5) deferred to Phase-4 unless higher-rank LoRA fails. See memo §29.

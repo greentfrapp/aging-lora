@@ -1,0 +1,10 @@
+label,fold,tag,eval_cohort,cell_type,alpha,n_train_donors,n_eval_donors,pearson_r,pearson_p,mae_y,pearson_ci_lo,pearson_ci_hi,pred_mean,eval_mean
+scf_CD4pT_loco_onek1k,loco_onek1k,scfoundation_t4,onek1k,CD4+ T,100,190,981,0.475224,0,12.7868,0.420036,0.526574,55.9682,63.9144
+scf_CD4pT_loco_onek1k,loco_onek1k,scfoundation_t4,aida,CD4+ T,100,190,293,0.441669,2.0244e-15,20.9187,0.359593,0.516762,62.1791,41.7645
+scf_CD4pT_loco_terekhova,loco_terekhova,scfoundation_t4,terekhova,CD4+ T,10,1005,166,0.519416,7.48306e-13,17.9079,0.402347,0.617247,32.4529,49.4277
+scf_CD4pT_loco_terekhova,loco_terekhova,scfoundation_t4,aida,CD4+ T,10,1005,293,0.564994,4.14156e-26,9.45536,0.485208,0.637136,48.084,41.7645
+scf_B_loco_onek1k,loco_onek1k,scfoundation_t4,onek1k,B,100,195,981,-0.0493174,0.122677,19.317,-0.108775,0.00297496,50.8175,63.9144
+scf_B_loco_onek1k,loco_onek1k,scfoundation_t4,aida,B,100,195,307,0.0305852,0.593456,25.2244,-0.0798324,0.14001,65.7771,41.0749
+scf_B_loco_terekhova,loco_terekhova,scfoundation_t4,terekhova,B,100,1010,166,0.121529,0.11882,15.4158,-0.0483322,0.263116,57.8256,49.4157
+scf_NK_loco_onek1k,loco_onek1k,scfoundation_t4,onek1k,NK,100,195,981,0.152382,1.62942e-06,18.4338,0.089482,0.213931,50.1036,63.9144
+scf_NK_loco_onek1k,loco_onek1k,scfoundation_t4,aida,NK,100,195,306,0.311398,2.63826e-08,21.9004,0.210602,0.403632,61.1836,41.098
