@@ -1347,3 +1347,50 @@ The paper now has enough characterization to start drafting. The minimum-viable 
 - §32: gene-EN matched-splits + pseudobulk-input Geneformer (matched-baseline reframing)
 
 This covers the four candidate headlines from the step-back review. The writing decision is which to lead with, but the data is ready.
+
+## 33. Load-bearing single-seed numbers inventory (Phase-3-B reframed-review pre-commit, 2026-04-29)
+
+Per the §28 lesson, every load-bearing positive number in the writeup that is <3 seeds is a correction-risk. This section enumerates them so future audits start with "verify these first."
+
+### 33.1 Tier-A — currently load-bearing for the headline
+
+| Number | Source | Seeds | Risk if collapses |
+|---|---|---|---|
+| L9 AIDA rank-32 R=0.617 / MAE=6.92 | §30, ridge_summary_r32_smoke.csv | **1 (seed 0)** | Matched-splits parity claim collapses; gene-EN at MAE=6.42 wins by ~1y or more |
+| NK best-layer L3.3 across 3 cohorts | §31, ridge_summary_layered.csv | **1 per cohort** | Cell-type-conditional layer methodology contribution loses cross-cohort robustness |
+| Pseudobulk-input CD4+T best layer L1–L4 | §32, ridge_summary_pseudobulk.csv | **1 (seed 0)** | Two-axis layer-selection principle becomes single-cell-type observation |
+| Frozen Geneformer CD4+T × Terekhova L1 R=0.616 / MAE=8.82 | §26 | **1 (seed 0)** | Frozen-base ceiling claim weakens; "FM doesn't need fine-tuning" loses one of its strongest data points |
+
+### 33.2 Tier-B — already 3-seed-verified (anchor numbers)
+
+| Number | Source | Notes |
+|---|---|---|
+| Rank-16 LoRA × ridge readout CD4+T loco_onek1k MAE = 10.85 ± 2.19 | §28 | The §28 audit already 3-seed corrected this from §27's seed-0 WIN to a close-MATCH |
+| Rank-16 LoRA × ridge readout CD4+T loco_onek1k AIDA L12 MAE = 8.32 | §28 (post_finetune CSV) | Cross-ancestry AIDA at rank-16 L12, 3-seed-verified |
+
+The Tier-B numbers are what the writeup's negative-fallback (outline (b) in D.28) leans on — they survived audit and don't move under further verification.
+
+### 33.3 Tier-C — single-seed numbers that DON'T affect the headline
+
+| Number | Source | Why it doesn't matter |
+|---|---|---|
+| scFoundation frozen R=0.475 on CD4+T × OneK1K | §29 | Even with ±0.1 seed variance, doesn't change the FM-class diagnostic conclusion |
+| Rank-32 L12 OneK1K MAE=11.00 | §30 | Lands on rank-16 3-seed mean; the conclusion "rank doesn't help" doesn't depend on this exact number |
+| B substrate-empty across all probes | §22, §26, §31, §32 | Robustly empty across multiple methods/seeds; no single-seed dependence |
+
+### 33.4 Verification queue (Tier-1 reframed-review tasks)
+
+D.21 verifies Tier-A row 1 (L9 AIDA rank-32). Decision rules in `notes/decision_rules_phase3.md` §D.21.
+D.22 verifies Tier-A row 2 (NK best-layer). Decision rules in §D.22.
+D.24 (analysis-only on existing embeddings) verifies Tier-A row 3 (pseudobulk CD4+T layer profile) plus extends the principle to NK and B. Decision rules in §D.24.
+
+Tier-A row 4 (frozen Terekhova L1) is **deprioritized** — single-seed but on the same compute path as D.22 (frozen extraction × NK seeds 1, 2 also covers CD4+T re-extraction at no extra cost), so the seed-1/seed-2 frozen-base CD4+T × Terekhova layer profile drops out of D.22 as a free byproduct.
+
+### 33.5 What this list institutionalizes
+
+The §28 audit happened because seed-0 was lucky and we didn't know which numbers depended on that luck until after we ran the bracket. Future audits should start by re-reading **this section first**, identify which Tier-A numbers any current claim depends on, and verify those before relying on the claim. This is a pre-flight checklist for paper claims, not just post-hoc forensics.
+
+Update this list (33.1) when:
+- A new finding is added to the writeup (add to Tier-A if <3 seeds, with risk-if-collapses)
+- A 3-seed bracket completes (move from Tier-A to Tier-B with verified mean ± std)
+- A single-seed finding is judged not-headline-relevant (move to Tier-C with reasoning)

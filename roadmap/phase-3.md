@@ -270,16 +270,49 @@ After §30's PIVOT we re-read existing layered-ridge CSVs (`ridge_summary_layere
 
 - [x] Task D.17 (done 2026-04-29, see §32): **Gene-EN baseline on FM-matched splits + preprocessing**. ElasticNetCV (top-5000 HVG, StandardScaler, 4 l1_ratios × 8 alphas × 3-fold CV) on loco_onek1k + loco_terekhova × CD4+T/B/NK. Output `results/baselines/gene_en_matched_splits.csv` (9 rows). **PAPER-CHANGING**: gene-EN matched R = 0.61 / 0.78 / 0.62 / 0.65 across CD4+T conditions (vs TF paper R=0.83 LOCO + R=0.77 AIDA). The "FM loses by 0.38 R-units" framing was an apples-to-oranges artifact; matched gap is 0.05–0.15 R-units. Cross-ancestry AIDA: gene-EN R=0.616/MAE=6.42 vs FM rank-32 L9 ridge R=0.617/MAE=6.92 — essentially tied. Memo §32, journal 2026-04-29.
 - [x] Task D.18 frozen-base (done 2026-04-29, see §32): **Pseudobulk-input Geneformer + ridge readout** across CD4+T/B/NK × all 3 eval cohorts × 13 layers. Output `results/phase3/ridge_summary_pseudobulk.csv` (117 rows), `scripts/extract_embeddings_pseudobulk.py`. Pseudobulk-input shifts best-R layer to L1–L4 (early) for CD4+T, opposite of per-cell mean-pool which favors L12 — when fed donor-aggregated input, the FM behaves more like a bulk model. Ridge R competitive with per-cell mean-pool (sometimes higher: Terekhova R=0.688 vs 0.621), MAE worse on cross-cohort. **D.18 LoRA × 3-seed extension DEPRIORITIZED** — frozen-base result sufficient for "FM and bulk converge at matched splits" point. Memo §32.6, journal 2026-04-29.
-- [ ] Task D.19 (Tier 1 → Tier 2 after step-back update, "A"): **L9 AIDA 3-seed verification on rank-32.** Re-run rank-32 LoRA at seeds 1, 2 + extract layered + ridge. Tests whether single-seed rank-32 L9 AIDA MAE=6.92 holds at 3-seed mean. **Demoted to Tier 2** after step-back review found rank-16 3-seed L12 AIDA already at MAE=8.32 ± small (per `ridge_summary_post_finetune.csv`); the §30 L9 finding is likely an outlier, and the rank-16 3-seed L12 number is the more defensible cross-ancestry headline. Run only if writeup needs to defend the L9 claim. ~$10, half a day.
+- [~] Task D.19 (**SUBSUMED by D.21** post-§32 reframed review): L9 AIDA 3-seed verification on rank-32. Originally Tier 2 after the step-back review demoted it; the §32 matched-splits parity claim re-elevated it to Tier 1 because the L9 R=0.617 / MAE=6.92 vs gene-EN matched R=0.616 / MAE=6.42 tie depends on this single seed-0 number. Re-promoted as D.21 with explicit decision rules. Track work under D.21.
 - [x] Task D.20 (done 2026-04-29, see §31): NK-early-layer asymmetry analysis. Confirmed from existing `results/phase3/ridge_summary_layered.csv`: NK-relevant signal lives in L2–L5 of frozen Geneformer across all 3 eval cohorts (best layers L3 OneK1K, L2 Terekhova, L5 AIDA; mean L3.3); CD4+T at L12 (mean L9.7); B substrate empty (mean L9.0 but R<0.23). Δ between best-layer R and L12 R for NK is largest on cross-ancestry AIDA (+0.121), suggesting early-layer NK features generalize better than late-layer ones. Methodology recommendation: cell-type-conditional layer selection. ~$0, no new compute. Memo §31, journal 2026-04-29.
 
-### Phase-3-B priority order (revised post-step-back review)
+### Phase-3-B reframed-review tasks (2026-04-29, post-§32, see scratchpad/reframed_review.md)
 
-1. **D.17 / D.20 first** (no compute, ~3h total) — removes apples-to-oranges from every comparison; locks in the new cross-layer finding.
-2. **D.18 frozen-base** (~$3, 1 day with dev) — the unaddressed pseudobulk-input gap. Can be extended to LoRA × 3-seed if frozen-base shows promise.
-3. **D.19** if writeup leans on L9 AIDA (likely demoted after step-back).
-4. **D.13–D.16** as defensibility ablations only if reviewers would predictably ask. After D.17/D.18/D.20, the paper has enough characterization for the most likely headline.
-5. **D.14 (scFoundation LoRA) and D.15 (full FT)** remain on the back burner — see scratchpad/full_finetune_suggestion.md for an alternative argument (full FT is high-value as a diagnostic if the predicted overfitting curve is the result), and scratchpad/step_back_review.md for the counter-argument that the paper has enough characterization without full FT once D.18 lands. Decision deferred to post-D.18.
+After §32 invalidated the central FM-loses-by-0.38-R-units claim, the paper's center of gravity shifted from "structural negative on FM aging prediction" to "methodology contribution + matched-splits comparison." The reframed-review proposed promoting cell-type-conditional layer selection to headline status; the critique flagged that several load-bearing positive numbers are still single-seed and that prior framings have been wrong twice in this conversation. The conclusion: **verify single-seed numbers and close the single-cell-type axes (matched-splits, pseudobulk-input) before committing to any framing.** Pre-commit decision rules so the next 3-seed result doesn't trigger another reactive reframing.
+
+#### Tier 1 — verification (load-bearing, ~$40, 2–3 days)
+
+- [ ] Task D.21 (Tier 1, "Action 1"): **L9 AIDA rank-32 LoRA × 3-seed verification.** Re-run rank-32 LoRA at seeds 1, 2 on CD4+T × loco_onek1k + extract layered + ridge → compute 3-seed mean for L9 AIDA. Currently load-bearing for the matched-splits parity claim (L9 R=0.617 / MAE=6.92 is single-seed seed-0). Subsumes the existing Tier-2 D.19. **Decision rule (pre-commit)**: ≤7.5y mean MAE → "tied with gene-EN within seed variance" survives; 7.5–8.5y → "modestly behind, within ~1y" (publishable, weaker headline); >8.5y → drop AIDA-parity from headline, fall back to "matched gap is much smaller than TF framing implied" without claiming parity. ~$10, half day.
+- [ ] Task D.22 (Tier 1, "Action 2"): **NK best-layer 3-seed verification on frozen Geneformer × all 3 cohorts.** §31's NK-at-L3.3 finding is single-seed (one extraction per fold). CD4+T L12 is already 3-seed-anchored via §28's `ridge_summary_post_finetune.csv`; NK isn't. Re-extract frozen base × NK × loco_onek1k + loco_terekhova × seeds 1, 2 → ridge readout per layer. **Decision rule**: NK ΔR(best vs L12) >+0.05 across all 3 cohorts at 3-seed mean → cell-type-conditional finding is anchor-ready for headline; collapses on any cohort → "no clean cross-cohort layer pattern, finding is single-seed artifact". ~$15, half day.
+- [ ] Task D.23 (Tier 1, "Action 3"): **Matched-splits gene-EN on NK and B.** D.17 ran CD4+T only. Closes the matched-splits framing across cell types and tests B-substrate-empty bilaterally. Reuse `scripts/gene_en_matched_splits.py` with NK/B inputs. **Decision rule**: gene-EN B R<0.2 across all conditions → B-substrate-empty interpretation gets bilateral support; otherwise B-empty is FM-specific and the substrate-level claim is wrong (revert to "B is harder for both methods, signal extractable but absent at this scale"). ~$0 (CPU), few hours.
+- [ ] Task D.24 (Tier 1, "Action 4"): **Pseudobulk-input frozen Geneformer on NK and B.** D.18 ran CD4+T only. Tests whether the unit-of-analysis → early-layer shift is multi-cell-type (real principle) or CD4+T-specific (single-finding). Reuse `scripts/extract_embeddings_pseudobulk.py`. **Decision rule**: NK pseudobulk-input best layer stays at L3-ish (matching per-cell mean-pool) → unit-of-analysis effect is CD4+T-specific, principle is two-finding-not-two-axis; NK pseudobulk-input shifts the best-layer relative to per-cell baseline → two-axis principle (cell-type × unit-of-analysis) supported. ~$10, half day.
+
+#### Tier 2 — after Tier 1 lands (~$15–20, 1 day)
+
+- [ ] Task D.25 (Tier 2, "Action 5"): **scFoundation frozen-ridge in matched-splits framing.** Already-extracted embeddings; just re-run ridge fit alongside matched-splits gene-EN numbers. Tests whether the FM-class diagnostic (§29's "0/6 is FM-class") looks different when framed against matched-splits gene-EN (R=0.61) instead of TF-paper gene-EN (R=0.83). Likely closes scFoundation-LoRA from the queue entirely if scFoundation also achieves matched-splits parity at frozen. ~$0, few hours.
+- [ ] Task D.26 (Tier 2, "Action 6"): **Bootstrap CIs on §31 layer-asymmetry numbers from existing data.** No new compute — bootstrap donor-resampling on existing ridge predictions per layer to put CIs on ΔR(best vs L12) per cell type. Robustness for the methodology section. ~$0, ~30 min.
+
+#### Non-compute action items (do alongside Tier 1)
+
+- [ ] Task D.27 ("Action 7"): **Update memo with a "load-bearing single-seed numbers" inventory.** One section listing every number the writeup currently leans on that's <3 seeds. Forces the next audit to start from "verify these first." Institutionalizes the §28 lesson.
+- [ ] Task D.28 ("Action 8"): **Draft paper outline at two tiers in parallel.** (a) Methodology-led with cell-type-conditional layer selection as the lead — viable only if Tier 1 verifications hold. (b) Matched-splits-comparison-led, with cell-type-conditional finding as one of three contributions — viable regardless of Tier 1 outcomes. Pick at the verification gate, not before.
+- [ ] Task D.29 ("Action 9"): **Write down decision rules NOW (in `notes/decision_rules_phase3.md` or memo §33).** The rules above for L9 AIDA, NK L3, and pseudobulk-input NK should be committed to text *before* the runs land, so post-hoc rationalization is harder. The §28 audit happened because seed-0 was lucky; the prevention is pre-commitment to what each outcome means.
+- [ ] Task D.30 ("Action 10"): **Stop committing to venue tier until verification lands.** Delete the NatComms language from any planning docs. The honest current floor is *Genome Biology* / *Bioinformatics* methods; verification can lift that, but speculation can't.
+
+#### Reframed-review verification gate
+
+After D.21–D.24 land, three outcomes:
+1. **All four hold cleanly**: methodology-led headline supported, paper outline (a) goes forward, scFoundation Tier 2 becomes optional.
+2. **Some hold, some don't** (most likely outcome based on §28 base rate): partial framing — keep matched-splits-comparison as headline anchor, demote whichever finding regressed.
+3. **Multiple regress**: the recurring framing-failure pattern is structural, not bad luck. Pause and run the §28-style audit before writing anything.
+
+Total commitment: ~$40, 2–3 days for Tier 1; framework decision at the gate; another ~$15–20, 1 day for Tier 2 if needed. Writing starts after the gate, not before.
+
+### Phase-3-B priority order (revised post-§32 reframed review)
+
+1. **D.27 / D.29 / D.30 first** (no compute, ~1h total) — pre-commit decision rules and inventory load-bearing single-seed numbers BEFORE running verifications. Prevents post-hoc rationalization.
+2. **D.21–D.24** (~$40, 2–3 days) — verify the load-bearing single-seed numbers and close the single-cell-type axes. Gate before any writeup commitment.
+3. **D.25 / D.26** (~$0, few hours) — cheap robustness add-ons after Tier 1.
+4. **D.28 paper outline drafts** in parallel with Tier 1.
+5. **D.13 / D.16 / D.19** — D.19 is now *subsumed by D.21*. D.13 (scFoundation 3-seed) and D.16 (Geneformer longer training) are defensive ablations only if reviewers would predictably ask, post-verification.
+6. **D.14 / D.15** (scFoundation LoRA, full FT) remain on back burner — see scratchpad/full_finetune_suggestion.md and scratchpad/step_back_review.md for the framing arguments. Decision still deferred; the §32 reframing weakens the case for full FT (capacity-overfitting closeout is no longer load-bearing for the matched-splits headline).
 
 ### Compute envelope
 
@@ -291,8 +324,10 @@ After §30's PIVOT we re-read existing layered-ridge CSVs (`ridge_summary_layere
 | ~~Variant 2 (D.5)~~ | ~~$15~~ | **skipped 2026-04-29 — §29; resurrected as D.18 with corrected protocol after step-back review** |
 | scFoundation diagnostic (D.7) | **~$3 spent** | done 2026-04-29 |
 | Rank-32 smoke (D.12) | **~$3 spent** | done 2026-04-29 |
-| Step-back review tasks (D.17, D.18, D.20) | ~$3–18 | ~2 days |
-| Phase-3-B defensibility ablations (D.13–D.16, D.19) | ~$15–60 conditional | ~2–4 days conditional |
+| Step-back review tasks (D.17, D.18, D.20) | **~$3 spent** | done 2026-04-29 |
+| Reframed-review Tier 1 verification (D.21–D.24) | ~$40 | ~2–3 days |
+| Reframed-review Tier 2 + non-compute (D.25–D.30) | ~$0–20 | ~1 day |
+| Phase-3-B defensibility ablations (D.13–D.16) | ~$15–60 conditional | ~2–4 days conditional |
 
 ### Cancelled from B+NK extension
 
