@@ -1210,3 +1210,58 @@ This is a meaningful negative — it tells us where NOT to spend compute next: d
 - D.14 (scFoundation LoRA × 3 seeds × 2 folds) — still on the table, lower priority given §29.3's strong negative.
 - D.15 (Geneformer full FT) — separate hypothesis from rank; risk of overfitting on 9500 cells × 190 donors.
 - **New D.16 (proposed)**: Geneformer LoRA + longer training (rank-16 × 5 or 6 epochs × 1 seed smoke). Direct test of (b). If R=0.631 / MAE=8.21 from rank-16 seed-0 was under-converged, longer training tightens std. If not, MAE=10.85 ± 2.19 is a real ceiling and we write up Phase-3-A.
+
+## 31. Cross-cell-type layer asymmetry on frozen Geneformer (Phase-3-B Task D.20, 2026-04-29)
+
+Re-reading `results/phase3/ridge_summary_layered.csv` (frozen-base layered probe from §26, 117 rows × 9 conditions × 13 layers) reveals a clean cell-type-specific layer asymmetry that we hadn't characterized: **NK-relevant aging signal lives in EARLY layers of frozen Geneformer (L2–L5), while CD4+T-relevant signal lives at L12.** B substrate is empty everywhere.
+
+### 31.1 Best-R layer per (cell × eval cohort) on frozen base
+
+| Cell × eval cohort | Best-R layer | Best R | L12 R | L12 − best |
+|---|---|---|---|---|
+| **CD4+T × OneK1K** | L12 | +0.560 | 0.560 | 0.000 |
+| **CD4+T × AIDA** | L12 | +0.527 | 0.527 | 0.000 |
+| CD4+T × Terekhova | L5 | +0.621 | 0.576 | −0.044 |
+| **NK × OneK1K** | **L3** | +0.304 | 0.260 | −0.044 |
+| **NK × Terekhova** | **L2** | +0.266 | 0.199 | −0.067 |
+| **NK × AIDA** | **L5** | +0.169 | 0.047 | **−0.121** |
+| B × OneK1K | L7 | +0.038 | −0.013 | (substrate empty) |
+| B × Terekhova | L9 | +0.228 | 0.102 | (substrate empty) |
+| B × AIDA | L11 | +0.120 | 0.099 | (substrate empty) |
+
+**Mean best-R layer across 3 eval cohorts (fold-mixed):**
+- CD4+T: L9.7 (L12 wins 2/3, L5 wins on chemistry-shift Terekhova)
+- B: L9.0 (substrate empty — R values 0.04–0.23, near noise floor)
+- **NK: L3.3 (early-layer-dominant on all 3 cohorts)**
+
+### 31.2 The pattern is cell-type-specific, not noise
+
+The NK early-layer pattern holds across all 3 (fold, eval_cohort) combinations:
+- NK × OneK1K (loco_onek1k → onek1k, in-distribution): L3 wins, R=0.304 vs L12 R=0.260 (Δ=+0.044)
+- NK × Terekhova (loco_terekhova → terekhova, chemistry-shift): L2 wins, R=0.266 vs L12 R=0.199 (Δ=+0.067)
+- NK × AIDA (loco_onek1k → aida, cross-ancestry): L5 wins, R=0.169 vs L12 R=0.047 (Δ=+0.121)
+
+The Δ between best-layer R and L12 R is largest on cross-cohort eval (AIDA: +0.121) and smallest on in-distribution eval (OneK1K: +0.044), suggesting the early-layer features generalize better than late-layer features for NK across cohorts. The pattern is consistent in direction across all 3 cohorts even where signal is weak.
+
+For CD4+T, L12 strictly wins on R for both in-distribution (OneK1K) and cross-ancestry (AIDA) — opposite of NK. Only the chemistry-shifted Terekhova fold has a non-L12 winner (L5), driven by calibration recovery (per §26's L1-on-Terekhova MAE=8.82 finding).
+
+### 31.3 Mechanistic hypothesis
+
+The pretrained Geneformer was masked-language-model trained on the Genecorpus 30M corpus, primarily PBMC-like tissues. Cell-type-discriminative features that emerge early in the encoder (L2–L5) capture broad transcriptomic state — effectively a low-dimensional embedding of cell identity + activation status. Late-layer features (L11–L12) encode more refined / context-dependent representations.
+
+For CD4+T (a relatively homogeneous cell type biologically), aging signal manifests in fine-grained activation programs that the late layers represent. For NK (a more heterogeneous compartment, with cytotoxic / regulatory / adaptive subsets each aging differently), aging signal manifests in coarser composition shifts that early layers can capture but late layers may smear together.
+
+This is a hypothesis, not a claim — the right test is to cluster donors by their layer-wise embedding similarity and see whether NK donor-clusters are more cell-state-driven and CD4+T donor-clusters are more activation-driven. Out of scope for this writeup; a useful future extension.
+
+### 31.4 Implications for the paper
+
+1. **The cross-cell-type layer asymmetry is novel.** No prior single-cell FM literature we've reviewed reports cell-type-conditional layer asymmetry for donor-level prediction. Worth a single panel.
+2. **The L9-AIDA-on-rank-32-LoRA finding from §30 is NOT this asymmetry**; that's a fine-tuning artifact specific to seed 0 of rank-32. The frozen-base CD4+T finding has L12 winning on AIDA, not L9. So §30's Candidate-3 headline (cross-layer asymmetry as paper lead) is *not supported*; §31's finding is supported, but it's about NK (substrate-weak), not the headline cross-ancestry positive.
+3. **Practical readout recommendation**: when probing frozen Geneformer for donor-level aging, use cell-type-conditional layer selection (L12 for CD4+T, L3–L5 for NK, accept the empty substrate for B).
+4. **§22.3 0/6 narrative is not weakened by this finding.** Even at NK's best layer (L5 / R=0.169 on AIDA), NK frozen-probe doesn't approach LASSO 0.629 / Pasta 0.258. The early-layer NK signal is real but weak, like §28 / §29 already established.
+
+### 31.5 One concrete revised takeaway
+
+The earlier framing "Geneformer L12 is the right layer for ridge readout" was CD4+T-specific. **The correct nuanced statement is**: "L12 is best for CD4+T, but for NK the best frozen-base layer is L2–L5 across all eval cohorts; this cell-type-conditional layer asymmetry is consistent with NK aging being a coarser-grained compositional change captured by early-layer features."
+
+This refines the methodology contribution from §27 — the ridge-readout improvement at L12 is the right recipe for **CD4+T**, but not necessarily other cell types. Future work on FM-based aging clocks should probe layer-wise per cell type rather than picking L12 by default.

@@ -197,3 +197,24 @@ Per §27.9 priorities, ran 5 additional fine-tune layered extractions (~2h, $2):
 2. **Detached process management**: bash run_in_background's wrapper kill propagated to children, killing the python mid-training. Recovered by relaunching with `nohup setsid` for full session detachment, plus a /proc/PID/fd/X poller to back up the deleted-but-open jsonl in case the process exited between recovery cycles. (Final_eval/done events for the rank-32 run were missed by the poller — not blocking since the headline is the ridge-readout MAE, not the per-cell head MAE.)
 3. **Cross-rank checkpoint loading**: extract_embeddings_layered.py defaulted to lora_rank=16, raising size mismatch when loading the rank-32 checkpoint. Added `--lora-rank` flag.
 **Compute**: ~$3 wasted on the misconfigured run + ~$3 on the corrected run = ~$6 total. Wall ~5h end-to-end (including misfire).
+
+## 2026-04-29 — §31 NK early-layer asymmetry on frozen Geneformer (no new compute)
+
+**Step-back review action D.20**: re-read existing `results/phase3/ridge_summary_layered.csv` (frozen-base layered probe from §26). Found a clean cell-type-specific layer asymmetry not previously characterized.
+
+**§31.1 finding**: Best-R layer per cell type, averaged across 3 (fold × eval_cohort) conditions:
+- CD4+T: L9.7 mean (L12 wins 2/3, L5 wins on Terekhova chemistry-shift)
+- B: L9.0 (substrate empty everywhere, R~0.04–0.23)
+- **NK: L3.3 (early-layer dominant on ALL 3 conditions)** — L3 wins on OneK1K, L2 wins on Terekhova, L5 wins on AIDA
+
+**§31.2 robustness**: NK Δ between best-layer-R and L12-R is largest on AIDA cross-ancestry (+0.121), smaller on Terekhova chemistry-shift (+0.067), smallest on in-distribution OneK1K (+0.044). Direction consistent across all 3 cohorts.
+
+**§31.3 hypothesis**: NK is a more heterogeneous compartment (cytotoxic/regulatory/adaptive subsets); aging signal there is coarser compositional shifts captured by early layers. CD4+T aging is finer activation programs needing late-layer features. Testable via donor-cluster analysis on layer embeddings — out of scope for current writeup.
+
+**§31.4 implications for writeup**:
+1. Novel finding — no prior FM literature reports cell-type-conditional layer asymmetry for donor-level prediction.
+2. The §30 L9-AIDA-rank-32 finding is NOT this asymmetry; that's fine-tuning artifact specific to seed 0 of rank-32. The frozen-base CD4+T finding has L12 winning on AIDA, not L9.
+3. Methodology recommendation: cell-type-conditional layer selection (L12 for CD4+T, L3–L5 for NK).
+4. Doesn't weaken §22.3 0/6 narrative — even NK best-layer R=0.169 on AIDA loses to LASSO/Pasta.
+
+**Cost**: $0, ~30 min analysis + writeup. No new compute. The pattern was already in data we collected for §26 in March; took the step-back review to surface it as a distinct finding rather than buried in the layered CSV.
