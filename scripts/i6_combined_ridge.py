@@ -86,7 +86,9 @@ def main():
             if eval_ret is None:
                 continue
             _, eval_y, eval_X_layered = eval_ret
-            aida_ret = _load("aida", cap, seed) if fold_id == "loco_onek1k" else None
+            # AIDA eval for both folds (matched comparison with gene-EN, which
+            # also evaluated AIDA for both fold directions).
+            aida_ret = _load("aida", cap, seed)
             n_layers = eval_X_layered.shape[0]
 
             for layer in range(n_layers):
@@ -181,11 +183,11 @@ def main():
                 print(line)
                 summary_rows.append(row)
 
-        # Matched-cap matched-method comparison
+        # Matched-cap matched-method comparison (both folds)
         print("\n=== I.6 Matched-cap FM-vs-gene-EN gap (3-seed mean AIDA R) ===")
-        for fold in ["loco_onek1k"]:
+        for fold in ["loco_onek1k", "loco_terekhova"]:
             print(f"\nFold: {fold}")
-            for cap in sorted(set(sub["cap"].unique()) & {50, 100, 500, 1000}):
+            for cap in sorted({50, 100, 500, 1000}):
                 fm_row = next((r for r in summary_rows if r["fold"] == fold and r["cap"] == cap and r["method"] == "FM"), None)
                 gen_row = next((r for r in summary_rows if r["fold"] == fold and r["cap"] == cap and r["method"] == "gene-EN"), None)
                 if fm_row and gen_row and "aida_R_mean" in fm_row and "aida_R_mean" in gen_row:
