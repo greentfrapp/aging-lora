@@ -493,6 +493,44 @@ F.4 and F.5 are useful refinements; defer until F.1-F.3 land.
 
 **Paper-impact framing if F.1-F.3 land cleanly**: the paper's claims will be either (a) confirmed under structural stress tests (current framing stands, with strengthened evidence) or (b) restructured around composition baseline / probe-aware layer selection / data-quality-aware layer interpretation. Both outcomes are paper-strengthening; the alternative is writing under unchallenged assumptions and finding out post-submission.
 
+#### Open follow-ups (proposed 2026-04-30, post-F.1/F.4/F.5 review from `f_expts_review.md`)
+
+Reviewer flagged two substantive follow-ups: F.1's borderline +0.298 AIDA composition R demands an additivity test against the actual methods, and F.5's binary "reframe" verdict misses the cell-type-conditional structure that is itself the paper's substantive contribution. Three new tasks G.1–G.3 implement these. Recommended order: **G.1 → G.2 → G.3 → F.2** (G.1 first because it gates the AIDA matched-splits parity claim; G.2/G.3 unlock a stronger methodology headline if B-cell PC-residual works; F.2 last as standalone methodology-stress). Total: ~2 days CPU, $0.
+
+- [ ] **Task G.1 (proposed 2026-04-30, addresses F.1 reviewer follow-up): Composition-additive ensemble.**
+  - **Implementation**: Build per-donor concat features `[composition_5d, gene-EN_features]` and `[composition_5d, FM_pseudobulk_768d_at_deployment-best-layer]`. Fit ElasticNet on the gene-EN+composition concat and ridge on the FM+composition concat, on loco_onek1k and loco_terekhova folds. Evaluate on AIDA cross-ancestry. Compare to gene-EN-alone and FM-ridge-alone AIDA R/MAE (already in `loco_baseline_table.csv` and Phase-3 results).
+  - **Decision rule (pre-commit)** — applied to ΔR = (method+composition) − (method-alone) on AIDA, averaged across the two folds:
+    - ΔR ≥ +0.05 on either method → method misses the composition signal; paper claims additive composition-baseline-plus-method contribution and reports both numbers in headline tables.
+    - 0 ≤ ΔR < +0.05 on both methods → methods already capture most of composition signal; paper must disclose composition as a partial confounder of the cross-ancestry parity claim, with explicit "composition-only baseline R = 0.298" in the AIDA headline.
+    - ΔR < 0 on both methods → composition is dominated by the methods; report as a strict baseline only (no confounder concern).
+  - **Output**: `results/phase3/g1_composition_additive.csv` with rows = (method × fold × eval_cohort × feature_set), columns = R, MAE, n_features, alpha, l1_ratio, ΔR_vs_method_alone.
+  - **Compute**: ~$0, ~half day. CPU only. Reuses gene-EN feature matrices and Phase-3 frozen FM pseudobulks; no new training.
+  - **Why first**: directly threatens the paper's "FM matched-splits parity with gene-EN on AIDA" claim. If composition is silently driving part of cross-ancestry R, the paper must disclose; running this *before* methodology lockdown means the disclosure can be framed correctly rather than retrofitted.
+
+- [ ] **Task G.2 (proposed 2026-04-30, addresses F.5 reviewer follow-up): PC-residualized FM probe on B × Terekhova.**
+  - **Implementation**: Take frozen Geneformer × B × loco_terekhova × seeds {0, 1, 2} embeddings at the F.5-best (layer × k_pc) for B-cell on the loco_terekhova fold (from F.5 table: layer 0 × k = 10, max ΔR = +0.144). Refit ridge on PC-residualized pseudobulk; evaluate on Terekhova holdout and AIDA. Compare to (a) gene-EN B × Terekhova R = 0.321 (D.23), (b) the existing FM-ridge B baseline (~R = 0).
+  - **Decision rule (pre-commit)** — applied to FM+PC-resid R on B × Terekhova, 3-seed mean:
+    - R ≥ gene-EN R − 0.05 (i.e., ≥ 0.27 on Terekhova holdout) → FM matches gene-EN on B-cells with cell-type-conditional probing; methodology contribution **extends from "CD4+T-only parity" to "multi-cell-type parity with cell-type-conditional probe."** This is a paper-headline-promoting outcome.
+    - R ∈ [gene-EN R − 0.15, gene-EN R − 0.05] (i.e., 0.17 ≤ R < 0.27) → meaningful improvement over FM baseline but FM still trails gene-EN; paper reports as "PC-residual narrows the gap" rather than "matches."
+    - R < gene-EN R − 0.15 (i.e., < 0.17) → PC-residual helps but doesn't close the gap; B-cell remains a gene-EN win and is reported as a methodology limitation.
+  - **Output**: `results/phase3/g2_pc_residual_b_cell.csv` with rows = (seed × eval_cohort × layer × k_pc), columns = R, MAE, ΔR_vs_full_embedding, ΔR_vs_gene_EN.
+  - **Compute**: ~$0, ~half day. CPU only. Analysis-only on existing checkpoints.
+  - **Why second**: could promote the paper's headline contribution from "CD4+T parity" to "cell-type-conditional probing recipe matches gene-EN across cell types." Runs after G.1 because G.1's AIDA disclosure may shape how the multi-cell-type claim is framed.
+
+- [ ] **Task G.3 (proposed 2026-04-30, packages F.5 + G.2): Cell-type-conditional probing recipe table.**
+  - **Implementation**: For each cell type ∈ {CD4+T, B, NK} × fold ∈ {loco_onek1k, loco_terekhova} × seed ∈ {0, 1, 2}: pick the F.5-best (layer × k_pc) per cell type and report the corresponding R/MAE on holdout + AIDA. Compare to (a) the standard ridge-full-embedding at the deployment-best fixed layer, and (b) gene-EN. Roll up into one table that becomes a paper figure.
+  - **Decision rule (pre-commit)** — applied to mean ΔR = (cell-type-conditional recipe) − (best-fixed-recipe) averaged across (cell × fold × seed) on holdout:
+    - mean ΔR ≥ +0.05 → unified cell-type-conditional recipe is a methodology contribution worthy of headline framing; report as primary "FM with cell-type-conditional probe ≈ gene-EN across cell types."
+    - mean ΔR ∈ [0, +0.05] → recipe is a refinement, not a primary contribution; report in supplement with "cell-type-conditional probing yields small but consistent gains."
+    - mean ΔR < 0 → recipe doesn't generalize; abandon and stick with single-recipe ridge baseline. The cell-type-conditional finding remains a *biological* observation (F.5) without becoming a *methodology* recipe.
+  - **Output**: `results/phase3/g3_cell_type_conditional_recipe.csv` with rows = (cell_type × fold × seed × eval_cohort × probe_recipe), columns = layer, k_pc, R, MAE, ΔR_vs_fixed.
+  - **Compute**: ~$0, ~half day. CPU only. Depends on G.2's result for B-cell — if G.2 says FM matches gene-EN on B with PC-residual, G.3 packages the recipe; if G.2 fails the threshold, G.3 still produces the table but framed as a refinement, not a contribution.
+  - **Why third**: depends on G.2 outcome. If G.2 promotes the headline, G.3 produces the table that goes in the paper; if G.2 doesn't, G.3 still characterizes the cell-type-conditional structure as a biological observation.
+
+#### Recommended bundle (G.1 + G.2 + G.3, then F.2)
+
+**~2 days total, $0.** Analysis-only on existing checkpoints/embeddings. G.1 first (gates paper claim), then G.2 (paper-headline-promoting if it works), then G.3 (packages whatever G.2 returned). F.2 (probe-class sweep, ~1–2 days CPU) is still on the docket but not addressed by this review — defer until after G-series lands since G.1 may change framing in ways that affect what F.2 needs to test.
+
 ### Phase-3-B priority order — Tier 1 + extensions COMPLETE 2026-04-30
 
 Done in autonomous session 2026-04-29/30:
