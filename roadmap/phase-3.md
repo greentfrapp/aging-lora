@@ -524,6 +524,8 @@ Reviewer flagged two substantive follow-ups: F.1's borderline +0.298 AIDA compos
     2. Holdout-side ΔR is also tiny (gene-EN +0.003 / +0.006; FM +0.007 / +0.008 / +0.008) — composition is dominated within-cohort too, not just cross-ancestry.
     3. Net for matched-splits parity: confound concern resolved. Existing parity headline ("FM rank-32 LoRA × CD4+T at AIDA, 3-seed mean R ≈ 0.59 vs gene-EN R = 0.616") stands without modification.
 
+    **Sanity reproduction (2026-04-30, post-H.1):** G.1 re-run reproduces all 10 rows bit-for-bit with identical R, MAE, alpha, and l1_ratio values. DOMINATED verdict confirmed deterministic.
+
 - [x] **Task G.2 (proposed 2026-04-30, addresses F.5 reviewer follow-up): PC-residualized FM probe on B × Terekhova.** *(Done 2026-04-30.)*
   - **Implementation**: Take frozen Geneformer × B × loco_terekhova × seeds {0, 1, 2} embeddings at the F.5-best (layer × k_pc) for B-cell on the loco_terekhova fold (from F.5 table: layer 0 × k = 10, max ΔR = +0.144). Refit ridge on PC-residualized pseudobulk; evaluate on Terekhova holdout and AIDA. Compare to (a) gene-EN B × Terekhova R = 0.321 (D.23), (b) the existing FM-ridge B baseline (~R = 0).
   - **Decision rule (pre-commit)** — applied to FM+PC-resid R on B × Terekhova, 3-seed mean:
@@ -548,6 +550,8 @@ Reviewer flagged two substantive follow-ups: F.1's borderline +0.298 AIDA compos
     **Caveat (cross-ancestry):** B × loco_terekhova → AIDA fails. CV-picked PC-residual R = −0.072, vs gene-EN AIDA R = +0.168. Cross-ancestry transfer for B is a gene-EN win regardless of probing recipe. This is consistent with F.5's observation that AIDA gains in B-cell were narrow (max ΔR_aida = +0.27 at L0, k=10 — but the CV-picked recipe at L9, k=5 lands at a different point in the (layer × k_pc) surface). Cross-ancestry on B-cells remains a methodology limitation.
 
     **Honest framing for the paper**: cell-type-conditional probe matches gene-EN on B × within-cohort but not on B × cross-ancestry. The "FM-with-cell-type-conditional-probe matches gene-EN" claim survives for within-cohort holdout but needs cell-type-and-eval-conditional caveats for AIDA.
+
+    **⚠ SUPERSEDED 2026-04-30 by H.1 multi-seed verification.** The single-seed R = 0.281 above was a lucky seed-0 outcome. 3-seed mean drops to R = 0.195 ± 0.078 (σ well above the 0.05 stability threshold). The MATCHES verdict downgrades to NARROWS GAP. CV-picked recipe is itself unstable across seeds (best layer L3–L12). See H.1 entry below for the corrected, deployment-relevant numbers — the G.2 single-seed values are NOT what should be cited in the paper.
 
 - [x] **Task G.3 (proposed 2026-04-30, packages F.5 + G.2): Cell-type-conditional probing recipe table.** *(Done 2026-04-30.)*
   - **Implementation**: For each cell type ∈ {CD4+T, B, NK} × fold ∈ {loco_onek1k, loco_terekhova} × seed ∈ {0, 1, 2}: pick the F.5-best (layer × k_pc) per cell type and report the corresponding R/MAE on holdout + AIDA. Compare to (a) the standard ridge-full-embedding at the deployment-best fixed layer, and (b) gene-EN. Roll up into one table that becomes a paper figure.
@@ -585,6 +589,18 @@ Reviewer flagged two substantive follow-ups: F.1's borderline +0.298 AIDA compos
     3. NK gains are AIDA-only (+0.09) and cohort-conditional within-fold; the recipe is a refinement, not a robust contribution.
     4. The G.3 table itself becomes a supplementary methodology figure showing per-(cell × fold × seed) probe selection and the resulting R/MAE alongside gene-EN. The headline framing remains "FM rank-32 LoRA matches gene-EN on CD4+T at matched splits"; the cell-type-conditional probe story sits in the methodology section as a refinement that closes the gap on B-cells specifically.
 
+    **⚠ Multi-seed update (2026-04-30, post-H.1): B-cell contribution downgraded.** With 4 additional B-cell rows from H.1 multi-seed (loco_terekhova × seeds 1, 2 and loco_onek1k × seeds 1, 2), the per-cell-type B aggregate drops from (mean ΔR_holdout +0.062, ΔR_aida +0.138) at n=2 to (**mean ΔR_holdout +0.008, ΔR_aida +0.043** at n=6). The B-cell contribution is now within rounding of zero on holdout and below the +0.05 contribution threshold on AIDA. Updated table is `results/phase3/h1_g3_recipe_multi_seed.csv` (20 rows = 14 from F.5 non-B + 6 from H.1 B).
+
+    Updated per-cell-type aggregation:
+
+    | cell type | n_conditions | mean ΔR_holdout | mean ΔR_aida |
+    |---|---|---|---|
+    | CD4+T | 8 | 0.000 | 0.000 |
+    | B | 6 (was 2) | **+0.008** (was +0.062) | **+0.043** (was +0.138) |
+    | NK | 6 | +0.002 | +0.091 |
+
+    Overall mean ΔR_holdout = +0.003 (was +0.009) → still REFINEMENT but now even less of a contribution. The cell-type-conditional probing recipe is no longer paper-supportable as a primary methodology contribution; it's a supplement-only refinement with the honest caveat that "B-cell PC-residual gains are seed-conditional and average to noise."
+
 #### Recommended bundle (G.1 + G.2 + G.3, then F.2)
 
 **~2 days total, $0.** Analysis-only on existing checkpoints/embeddings. G.1 first (gates paper claim), then G.2 (paper-headline-promoting if it works), then G.3 (packages whatever G.2 returned). F.2 (probe-class sweep, ~1–2 days CPU) is still on the docket but not addressed by this review — defer until after G-series lands since G.1 may change framing in ways that affect what F.2 needs to test.
@@ -595,7 +611,7 @@ Reviewer endorses the G-series outcomes and proposes four follow-ups. Two Tier 1
 
 Subtle new framing observation from the reviewer: G.3's per-condition rank-32 LoRA × CD4+T results sit narrowly *above* gene-EN (+0.011 to +0.033), which slightly weakens D.36's "FM trails gene-EN by 1.35y on average" framing. D.36's bootstrap analysis still applies for the bulk-distribution comparison, but the per-condition picture is a tension worth one sentence in the writeup.
 
-- [ ] **Task H.1 (proposed 2026-04-30, addresses G.2 single-seed limitation): Multi-seed verification of B × Terekhova PC-residual probe.**
+- [x] **Task H.1 (proposed 2026-04-30, addresses G.2 single-seed limitation): Multi-seed verification of B × Terekhova PC-residual probe.** *(Done 2026-04-30 on local 2080 Ti, ~$0.)*
   - **Implementation**: Re-extract frozen Geneformer × B-cell layered embeddings for seeds 1, 2 across all 4 cohorts (onek1k, stephenson, terekhova, aida) — produces `{cohort}_B_frozen_base_seed{1,2}_alllayers.npz`. Then re-run G.2's CV-honest pipeline (`scripts/g2_pc_residual_b_cell.py` adapted to seeds 1, 2 and aggregated to 3-seed mean ± std).
   - **Decision rule (pre-commit)** — applied to 3-seed mean R on Terekhova holdout (current single-seed R = 0.281, gene-EN R = 0.321):
     - 3-seed mean R ≥ 0.27 AND σ(R) ≤ 0.05 → MATCHES gene-EN verdict survives multi-seed; cell-type-conditional probing extension claim is robust. Paper headline survives.
@@ -605,6 +621,33 @@ Subtle new framing observation from the reviewer: G.3's per-condition rank-32 Lo
   - **Output**: `results/phase3/h1_b_cell_multi_seed.csv` with rows = (seed × eval_cohort × layer × k_pc), columns = R, MAE, ΔR_vs_full, ΔR_vs_gene_EN; plus 3-seed-aggregated row.
   - **Compute**: ~$5–10 GPU (frozen Geneformer extraction × 4 cohorts × 2 seeds × B cell-type ≈ 8 extraction passes; per Phase-1 calibration, frozen extraction is ~$0.50–1.50 per cohort×celltype). Plus ~half day CPU for the analysis re-run.
   - **Why first**: load-bearing for the cell-type-conditional probing extension claim. §28 lesson applies — a single-seed near-headline number is correction-risk. Without multi-seed verification, the B-cell parity claim must be flagged as "single-seed near-headline" in the paper.
+  - **Result (2026-04-30)**: 8 frozen B × {seed1, seed2} × 4-cohort npz files extracted on local RTX 2080 Ti in ~78 minutes (~$0 cloud-equivalent). 6-row multi-seed CSV at `results/phase3/h1_b_cell_multi_seed.csv` + per-(layer × k_pc × seed × fold) CV grid at `h1_b_cell_multi_seed_cv_grid.csv`. **Decision rule fires NARROWS GAP** (mean ∈ [0.17, 0.27)) — the G.2 single-seed MATCHES verdict was lucky.
+
+    **B × loco_terekhova multi-seed (load-bearing fold):**
+
+    | seed | CV-picked (L, k_pc) | R_holdout_resid | R_aida_resid |
+    |---|---|---|---|
+    | 0 | (L9, k=5) | +0.281 | −0.072 |
+    | 1 | (L7, k=5) | +0.177 | +0.275 |
+    | 2 | (L3, k=10) | +0.127 | +0.014 |
+    | **3-seed mean ± σ** | varies | **+0.195 ± 0.078** | **+0.072 ± 0.181** |
+
+    **vs gene-EN R = 0.321 → mean gap = −0.126.** σ(R_holdout) = 0.078 is well above the 0.05 stability threshold; σ(R_aida) = 0.181 with sign-flips across seeds. Cross-ancestry transfer is essentially noise on B-cells.
+
+    **B × loco_onek1k multi-seed (n=3):**
+    - seeds 0/1/2: holdout R = 0.079 / 0.247 / 0.192 → mean 0.173 ± 0.086
+    - vs gene-EN R = 0.136 → mean ΔR = +0.037 (FM marginally above gene-EN within-cohort)
+    - AIDA: 0.126 / 0.058 / 0.359 → mean 0.181 ± 0.158, vs gene-EN +0.126 → mean ΔR = +0.055
+
+    **CV-picked recipe is itself unstable across seeds** — best layer ranges L3–L12, best k_pc 5–10. The "deployment recipe" depends on which seed you happen to train. This is consistent with F.5's read that B-cell age is a low-variance residual axis: low-variance axes are brittle to seed-conditional rotation in PCA basis.
+
+    **Honest reframe (overrides G.2's single-seed MATCHES verdict):**
+    1. **G.2's single-seed R = 0.281 (matching gene-EN within 0.04) was a lucky seed-0 outcome**; multi-seed mean (R = 0.195) lands firmly in NARROWS GAP territory. Paper cannot claim "FM matches gene-EN on B-cells with cell-type-conditional probing." The honest statement is "PC-residual probing narrows the FM-vs-gene-EN gap on B × Terekhova by ~30% on average, with high seed variance (σ ≈ 0.08)."
+    2. **B-cell parity claim downgraded** from headline-promoting to a methodology-section observation about partial gap-closure with seed-conditional reliability.
+    3. **§28 lesson VINDICATED** — single-seed near-headline numbers are correction-risk; multi-seed verification was the correct call. This becomes a process talking point: "the methodology refinement framing was tested at multi-seed and downgraded from MATCH to NARROWS GAP after correction-risk verification."
+    4. **Cross-ancestry on B-cells is essentially seed-dependent noise**, with R ranging from −0.07 to +0.28 across seeds. Cannot claim cross-ancestry probing recipe for B.
+
+    **G.2 entry above must be re-read with these caveats.** The single-seed numbers are accurate but unrepresentative; the multi-seed numbers here are the deployment-relevant ones.
 
 - [x] **Task H.2 (proposed 2026-04-30, identical to queued F.2): Per-layer non-linear probe sweep.** *(Subsumed by F.2; promoted from deferred to Tier 1.)*
   - F.2 already covers the reviewer's "Analysis A" scope: 4 probe classes (ridge, pca_ols, kernel_rbf, mlp_h64) × 13 layers × rank-32 × CD4+T × loco_onek1k × 3 seeds. Two of the four probes (kernel_rbf, mlp_h64) are non-linear, directly answering "do non-linear probes shift the layer ordering or recover signal beyond ridge?"

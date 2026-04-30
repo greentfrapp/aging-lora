@@ -1,0 +1,21 @@
+method,fold,cell_type,seed,cond_recipe,cond_layer,cond_k_pc,fixed_layer,R_holdout_cond,MAE_holdout_cond,R_holdout_fixed,MAE_holdout_fixed,deltaR_holdout,R_aida_cond,R_aida_fixed,deltaR_aida,R_geneEN_holdout,R_geneEN_aida,R_holdout_cond_vs_geneEN,source
+geneformer_frozen_seed0,loco_onek1k,CD4+ T,0,full-embed,12,0,12,0.5603,16.5173,0.5603,16.5173,0.0000,0.5275,0.5275,0.0000,0.6118,0.6156,-0.0515,F.5
+geneformer_frozen_seed0,loco_onek1k,NK,0,pc-residual,6,25,3,0.2860,51.7313,0.3045,62.2842,-0.0185,0.2451,0.1404,0.1047,0.3661,0.2363,-0.0801,F.5
+geneformer_frozen_seed0,loco_terekhova,CD4+ T,0,full-embed,5,0,5,0.6209,18.2382,0.6209,18.2382,0.0000,,,,0.7757,0.6507,-0.1548,F.5
+geneformer_frozen_seed0,loco_terekhova,NK,0,pc-residual,2,5,2,0.2799,20.2864,0.2659,14.4117,0.0140,,,,0.4216,0.2444,-0.1417,F.5
+geneformer_frozen_seed1,loco_onek1k,NK,1,pc-residual,2,25,3,0.2611,20.4840,0.2534,39.7570,0.0077,0.3825,0.2945,0.0880,0.3661,0.2363,-0.1050,F.5
+geneformer_frozen_seed1,loco_terekhova,NK,1,pc-residual,2,5,2,0.2744,13.8917,0.2708,13.9809,0.0036,,,,0.4216,0.2444,-0.1472,F.5
+geneformer_frozen_seed2,loco_onek1k,NK,2,pc-residual,2,5,4,0.3032,19.4014,0.3056,34.2799,-0.0024,0.2926,0.2126,0.0800,0.3661,0.2363,-0.0629,F.5
+geneformer_frozen_seed2,loco_terekhova,NK,2,pc-residual,2,5,2,0.3476,18.4757,0.3377,13.5382,0.0099,,,,0.4216,0.2444,-0.0740,F.5
+geneformer_rank16_seed0,loco_onek1k,CD4+ T,0,full-embed,7,0,7,0.6389,9.9634,0.6389,9.9634,0.0000,0.4651,0.4651,0.0000,0.6118,0.6156,0.0271,F.5
+geneformer_rank16_seed1,loco_onek1k,CD4+ T,1,full-embed,6,0,6,0.6354,12.9371,0.6354,12.9371,0.0000,0.5507,0.5507,0.0000,0.6118,0.6156,0.0236,F.5
+geneformer_rank16_seed2,loco_onek1k,CD4+ T,2,full-embed,6,0,6,0.6225,11.0513,0.6225,11.0513,0.0000,0.5500,0.5500,0.0000,0.6118,0.6156,0.0107,F.5
+geneformer_rank32_seed0,loco_onek1k,CD4+ T,0,full-embed,12,0,12,0.6359,11.0030,0.6359,11.0030,0.0000,0.6134,0.6134,0.0000,0.6118,0.6156,0.0241,F.5
+geneformer_rank32_seed1,loco_onek1k,CD4+ T,1,full-embed,12,0,12,0.6450,13.4208,0.6450,13.4208,0.0000,0.5859,0.5859,0.0000,0.6118,0.6156,0.0332,F.5
+geneformer_rank32_seed2,loco_onek1k,CD4+ T,2,full-embed,12,0,12,0.6187,12.1813,0.6187,12.1813,0.0000,0.5840,0.5840,0.0000,0.6118,0.6156,0.0069,F.5
+geneformer_frozen_seed0,loco_terekhova,B,0,pc-residual-CV,9,5,9,0.2805,17.3253,0.1740,,0.1065,-0.0723,-0.0614,-0.0109,0.3210,0.1683,-0.0405,H.1
+geneformer_frozen_seed1,loco_terekhova,B,1,pc-residual-CV,7,5,10,0.1774,14.2186,0.3108,,-0.1334,0.2754,0.2958,-0.0204,0.3210,0.1683,-0.1436,H.1
+geneformer_frozen_seed2,loco_terekhova,B,2,pc-residual-CV,3,10,2,0.1272,27.7580,0.0890,,0.0382,0.0141,0.0021,0.0120,0.3210,0.1683,-0.1938,H.1
+geneformer_frozen_seed0,loco_onek1k,B,0,pc-residual-CV,12,10,6,0.0789,18.2250,0.0548,,0.0241,0.1259,0.0384,0.0875,0.1358,0.1263,-0.0569,H.1
+geneformer_frozen_seed1,loco_onek1k,B,1,pc-residual-CV,6,5,12,0.2472,26.9843,0.2276,,0.0196,0.0579,0.0328,0.0251,0.1358,0.1263,0.1114,H.1
+geneformer_frozen_seed2,loco_onek1k,B,2,pc-residual-CV,3,10,6,0.1920,26.7891,0.2020,,-0.0100,0.3590,0.1935,0.1655,0.1358,0.1263,0.0562,H.1
