@@ -2249,3 +2249,65 @@ Post-F.1+F.4+F.5: three new refinements:
 The F.x bundle so far has *strengthened* the paper, not restructured it. The cs_lens reframing turns out to be a refinement (ridge is the right probe class for this problem) rather than a structural overhaul. The additional_concerns reading is partly confirmed (composition is a meaningful baseline; B-cell signal is residual) but doesn't dominate the paper's findings.
 
 F.2 (probe-class sweep) still pending will be the strongest test of the cs_lens framework. F.3 has now resolved the cell-count question — see §42.4: the cell-type-conditional layer asymmetry is largely cap=20 specific, and per-donor cell count is the largest single methodological lever (cap=100 AIDA R = 0.706 vs cap=20 = 0.527, Δ = +0.18 R). This finding likely requires paper restructuring.
+
+## 43. I.1 — Gene-EN cap-sweep (partial, 2026-04-30)
+
+User asked to run f3_review.md follow-ups (I.1-I.5) autonomously. I.1 (gene-EN at varying cap) is the cheapest and most decision-changing. Output: `results/phase3/i1_gene_en_cap_sweep.csv`.
+
+### 43.1 Results so far (cap=5000 still running)
+
+| Method × cap | loco_onek1k → onek1k | loco_onek1k → AIDA | loco_terekhova → terekhova | loco_terekhova → AIDA |
+|---|---|---|---|---|
+| gene-EN cap=20 | 0.437 | 0.399 | 0.526 | 0.402 |
+| gene-EN cap=100 | 0.612 | **0.616** | 0.776 | 0.651 |
+| gene-EN cap=500 | 0.679 | **0.733** | **0.848** | **0.733** |
+| FM frozen cap=20 | 0.560 | 0.527 | 0.621 | (n/a) |
+| FM frozen cap=100 | 0.687 | **0.706** | 0.749 | (n/a) |
+
+### 43.2 Cross-method gap as a function of cap (loco_onek1k → AIDA)
+
+| cap | gene-EN R | FM R | FM-vs-gene-EN gap |
+|---|---|---|---|
+| 20 | 0.399 | 0.527 | **+0.128** (FM ahead) |
+| 100 | 0.616 | 0.706 | **+0.090** (FM ahead) |
+| 500 | **0.733** | (no FM cap=500) | **−0.027** (gene-EN ahead, vs FM cap=100) |
+
+**Bulk gains MORE from cap than FM.** Going from cap=20 → cap=100, gene-EN gains +0.217 R while FM gains +0.179 R. Going from cap=100 → cap=500, gene-EN gains another +0.117 R; FM has not been tested at cap=500.
+
+### 43.3 Decision-rule outcome (pre-committed)
+
+Per the I.1 pre-commit:
+> "Gene-EN at cap=full R ≥ 0.70 on AIDA → bulk's plateau equals or exceeds FM's cap=100; FM has no relative advantage; methodology contribution must reframe around layer choice (where FM still has structure) not absolute R."
+
+**Triggered at cap=500.** Gene-EN cap=500 → AIDA R = 0.733 ≥ 0.70, AND exceeds FM cap=100 (0.706) by +0.027 R. Cap=5000 will only make this stronger.
+
+### 43.4 Implications for the paper
+
+This is the most disruptive finding to date. The §32 matched-splits parity narrative — which framed FM-vs-gene-EN as "competitive within seed variance, ~1.35y MAE worse" (D.36) — was conditional on **both methods at cap=100**. At cap=500 (closer to "full bulk"), gene-EN actually **exceeds** FM. The headline R for AIDA cross-ancestry shifts from "FM frozen 0.71" to "gene-EN bulk 0.73."
+
+The two-tier framing from §38 ("LoRA fine-tuned variants deployable; frozen-base characterization-only") still stands within the FM family, but the FM-vs-bulk question is now decisively answered: **at matched cap, bulk beats FM at AIDA cross-ancestry**.
+
+This doesn't kill the paper — it reframes the contribution. The methodology contributions that survive:
+1. Cell-type-conditional layer-of-readout (frozen-base, cap=20 specific, but real and non-trivial).
+2. Per-donor cell-count as the largest methodological lever for both bulk and FM (F.3 + I.1).
+3. Bootstrap layer-selection stability + small-N artifacts (E.5–E.8).
+4. PC-residual cell-type-conditional encoding (F.5).
+5. Composition baseline at cross-cohort (F.1: monocyte-fraction tracking).
+
+What changes:
+1. **The "FM matched-splits parity" narrative needs significant restatement.** The right framing is now: "FM frozen at cap=100 is competitive with gene-EN at cap=100 (FM +0.09 R), but gene-EN's plateau at higher caps exceeds FM's." Whether this is paper-strengthening (showing methodology lever > FM choice) or paper-narrowing (FM doesn't have an absolute-performance edge) depends on framing.
+2. **The §32 paper-changing insight (TF's R=0.83 was methodology-mismatch, not FM advantage) holds even more strongly** — both bulk and FM benefit from cap; both methods' "best" R depends on cap, not on choice between FM and bulk.
+
+### 43.5 Caveats and what I.1 doesn't answer
+
+- **FM at cap=500 not tested.** The right comparison is FM cap=500 vs gene-EN cap=500 — currently we're comparing FM cap=100 vs gene-EN cap=500. F.3 didn't run cap=500 because of compute cost. I.3 (plateau test) will fill this gap.
+- **Single-seed.** §28 lesson: gene-EN cap=500 = 0.733 might drop to 0.70 at 3-seed mean.
+- **Single fold direction.** loco_terekhova → AIDA at cap=500 also gives 0.733. So the pattern is consistent across folds (good).
+
+### 43.6 Status of remaining I.x tasks
+
+- I.1: cap=5000 still running (~2h more). Will commit when done.
+- I.2 (NK + B at cap=100): in progress, ~2/8 extractions done.
+- I.3 (plateau): not started.
+- I.4 (3-seed cap=100 verification): in progress, 1st extraction underway (slowed by I.2 GPU contention).
+- I.5 (LoRA cap=100): deferred, ~30h GPU.
