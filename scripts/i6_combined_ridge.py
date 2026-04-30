@@ -1,0 +1,178 @@
+"""I.6 — Combined FM ridge readout across cap-matrix.
+
+For each (cap, seed) condition, runs per-layer ridge readout and produces
+the 3-seed mean ± SD per layer per fold. cap=1000 is single-seed.
+
+Output: results/phase3/i6_fm_ridge_caps.csv
+Combined comparison table: results/phase3/i6_summary.csv
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import Ridge, RidgeCV
+from scipy.stats import pearsonr
+
+
+EMB_DIR = Path("results/phase3/embeddings_layered")
+OUT_CSV = Path("results/phase3/i6_fm_ridge_caps.csv")
+SUMMARY_CSV = Path("results/phase3/i6_summary.csv")
+ALPHAS = [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0]
+
+
+def _tag(cap: int, seed: int) -> str:
+    if seed == 0:
+        return f"frozen_base_cap{cap}_alllayers"
+    return f"frozen_base_cap{cap}_seed{seed}_alllayers"
+
+
+def _load(cohort: str, cap: int, seed: int):
+    p = EMB_DIR / f"{cohort}_CD4p_T_{_tag(cap, seed)}.npz"
+    if not p.exists():
+        return None
+    z = np.load(p, allow_pickle=True)
+    return z["donor_ids"], z["ages"].astype(np.float32), z["embeddings_per_layer"].astype(np.float32)
+
+
+def _fit(X_train, y_train, X_eval, y_eval, seed=0):
+    cv = RidgeCV(alphas=ALPHAS, cv=3, scoring="neg_mean_absolute_error")
+    rng = np.random.default_rng(seed)
+    perm = rng.permutation(len(y_train))
+    cv.fit(X_train[perm], y_train[perm])
+    final = Ridge(alpha=float(cv.alpha_)).fit(X_train, y_train)
+    pred = final.predict(X_eval)
+    if np.std(pred) > 0 and np.std(y_eval) > 0 and len(y_eval) > 1:
+        r, _ = pearsonr(pred, y_eval)
+    else:
+        r = 0.0
+    mae = float(np.median(np.abs(pred - y_eval)))
+    return float(r), mae
+
+
+def main():
+    folds = json.loads(Path("data/loco_folds.json").read_text())["folds"]
+    fmap = {f["fold_id"]: f for f in folds}
+
+    cap_seed_pairs = [
+        (50, 0), (50, 1), (50, 2),
+        (100, 0), (100, 1), (100, 2),
+        (500, 0), (500, 1), (500, 2),
+        (1000, 0),
+    ]
+
+    rows = []
+    for cap, seed in cap_seed_pairs:
+        for fold_id in ["loco_onek1k", "loco_terekhova"]:
+            f = fmap[fold_id]
+            train_X_per_layer, train_y_all = [], []
+            skip = False
+            for tc in f["train_cohorts"]:
+                ret = _load(tc, cap, seed)
+                if ret is None:
+                    skip = True
+                    break
+                _, ages, emb = ret
+                train_X_per_layer.append(emb)
+                train_y_all.append(ages)
+            if skip:
+                continue
+            train_X_layered = np.concatenate(train_X_per_layer, axis=1)
+            train_y = np.concatenate(train_y_all)
+
+            eval_ret = _load(f["holdout_cohort"], cap, seed)
+            if eval_ret is None:
+                continue
+            _, eval_y, eval_X_layered = eval_ret
+            aida_ret = _load("aida", cap, seed) if fold_id == "loco_onek1k" else None
+            n_layers = eval_X_layered.shape[0]
+
+            for layer in range(n_layers):
+                r, mae = _fit(train_X_layered[layer], train_y, eval_X_layered[layer], eval_y)
+                row = {"cap": cap, "seed": seed, "fold": fold_id, "layer": layer,
+                       "holdout_R": r, "holdout_MAE": mae}
+                if aida_ret:
+                    _, aida_y, aida_X = aida_ret
+                    ar, amae = _fit(train_X_layered[layer], train_y, aida_X[layer], aida_y)
+                    row["aida_R"] = ar
+                    row["aida_MAE"] = amae
+                rows.append(row)
+
+    df = pd.DataFrame(rows)
+    OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(OUT_CSV, index=False, float_format="%.4f")
+    print(f"[I.6] wrote {len(df)} FM-ridge rows to {OUT_CSV}")
+
+    # Best-layer-per-(cap, seed, fold), then 3-seed mean over best-layer R.
+    print("\n=== I.6 FM 3-seed best-layer R per (cap × fold) ===")
+    summary_rows = []
+    for fold in ["loco_onek1k", "loco_terekhova"]:
+        sub = df[df["fold"] == fold]
+        if len(sub) == 0:
+            continue
+        print(f"\nFold: {fold}")
+        for cap in sorted(sub["cap"].unique()):
+            sub2 = sub[sub["cap"] == cap]
+            best_per_seed_holdout = sub2.loc[sub2.groupby("seed")["holdout_R"].idxmax()]
+            R_mean = best_per_seed_holdout["holdout_R"].mean()
+            R_std = best_per_seed_holdout["holdout_R"].std() if len(best_per_seed_holdout) > 1 else 0.0
+            line = f"  cap={cap:5d}: holdout best-layer R = {R_mean:+.3f} ± {R_std:.3f}  (n={len(best_per_seed_holdout)})"
+            row = {"fold": fold, "cap": cap, "method": "FM",
+                   "holdout_R_mean": R_mean, "holdout_R_std": R_std,
+                   "n_seeds": len(best_per_seed_holdout)}
+            if "aida_R" in sub2.columns and sub2["aida_R"].notna().any():
+                best_per_seed_aida = sub2.loc[sub2.groupby("seed")["aida_R"].idxmax()]
+                aR_mean = best_per_seed_aida["aida_R"].mean()
+                aR_std = best_per_seed_aida["aida_R"].std() if len(best_per_seed_aida) > 1 else 0.0
+                line += f" | AIDA = {aR_mean:+.3f} ± {aR_std:.3f}"
+                row["aida_R_mean"] = aR_mean
+                row["aida_R_std"] = aR_std
+            print(line)
+            summary_rows.append(row)
+
+    # Cross-method (FM vs gene-EN) summary if gene-EN CSV exists.
+    gene_csv = Path("results/phase3/i6_gene_en_3seed_caps.csv")
+    if gene_csv.exists():
+        gdf = pd.read_csv(gene_csv)
+        print("\n=== I.6 gene-EN 3-seed mean per (cap × fold) ===")
+        for fold in ["loco_onek1k", "loco_terekhova"]:
+            sub = gdf[gdf["fold"] == fold]
+            if len(sub) == 0:
+                continue
+            print(f"\nFold: {fold}")
+            for cap in sorted(sub["cap"].unique()):
+                holdout_vals = sub[(sub["cap"] == cap) & (sub["eval_cohort"] != "aida")]["R"]
+                aida_vals = sub[(sub["cap"] == cap) & (sub["eval_cohort"] == "aida")]["R"]
+                line = f"  cap={cap:5d}: holdout R = {holdout_vals.mean():+.3f} ± {holdout_vals.std():.3f}"
+                row = {"fold": fold, "cap": cap, "method": "gene-EN",
+                       "holdout_R_mean": holdout_vals.mean(), "holdout_R_std": holdout_vals.std(),
+                       "n_seeds": len(holdout_vals)}
+                if len(aida_vals) > 0:
+                    line += f" | AIDA = {aida_vals.mean():+.3f} ± {aida_vals.std():.3f}"
+                    row["aida_R_mean"] = aida_vals.mean()
+                    row["aida_R_std"] = aida_vals.std()
+                print(line)
+                summary_rows.append(row)
+
+        # Matched-cap matched-method comparison
+        print("\n=== I.6 Matched-cap FM-vs-gene-EN gap (3-seed mean AIDA R) ===")
+        for fold in ["loco_onek1k"]:
+            print(f"\nFold: {fold}")
+            for cap in sorted(set(sub["cap"].unique()) & {50, 100, 500, 1000}):
+                fm_row = next((r for r in summary_rows if r["fold"] == fold and r["cap"] == cap and r["method"] == "FM"), None)
+                gen_row = next((r for r in summary_rows if r["fold"] == fold and r["cap"] == cap and r["method"] == "gene-EN"), None)
+                if fm_row and gen_row and "aida_R_mean" in fm_row and "aida_R_mean" in gen_row:
+                    gap = fm_row["aida_R_mean"] - gen_row["aida_R_mean"]
+                    print(f"  cap={cap:5d}: FM AIDA R = {fm_row['aida_R_mean']:+.3f} ± {fm_row['aida_R_std']:.3f}  "
+                          f"vs gene-EN = {gen_row['aida_R_mean']:+.3f} ± {gen_row['aida_R_std']:.3f}  "
+                          f"→ gap = {gap:+.3f}")
+
+    sdf = pd.DataFrame(summary_rows)
+    sdf.to_csv(SUMMARY_CSV, index=False, float_format="%.4f")
+    print(f"\n[I.6] wrote {len(sdf)} summary rows to {SUMMARY_CSV}")
+
+
+if __name__ == "__main__":
+    main()
