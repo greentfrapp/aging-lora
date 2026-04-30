@@ -2380,3 +2380,40 @@ The methodology contribution that survives:
 2. At high per-donor cap, FM and gene-EN are roughly equivalent on AIDA cross-ancestry; the cell-count axis dominates the method-choice axis.
 3. Cell-type-conditional layer-of-readout is largely a cap=20 artifact; at cap=100, age signal is recoverable from early layers across cell types.
 4. The methodology framing of the paper shifts from "FM-vs-bulk" to "per-donor cell count is the lever; method choice is secondary."
+
+## 45. I.6 — 3-seed cap-matrix (LAUNCHED 2026-04-30, supersedes I.3)
+
+User reviewed §43 (I.1) and pushed back on the matched-cap-vs-ceiling conflation: "Why compare gene-EN cap=500 R=0.733 with FM cap=100 R=0.706?" Walk-back in §43.3 documented that the I.1 decision-rule trigger was sloppily worded, and that the matched-cap reading (FM ahead at cap=20 +0.128, cap=100 +0.090, no FM cap=500 data) is incomplete.
+
+User's follow-up: "We should have 3-seed for cell=50, cell=100, cell=500, for both FM and Gene-EN" — and after a feasibility check that confirmed cap=1000 is also achievable: "FM 1-seed on 1000, wait for review after."
+
+### 45.1 Design
+
+| Method | cap=50 | cap=100 | cap=500 | cap=1000 |
+|---|---|---|---|---|
+| gene-EN | 3 seeds | 3 seeds | 3 seeds | 3 seeds |
+| FM | 3 seeds | 3 seeds (F.3 s0 + I.4 s1 s2) | 3 seeds | **1 seed (review gate)** |
+
+cap=200 was dropped vs the original I.3 plan; cap=50/100/500 are the trajectory anchors and cap=1000 is the saturation probe (cap=1000 is effectively "uncapped" for AIDA — only 24/595 donors hit the cap).
+
+### 45.2 Compute and risk
+
+- Sequential A10G GPU: ~63h for FM matrix (~$32 spot). cap=500 onek1k single extraction ≈ 7.6h; cap=1000 onek1k ≈ 10h.
+- CPU gene-EN: ~6-9h sequential (24 (seed × cap × fold) conditions × ~4 _build calls × cache-cold disk reads).
+- gene-EN runs in parallel with FM extractions (no contention).
+- Skip-existing logic in `i6_fm_extractions.sh` makes the run resumable across instance reboots.
+- cap=1000 review gate: after the 4 cap=1000 seed=0 extractions land, decide whether to commit ~$30 more for cap=1000 × 3 seeds based on whether the matched-cap gap is informative (e.g., FM still ahead → no; gene-EN catches up → maybe extend).
+
+### 45.3 Pre-committed decision rules
+
+- At every matched cap with 3-seed data, FM 3-seed mean AIDA R exceeds gene-EN 3-seed mean by **>+0.05** → matched-cap FM advantage is real; the §43 walk-back's "FM ahead at all caps with data" claim is reproduced.
+- At cap=500 specifically, gene-EN 3-seed mean ≥ FM 3-seed mean → bulk catches up at high cap; methodology contribution must reframe around layer choice + cell-count + cell-type-conditional shifts (not absolute matched-cap R).
+- Mixed (FM ahead at cap=50/100, gene-EN ahead at cap=500) → cap-dependent advantage; report the trajectory rather than picking one cap.
+
+### 45.4 Launch state (2026-04-30 ~13:07 UTC)
+
+- gene-EN: launched (`nohup .venv/bin/python scripts/i6_gene_en_3seed.py > /tmp/i6_gene_en.log`); started seed=0 cap=50.
+- FM extractions: chained behind I.4 (`nohup bash scripts/i6_chain.sh`) — waits for I.4 wrapper + ridge to finish, then runs `i6_fm_extractions.sh` sequentially over (cap=50 × 3 seeds → cap=500 × 3 seeds → cap=1000 × 1 seed).
+- I.4 (FM cap=100 3-seed verification) still extracting aida seed=2 at launch time; ETA ~12 min then auto-fires `i4_3seed_ridge.py`.
+- Both processes orphaned to init (PPID=1) so they survive Claude session swaps and SSH disconnects.
+- User offline 12h; expect partial results visible at return, full FM matrix not finishing until ~3 days later.

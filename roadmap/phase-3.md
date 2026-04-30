@@ -702,15 +702,11 @@ Decision rules pre-committed for each task. Recommended order: **I.1 → I.4 →
   - **Compute**: ~$1-2 GPU (A10G spot), ~3h wall.
   - **Why second**: Decides whether F.3 generalizes or is CD4+T-specific. Paper restructuring depends on this.
 
-- [ ] **Task I.3 (proposed 2026-04-30, addresses f3_review.md "plateau test"): Cap-trajectory plateau on CD4+T.**
-  - **Implementation**: GPU-extract CD4+T frozen at cap=50, cap=200, cap=500 × 4 cohorts. Combined with existing cap=5/20/100 results, gives a 6-point trajectory. Tests whether the cap=20 → cap=100 R gain plateaus at cap=200 or continues climbing.
-  - **Decision rule (pre-commit)**:
-    - cap=200 AIDA R ≈ 0.71 (≤ cap=100 + 0.01) → plateau reached; cap=100 is the recipe.
-    - cap=200 AIDA R ≥ 0.74 → not plateaued; need cap=500 result to decide where to stop. If cap=500 R ≥ 0.78, the trajectory keeps climbing and the recipe is "as many cells as possible."
-    - cap=200 R drops below cap=100 → unexpected; investigate (probably indicates a noise or tokenization issue).
-  - **Output**: `results/phase3/i3_cap_trajectory.csv` plus 12 NPZ extractions.
-  - **Compute**: ~$3-5 GPU, ~6-8h wall (cap=500 onek1k will be the biggest extraction yet, ~490k cells).
-  - **Why third**: Establishes whether cap=100 is itself the answer or a way-point on a longer curve.
+- [~] **Task I.3 (SUPERSEDED 2026-04-30 by I.6; original cap=50/200/500 single-seed plan replaced after the I.1 walk-back exposed the matched-cap-vs-ceiling conflation and the gene-EN-single-seed asymmetry).**
+  - Original I.3 ran cap=50/200/500 × 4 cohorts × 1 seed for FM only.
+  - The decision rule depended on FM-vs-FM-cap=100 plateau check; with I.4 verifying FM cap=100 at 3 seeds, the unverified single-seed FM cap=200/500 numbers are no longer comparable.
+  - I.6 absorbs the plateau test (FM cap=500/1000) and adds the missing matched-cap matched-seed comparison vs gene-EN at all caps.
+  - Scripts `scripts/i3_cap_trajectory.sh` and `scripts/i3_cap_trajectory_ridge.py` retained on disk as reference but not run.
 
 - [ ] **Task I.4 (proposed 2026-04-30, addresses §28-lesson + f3_review.md single-seed caveat): 3-seed verification of cap=100 CD4+T frozen.**
   - **Implementation**: Re-extract CD4+T frozen at cap=100 × 4 cohorts × cell-sampling seed=1 and seed=2. Combined with existing seed=0 (F.3), gives 3-seed mean ± SD per layer. Tests whether F.3's headline R=0.706 (single seed) holds at 3-seed mean (the §28 lesson: single-seed near-headlines often drop ~0.05-0.08 R at 3-seed).
@@ -732,11 +728,25 @@ Decision rules pre-committed for each task. Recommended order: **I.1 → I.4 →
   - **Compute**: ~$15-20 GPU (rank-32 LoRA at cap=100 = ~5× longer than cap=20 = ~30h wall).
   - **Why last**: Most expensive; conditional on I.1-I.4 outcomes (if I.1 shows gene-EN matches FM at cap=100, I.5 becomes much less interesting).
 
-#### I.1–I.5 recommended bundle and execution
+- [ ] **Task I.6 (proposed 2026-04-30, supersedes I.3; addresses matched-cap matched-seed gap exposed by I.1 walk-back): 3-seed cap-matrix for FM and gene-EN.**
+  - **Implementation**:
+    - **gene-EN**: 3 seeds × caps {50, 100, 500, 1000} × 2 folds × eval (holdout + AIDA). Same matched-splits ElasticNet pipeline as I.1 but parameterized over seed. Script: `scripts/i6_gene_en_3seed.py`.
+    - **FM 3-seed**: re-extract CD4+T frozen at cap=50 (× 3 seeds × 4 cohorts) and cap=500 (× 3 seeds × 4 cohorts). cap=100 is already covered by F.3 (seed=0) + I.4 (seeds 1, 2).
+    - **FM 1-seed**: cap=1000 (seed=0 only) × 4 cohorts. Review gate after — expand to 3 seeds only if matched-cap FM-vs-gene-EN gap at cap=1000 is informative.
+    - Combined ridge readout: `scripts/i6_combined_ridge.py` produces 3-seed mean ± SD per (cap × method × fold) and the matched-cap gap table.
+  - **Decision rule (pre-commit)**:
+    - At every matched cap with 3-seed data, FM 3-seed mean AIDA R exceeds gene-EN 3-seed mean by >+0.05 → FM has true matched-cap advantage; reframe is **not** needed.
+    - At cap=500 specifically, gene-EN 3-seed mean ≥ FM 3-seed mean → ceiling-vs-ceiling: bulk catches up at high cap; methodology contribution must reframe around layer choice + cell-count + cell-type-conditional shifts (not absolute matched-cap R).
+    - Mixed (FM ahead at cap=50/100, gene-EN ahead at cap=500) → cap-dependent advantage; report the trajectory rather than picking one cap.
+  - **Output**: `results/phase3/i6_gene_en_3seed_caps.csv`, `results/phase3/i6_fm_ridge_caps.csv`, `results/phase3/i6_summary.csv`, plus ~28 new NPZ extractions.
+  - **Compute**: ~$32 GPU (~63h wall sequential A10G) + ~6-9h CPU. cap=1000 onek1k single extraction is the longest single GPU run yet (~10h).
+  - **Why**: This is now the headline experiment for the matched-cap FM-vs-bulk question. I.1 alone could not answer it.
 
-**Order**: I.1 (CPU, 30 min) → I.4 + I.2 in parallel (~3-4h GPU) → I.3 (~6-8h GPU) → I.5 (~30h GPU, conditional).
+#### I.1–I.6 recommended bundle and execution
 
-**Total bundle**: ~$20-30 GPU, ~2-3 days wall (mostly I.5).
+**Order**: I.1 (CPU, 30 min, DONE) → I.2 + I.4 in parallel (~3-4h GPU, DONE/IN-PROGRESS) → I.6 (~70h GPU + ~9h CPU; gene-EN side runs in parallel with FM extractions) → I.5 (~30h GPU, deferred; conditional on I.6 outcome).
+
+**Total bundle**: ~$50-70 GPU, ~4-5 days wall (mostly I.6 + deferred I.5).
 
 **Tier 1 (must run before paper restructuring decision)**: I.1 + I.4 + I.2.
 **Tier 2 (informative but not blocking)**: I.3.
