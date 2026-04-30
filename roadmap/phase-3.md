@@ -327,14 +327,63 @@ After Tier 1 verification gate resolved, the autonomous session implemented addi
 
 Compute for D.31-D.37: ~$0 (all analysis-only on existing data). Wall: ~3 hours of session time.
 
-#### Open follow-ups (proposed but not yet run)
+#### Open follow-ups (proposed 2026-04-30, post-D.37 limitations §38.5)
 
-- [ ] Task E.1 (proposed 2026-04-30, post-D.37): **Multi-seed modal-layer ensemble.** For multi-seed conditions, aggregate CV-mean-R per layer across seeds, pick argmax. Tests whether ensembling stabilizes layer choice for frozen-base. ~$0, ~30 min.
-- [ ] Task E.2 (proposed 2026-04-30, post-D.37): **Cohort-holdout inner CV.** Iteratively hold out one train cohort as inner-validation; pick best layer; evaluate on actual holdout. Tests cross-cohort generalization of layer choice. ~$0, ~1 hour.
-- [ ] Task E.3 (proposed 2026-04-30, post-D.37): **Bootstrap CIs on layer selection itself.** Bootstrap train donors n=200, re-run K-fold CV per bootstrap, get distribution of CV-best layer. Quantifies layer-choice uncertainty. ~$0, ~2-3 hours.
-- [ ] Task E.4 (proposed 2026-04-30, post-D.37): **End-to-end ensemble deployment test.** Apply E.1 modal-layer pick → fit ridge at modal-layer → evaluate on holdout. Compare R/MAE to single-seed CV. ~$0, ~30 min (bundled with E.1).
+D.37 documented three open limitations of the inner-CV layer-selection methodology:
+1. Single-seed CV picks variable layers for frozen-base — does ensembling stabilize?
+2. Within-train K-fold CV doesn't capture cohort batch effects — does cohort-holdout CV agree?
+3. Argmax(CV-R) is a point estimate — what's the layer-choice uncertainty?
 
-Recommended bundle: E.1 + E.2 + E.4 (~1.5-2 hours, $0). E.3 deferred unless reviewers ask.
+E.1–E.4 address these. Pre-committed decision rules baked into each task description so post-hoc rationalization is harder (the §28 lesson, applied prospectively).
+
+- [ ] **Task E.1 (proposed 2026-04-30, addresses §38.5 #2): Multi-seed modal-layer ensemble.**
+  - **Implementation**: For multi-seed conditions (NK frozen × 3 seeds, rank-16 × 3 seeds, rank-32 × 3 seeds), aggregate the CV-mean-R per layer **across seeds** (mean or median), then pick argmax. Compare to single-seed CV picks AND to the oracle (test-best) layer. Reuse `results/phase3/d37_cv_layer_selection.csv` (already has per-seed CV-R-per-layer arrays saved).
+  - **Decision rule (pre-commit)**:
+    - Modal-layer matches oracle in ≥2/3 multi-seed conditions → ensembling is the deployment recipe; report multi-seed-modal as the standard.
+    - Modal-layer matches in 1/3 → ensembling helps marginally; report both single-seed and ensemble.
+    - Modal-layer fails on ≥2/3 → ensembling doesn't help; frozen-base layer selection is fundamentally noisy at the cell-sampling level.
+  - **Output**: `results/phase3/e1_modal_layer_ensemble.csv` with rows = (method × condition), columns = single-seed-CV-layer-list, modal-layer, oracle-layer, agreement-flag.
+  - **Compute**: $0, ~30 min. Pure analysis on existing CSV.
+
+- [ ] **Task E.2 (proposed 2026-04-30, addresses §38.5 #1): Cohort-holdout inner CV.**
+  - **Implementation**: For each (fold × cell_type × seed), instead of K-fold CV across all train donors, iteratively hold out one entire train cohort as inner-validation. For loco_onek1k (train = Stephenson + Terekhova): inner-validation = Terekhova alone (or Stephenson alone). For loco_terekhova (train = OneK1K + Stephenson): inner-validation = OneK1K alone. Pick best layer using only the non-inner-validation cohort; evaluate at that layer on the actual held-out cohort + AIDA. Compare to D.37 K-fold-CV picks.
+  - **Decision rule (pre-commit)**:
+    - Cohort-holdout CV picks same layer as K-fold CV in ≥75% of conditions → cell-type-conditional layer claim generalizes across cohorts (deployment recipe robust to batch effects).
+    - 50–75% agreement → claim survives but with cohort-specific caveat (already partially captured by D.22 PARTIAL).
+    - <50% agreement → layer choice is cohort-specific, not a generalizable recipe; methodology contribution narrows further.
+  - **Output**: `results/phase3/e2_cohort_holdout_cv.csv` with rows = (method × condition × inner-validation-cohort), columns = CV-selected-layer-by-cohort-holdout, K-fold-CV-layer-from-D37, oracle-layer, agreement-flag.
+  - **Compute**: $0, ~1 hour. Pure analysis on existing layered embeddings.
+
+- [ ] **Task E.3 (proposed 2026-04-30, addresses §38.5 #3): Bootstrap CIs on layer-selection itself.**
+  - **Implementation**: For each (fold × cell_type × seed), bootstrap-resample train donors with replacement (n=200 bootstraps), run K-fold CV per bootstrap, record the CV-best layer per bootstrap. Output: distribution of "which layer wins" across bootstraps. Quantifies layer-choice uncertainty under donor sampling.
+  - **Decision rule (pre-commit)**:
+    - Single layer wins ≥70% of bootstraps → layer choice is robust; report as single number with confidence.
+    - 40–70% → moderate uncertainty; report top-2 layers as "the recipe range" (e.g., "L11–L12 for rank-16 LoRA").
+    - <40% → layer choice is fundamentally noisy under donor sampling; can only claim a "layer band" (e.g., "L0–L4 for NK").
+  - **Output**: `results/phase3/e3_bootstrap_layer_selection.csv` with rows = (method × condition × layer), columns = win-rate-across-bootstraps, mean-CV-R, std-CV-R.
+  - **Compute**: $0, ~2-3 hours CPU. 200 bootstraps × 5 folds × 13 layers × ~12 conditions = ~156k ridge fits at ~0.05s each. Reducible to 100 bootstraps for ~1.5h if time-constrained.
+
+- [ ] **Task E.4 (proposed 2026-04-30, validation of E.1): End-to-end ensemble deployment test.**
+  - **Implementation**: After E.1 produces multi-seed modal-layer picks, apply that pick end-to-end: fit ridge at modal-layer on full train, evaluate on actual holdout cohort + AIDA. Compare holdout R/MAE at modal-layer to (a) single-seed CV picks, (b) oracle. Tests whether the ensemble actually delivers better deployment performance.
+  - **Decision rule (pre-commit)**:
+    - Ensemble R penalty (vs oracle) drops by ≥50% compared to single-seed CV mean R penalty → ensemble is the recipe; recommend modal-layer-across-N-seeds for deployment.
+    - 25–50% drop → ensemble helps but isn't the dominant solution; recommend N-seed deployment with caveat.
+    - <25% drop → ensemble doesn't materially help; single-seed CV is the recipe.
+  - **Output**: `results/phase3/e4_ensemble_deployment.csv` with rows = (method × condition), columns = single-seed-mean-R-penalty, ensemble-R-penalty, oracle-R, recommendation.
+  - **Compute**: $0, ~30 min. Bundled with E.1.
+
+#### Recommended execution
+
+**Bundle**: E.1 + E.2 + E.4 (~1.5-2 hours total, $0). Addresses the two most paper-relevant limitations (cohort generalization + ensemble deployment) and gives:
+- A clear deployment recipe (E.1+E.4: "use modal-layer across N seeds")
+- Cohort-generalization evidence (E.2: "the recipe survives leave-one-train-cohort-out CV")
+
+**E.3 deferred** unless reviewers specifically ask for layer-choice CIs. It's more rigorous but adds 2-3 hours for a refinement rather than a paper-changing finding.
+
+**Paper impact if E.1+E.2+E.4 land cleanly**: §3.5 of `paper_draft_v0.md` strengthens from "deployment recipe for fine-tuned variants only" to "two-tier deployment recipe with cohort-generalization validation":
+> "(1) For fine-tuned variants, single-seed CV is sufficient. (2) For frozen-base variants, multi-seed modal-layer ensembling stabilizes layer choice and recovers oracle-level R/MAE within X%. Both recipes generalize across cohorts via leave-one-train-cohort-out validation."
+
+Estimated paper-strength uplift: substantial. The "did you select layer on the test set?" reviewer challenge gets fully addressed.
 
 ### Phase-3-B priority order — Tier 1 + extensions COMPLETE 2026-04-30
 
