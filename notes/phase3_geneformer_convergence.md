@@ -2210,14 +2210,3 @@ Post-F.1+F.4+F.5: three new refinements:
 The F.x bundle so far has *strengthened* the paper, not restructured it. The cs_lens reframing turns out to be a refinement (ridge is the right probe class for this problem) rather than a structural overhaul. The additional_concerns reading is partly confirmed (composition is a meaningful baseline; B-cell signal is residual) but doesn't dominate the paper's findings.
 
 F.2 (probe-class sweep) still pending will be the strongest test of the cs_lens framework. F.3 (cell-count artifact) will resolve whether the cell-type-conditional layer asymmetry is biology or SNR.
-
-### 41.6 Synthesis — what the inconsistency audit changed
-
-Pre-audit (§40 framing): "rank-16 is regime B (K-fold correct, bootstrap wrong); methodology is two-tier."
-
-Post-audit (refined):
-1. **Rank-16 anomaly is real but distribution-specific**: K-fold CV picks L6 (OneK1K-best); bootstrap picks L12 (AIDA-best). Both are correct for their target distribution.
-2. **The seed-2 anomaly survives the flatness check** (E.7 confirms 0.058 R gap on OneK1K is real and statistically robust), but on AIDA the seed 0 actually shows L12 BEST by 0.10 R.
-3. **Frozen × NK × AIDA has SD = 0.116** — the directional-regime-only framing is institutionally supported (E.6).
-4. **Frozen × NK × Terekhova bootstrap-vs-oracle gap is real, not flat** (E.5) — needs E.8 to determine if leakage explains it.
-5. The two-tier framing of §40 needs to be re-stated as **distribution-specific**: for AIDA cross-ancestry deployment, bootstrap's L12 is the recipe across rank-16 + rank-32; for in-distribution loco-holdout, K-fold CV's pick is closer.
