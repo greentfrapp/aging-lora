@@ -1,0 +1,20 @@
+[cli] fold=loco_onek1k train=['stephenson', 'terekhova'] holdout=onek1k h5ad=data/cohorts/integrated/CD4p_T.h5ad
+[cli] train cells=9500 donors=190
+[cli] eval cells=19620 donors=981
+[cli] head bias init (= mean train age per-cell): 48.93
+[cli] building model + LoRA…
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights: 100%|██████████| 197/197 [00:00<00:00, 3318.66it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: save/Geneformer/Geneformer-V2-104M
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[cli] params: {'total_params': 108493825, 'trainable_params': 4719361, 'trainable_pct': 4.3499}
+[transformers] `use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+[cli] done. mae=18.827 r=0.487 wall=8812.8s

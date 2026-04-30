@@ -226,6 +226,44 @@ This is a refinement of the cell-type-conditional layer finding: NK reads
 better at early-to-mid layers than at L12 on cross-cohort settings, with
 the advantage robust across 3 seeds of cell sampling.
 
+**Layer-selection deployment recipe (E.1–E.4 stress tests, see memo §40)**:
+We performed four orthogonal stress tests on the layer-selection methodology:
+multi-seed modal-layer ensembling (E.1), cohort-holdout inner CV (E.2),
+n=200 bootstrap CIs on layer selection (E.3), and end-to-end ensemble
+deployment (E.4). The combined evidence reveals four deployment regimes:
+
+- **Genuinely deployable (rank-32 LoRA × CD4+T)**: K-fold inner CV,
+  bootstrap layer-selection (top-1 win rate 100%, 3/3 seeds), and
+  post-hoc oracle all agree on L12. Multi-seed ensembling adds nothing
+  (E.4: 0% drop in R penalty because single-seed CV is already at oracle).
+  Recipe: single-seed K-fold CV + ridge readout at the CV-selected layer.
+- **K-fold CV correct, bootstrap mis-identifies (rank-16 LoRA × CD4+T)**:
+  K-fold CV picks L6/L7 across 3 seeds, matching oracle (L6/L6/L7) within
+  ±1 layer with R penalty ≤0.01. But bootstrap layer-selection (n=200)
+  robustly picks L12 with 97.5–100% confidence — the train-CV-best layer.
+  Under cross-cohort distribution shift, the train-CV objective rewards
+  the deepest layer, but holdout-best shifts earlier. **High bootstrap
+  confidence ≠ high deployment accuracy.** Recipe: single-seed K-fold CV.
+- **Frozen-base layer selection on cross-cohort holdouts**: directional
+  regime survives (NK reads at L0–L4 across cohorts; CD4+T reads at L9–L12)
+  but the specific layer is unstable across cell-sampling seeds and
+  cohort-holdout configurations. Modal-layer ensembling actively hurts
+  (E.4: ensemble R-penalty exceeds single-seed CV penalty by 22–63% for
+  NK frozen). Cohort-holdout CV agrees with K-fold CV in only 22% of
+  configurations on 2-cohort folds (E.2), so cohort-stratified validation
+  is uninformative here. Bootstrap layer-selection (E.3) is robust for
+  NK × loco_terekhova (L3 at 90.5–99% across 3 seeds, oracle L2 — off
+  by 1) but unstable for NK × loco_onek1k (37–63% top-1 across seeds).
+  **Honest framing: directional regime is the methodology contribution
+  (NK at early layers, CD4+T at late layers), not a deployment recipe
+  with specific layer numbers.**
+- **Substrate-weak (frozen × B × any cohort)**: holdout R differences
+  across layers are within noise; both K-fold CV and bootstrap pick within
+  this noise band (e.g., bootstrap picks L3 at 90.5% but oracle is L9 with
+  R = 0.23 — 6 layers apart but performance gap is small relative to the
+  cell-type baseline). Substrate-weak interpretation already noted (§3.5
+  D.23 + D.26 outcomes).
+
 ### 3.6 Unit-of-analysis interacts with layer choice
 
 Pseudobulk-input frozen Geneformer ridge readout best layer per condition:

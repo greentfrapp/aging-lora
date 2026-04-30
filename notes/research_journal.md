@@ -327,3 +327,49 @@ D.36 (proposed-and-implemented): bootstrap MAE CI on rank-32 L9 AIDA 3-seed pool
 Refines the §32 parity narrative: "**competitive within seed variance, not strictly tied**." CI-overlap supports "competitive" claim; Mann-Whitney rules out "tied." Both numbers reported in writeup.
 
 The §32 paper-changing narrative still holds in essence: the 0.4 R-units gap was a methodology-mismatch artifact. But the residual ~1.35y MAE gap at matched splits is real and statistically distinguishable.
+
+## 2026-04-30 — §40 E.1-E.4 deployment-recipe stress tests
+
+User: "Proceed autonomously to run all 4 experiments including E3." Ran E.1 (modal-layer ensemble), E.2 (cohort-holdout CV), E.3 (bootstrap CIs on layer selection), E.4 (end-to-end ensemble deployment).
+
+**E.1 modal-layer ensembling**:
+- rank-32 × CD4+T × loco_onek1k: PERFECT (all picks L12, agreement 3/3)
+- rank-16 × CD4+T × loco_onek1k: GOOD (modal=L6, agreement 2/3)
+- NK frozen × loco_onek1k: FAIL (modal=L0, agreement 0/3 oracles)
+- NK frozen × loco_terekhova: FAIL (modal=L3, agreement 0/3 oracles)
+- Decision: 2/4 pass, 0/4 partial, 2/4 fail → ensembling helps marginally; pattern is method-stratified
+
+**E.4 end-to-end deployment**:
+- rank-32: trivially 0 penalty (single CV already at oracle)
+- rank-16: 89.9% R-penalty drop — ensemble works
+- NK frozen onek1k: −62.7% drop (ensemble HURTS — modal layer worse than per-seed picks)
+- NK frozen terekhova: −22.3% drop (slight hurt)
+- Decision: ensemble helps for fine-tuned variants only; for frozen NK it actively hurts
+
+**E.2 cohort-holdout inner CV**:
+- 32 cohort-holdout configurations (16 D.37 conditions × 2 inner-val cohorts)
+- Agreement with K-fold CV: 7/32 = 21.9% (well below 50% threshold)
+- Agreement with oracle: 8/32 = 25.0%
+- Mechanism: with only 2 train cohorts, cohort-holdout CV is fundamentally unstable. Inner-val choice (Stephenson vs Terekhova) drives picks 5+ layers apart.
+- Decision: <50% agreement → "layer choice is cohort-specific"; methodological null result with clear scope (would be informative on ≥3 train cohorts only)
+
+**E.3 bootstrap CIs on layer selection** (n=200 × 16 conditions, 83.4 min wall):
+- 12/16 robust (top1 ≥70%); 3/16 moderate; 1/16 noisy (frozen seed0 loco_onek1k NK: 37%)
+- Rank-32 LoRA × CD4+T: 100%/100%/100% bootstrap-confidence on L12 across 3 seeds. Matches K-fold CV and oracle. Genuinely deployable.
+- Rank-16 LoRA × CD4+T: 100%/97.5%/100% bootstrap-confidence on L12, but oracle is L6/L6/L7. K-fold CV picked L6/L7 (matches oracle). **Bootstrap robustly picks the wrong layer here** — the train-CV-optimal (L12) diverges from holdout-optimal (L6) under cross-cohort distribution shift.
+- Frozen × CD4+T × loco_onek1k seed0: bootstrap picks L12 84.5% (matches oracle) where K-fold CV picked L4 (wrong). **Bootstrap rescues a K-fold CV failure** for this single condition.
+- Frozen × CD4+T × loco_terekhova: bootstrap picks L12 100% but oracle is L5. K-fold CV picks L6 (close to oracle). Same divergence pattern as rank-16 — bootstrap mis-identifies under distribution shift.
+- Frozen × NK × loco_terekhova × 3 seeds: bootstrap picks L3 (90.5%/98.5%/99%) very robustly; K-fold CV picks L2-L3; oracle L2. All methods agree on the early-layer regime; specific L2-vs-L3 dispute.
+- Frozen × NK × loco_onek1k × 3 seeds: bootstrap picks L3/L2/L12 (37%/50.5%/63%) — variable; K-fold CV picks L0/L2/L3 — variable. Both methods are unreliable here.
+
+**Crucial insight**: bootstrap robustly identifies the **train-CV-best** layer, but train-CV-best can diverge from holdout-best under cross-cohort distribution shift. High bootstrap confidence ≠ high deployment accuracy. For rank-16, single K-fold CV (lower confidence) picks closer to holdout-best than bootstrap (high confidence) does — the noisier method tracked the right answer better here.
+
+**Four deployment regimes identified (refined synthesis)**:
+- A. Genuinely deployable (rank-32 × CD4+T): all three methods agree on L12.
+- B. Single K-fold CV correct, bootstrap wrong (rank-16 × CD4+T): K-fold CV ≈ oracle; bootstrap robustly picks deeper. Use single K-fold CV, NOT bootstrap.
+- C. Bootstrap rescues K-fold CV (frozen × CD4+T × loco_onek1k seed0): single condition where bootstrap is right. N=1, not generalizable.
+- D. Both methods unreliable (frozen × NK × loco_onek1k): report directional regime only.
+
+Methodologically: the two failure modes (B and D) are the binding constraint. Framework conclusion is that **fine-tuned-variant K-fold CV layer selection is the deployment recipe; frozen-base layer choice is characterization-only**. E.3 confirms this, with the surprising note that bootstrap doesn't always help even when robust.
+
+Compute: $0 (all CPU on existing embeddings). Wall: ~5 min E.1+E.4, ~3 min E.2, 83.4 min E.3.
