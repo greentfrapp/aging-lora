@@ -2381,7 +2381,64 @@ The methodology contribution that survives:
 3. Cell-type-conditional layer-of-readout is largely a cap=20 artifact; at cap=100, age signal is recoverable from early layers across cell types.
 4. The methodology framing of the paper shifts from "FM-vs-bulk" to "per-donor cell count is the lever; method choice is secondary."
 
-## 45. I.6 — 3-seed cap-matrix (LAUNCHED 2026-04-30, supersedes I.3)
+## 45. I.4 — 3-seed verification of F.3 cap=100 (DONE 2026-04-30)
+
+8 extractions (CD4+T cap=100 × seeds 1, 2 × 4 cohorts; seed=0 from F.3) + ridge readout. Output: `results/phase3/i4_cap100_3seed_layered_ridge.csv` (78 rows).
+
+### 45.1 Decision rule (pre-committed) → middle bracket; F.3 walk-back
+
+Pre-committed:
+- 3-seed mean AIDA R at L2 ≥ 0.65 → robust; F.3 holds.
+- 0.55 ≤ 3-seed mean R < 0.65 → real but smaller; report 3-seed mean.
+- 3-seed mean R < 0.55 → fluke.
+
+**Middle bracket triggered.** 3-seed mean AIDA R at L2 = **0.609 ± 0.119**.
+
+### 45.2 Per-seed AIDA R at L2 (cap=100, loco_onek1k)
+
+| seed | AIDA R |
+|---|---|
+| 0 (F.3) | **0.706** |
+| 1 | 0.476 |
+| 2 | 0.645 |
+
+F.3's headline was the best of 3 seeds. The seed=1 number (0.476) is ~0.23 R below F.3 — within seed-sampling noise but enough to invalidate the single-seed headline. SD = 0.119, much larger than typical bootstrap CI half-width.
+
+### 45.3 Best-layer-by-3-seed-mean is NOT L2
+
+Reading per layer (loco_onek1k AIDA, cap=100, 3-seed mean ± SD):
+
+| Layer | 3-seed mean R | SD | Note |
+|---|---|---|---|
+| L1 | 0.605 | **0.033** | low-variance early layer |
+| L2 | 0.609 | 0.119 | F.3's pick; high variance |
+| L3 | **0.665** | 0.035 | best mean, low variance |
+| L4 | 0.630 | 0.068 | |
+| L5 | 0.632 | 0.039 | |
+| L9 | 0.608 | 0.062 | D.21 LoRA's pick |
+| L12 | 0.647 | 0.015 | best stability, late layer |
+
+**L3 is the best 3-seed-mean layer (0.665 ± 0.035) — clears the upper decision bracket (≥0.65) with tight variance.** L12 has the lowest SD (0.015) and a respectable mean (0.647). F.3's pick (L2) is the *most-variable* layer, not the most-defensible.
+
+### 45.4 Implications
+
+1. **F.3 single-seed headline (R=0.706 at L2 cap=100) does not survive 3-seed verification.** The §43 + §44 narratives that built on R=0.706 need to be requalified to R=0.609 ± 0.119 at L2, or restated around L3 (R=0.665 ± 0.035).
+2. **F.3's "+0.18 R from cap=20→100" gain shrinks to +0.08 to +0.14** depending on layer pick (cap=20 baseline was also single-seed; needs its own 3-seed). The cap effect is real but smaller than originally claimed.
+3. **Matched-cap FM-vs-gene-EN at cap=100 is now nearly tied** at 3-seed mean even before gene-EN gets its own 3-seed: FM L2 = 0.609 ± 0.119 vs gene-EN single-seed = 0.616. Pick L3 and FM is +0.05 ahead; pick L2 and FM is tied or behind.
+4. **Layer selection should be done on the 3-seed-mean, not on a single seed's argmax.** F.3's L2 was the argmax in seed=0; at 3-seed mean it's mid-pack. This is the §28 lesson re-confirmed: single-seed near-headlines + single-seed-argmax-layer-picks compound.
+5. **The §31 / §44 cell-type-conditional layer claim** (CD4+T cap=100 → early layers) survives in spirit — L1-L4 cluster around 0.60-0.67 — but L9-L12 are also competitive (0.60-0.65). Calling cap=100 a "clean shift to early layers" was overstated; **the 3-seed picture is "all layers are roughly equivalent in the 0.60-0.66 band, with high seed-variance"**.
+
+### 45.5 Update to F.3 § narrative
+
+Where §43-§44 cite "R=0.706 at L2 cap=100", these should be requalified. The new defensible headlines:
+
+- **L3 cap=100 3-seed mean = 0.665 ± 0.035** on AIDA loco_onek1k (best by mean).
+- **L12 cap=100 3-seed mean = 0.647 ± 0.015** on AIDA loco_onek1k (most stable).
+- **L2 cap=100 3-seed mean = 0.609 ± 0.119** on AIDA loco_onek1k (F.3's original pick, high variance — not recommended as headline).
+
+I.4 confirms the §28 lesson: single-seed near-headlines drop ~0.05-0.10 R at 3-seed.
+
+## 46. I.6 — 3-seed cap-matrix (LAUNCHED 2026-04-30, supersedes I.3)
 
 User reviewed §43 (I.1) and pushed back on the matched-cap-vs-ceiling conflation: "Why compare gene-EN cap=500 R=0.733 with FM cap=100 R=0.706?" Walk-back in §43.3 documented that the I.1 decision-rule trigger was sloppily worded, and that the matched-cap reading (FM ahead at cap=20 +0.128, cap=100 +0.090, no FM cap=500 data) is incomplete.
 

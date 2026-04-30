@@ -708,7 +708,7 @@ Decision rules pre-committed for each task. Recommended order: **I.1 → I.4 →
   - I.6 absorbs the plateau test (FM cap=500/1000) and adds the missing matched-cap matched-seed comparison vs gene-EN at all caps.
   - Scripts `scripts/i3_cap_trajectory.sh` and `scripts/i3_cap_trajectory_ridge.py` retained on disk as reference but not run.
 
-- [ ] **Task I.4 (proposed 2026-04-30, addresses §28-lesson + f3_review.md single-seed caveat): 3-seed verification of cap=100 CD4+T frozen.**
+- [x] **Task I.4 (DONE 2026-04-30, see §45; addresses §28-lesson + f3_review.md single-seed caveat): 3-seed verification of cap=100 CD4+T frozen.** Decision rule MIDDLE bracket triggered: 3-seed mean AIDA R at L2 (cap=100) = **0.609 ± 0.119**. F.3's single-seed R=0.706 was the best of 3 seeds (per-seed: 0.706 / 0.476 / 0.645). **Best-layer-by-3-seed-mean is NOT L2** — L3 wins with 0.665 ± 0.035 (low variance; clears the upper bracket); L12 has lowest SD at 0.015 with mean 0.647. F.3 walk-back: cite L3 cap=100 3-seed mean = 0.665 ± 0.035 (or L12 = 0.647 ± 0.015 for stability) as the headline rather than L2 = 0.706 single-seed. The "+0.18 R from cap=20→100" gain shrinks to +0.08-+0.14 depending on layer pick.
   - **Implementation**: Re-extract CD4+T frozen at cap=100 × 4 cohorts × cell-sampling seed=1 and seed=2. Combined with existing seed=0 (F.3), gives 3-seed mean ± SD per layer. Tests whether F.3's headline R=0.706 (single seed) holds at 3-seed mean (the §28 lesson: single-seed near-headlines often drop ~0.05-0.08 R at 3-seed).
   - **Decision rule (pre-commit)**:
     - 3-seed mean AIDA R at L2 ≥ 0.65 → cap=100 effect is robust; F.3 headline holds.
