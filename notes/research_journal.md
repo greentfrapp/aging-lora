@@ -240,3 +240,90 @@ Per §27.9 priorities, ran 5 additional fine-tune layered extractions (~2h, $2):
 **§32.5 next-step decision**: D.18 LoRA × 3-seed extension **deprioritized** — frozen-base pseudobulk-input result is sufficient to make the "FM and bulk converge at matched splits" point. Adding LoRA fine-tunes on pseudobulk-input is unlikely to flip the picture. The paper now has enough characterization across 5 sections (§22/§27/§28, §29, §30, §31, §32) to start drafting; remaining decision is which finding to lead with.
 
 **Cost**: ~$3 D.18 frozen-base + $0 D.17 (CPU sklearn) = ~$3 total. Wall ~1 day with dev. Memo §32 (full table). Both experiments delivered the predicted-most-likely outcome (matched gap is small, pseudobulk-input shifts layer profile) — diagnostic value high regardless of whether the result was a WIN.
+
+## 2026-04-29 — §33 load-bearing single-seed numbers inventory (D.27, autonomous-session pre-commitment)
+
+Per the §28 audit lesson, every load-bearing positive number <3 seeds is a correction risk. §33 enumerates them:
+
+**Tier-A (load-bearing for headline)**: 4 numbers — L9 AIDA rank-32 R=0.617/MAE=6.92, NK best-layer L3.3 across cohorts, pseudobulk-input CD4+T best layer L1-L4, frozen Terekhova L1 R=0.616.
+
+**Tier-B (3-seed-anchored)**: 2 numbers — rank-16 L12 OneK1K MAE=10.85±2.19, rank-16 L12 AIDA MAE=8.32.
+
+**Tier-C (single-seed but doesn't affect headline)**: 3 numbers — scFoundation R, rank-32 L12 OneK1K MAE, B substrate-empty.
+
+This inventory institutionalizes the §28 lesson: future audits start by re-reading §33.1 to identify which numbers any current claim depends on.
+
+## 2026-04-29 — §34 D.24 + D.25 + D.26 results (Tier 2 analyses, autonomous session)
+
+D.24 extension (analysis-only on existing embeddings): pseudobulk-input ridge fits for 3 missing cross-cohort conditions (NK × Terekhova, NK × AIDA loco_terekhova, B × AIDA loco_terekhova). Now 12 conditions total. Output `ridge_summary_pseudobulk.csv` (156 rows). Key finding: **NK pseudobulk-input best layer is L0-L3 across all 4 conditions** (matches CD4+T's L1-L4 shift). Two-axis principle refined: pseudobulk-input → early layers regardless of cell type; per-cell mean-pool layer choice is cell-type-conditional.
+
+D.25 (analysis-only on existing scFoundation embeddings): three-way matched-splits comparison. Output `d25_three_way_matched_splits.csv`. Finding: **scFoundation Δ vs gene-EN matched on CD4+T = -0.137 / -0.174 / -0.256 / -0.086** across conditions, vs Geneformer per-cell ridge Δ -0.052 / -0.088 / -0.155 / n.a. scFoundation lags Geneformer by 0.08-0.10 R-units consistently. **Matched-splits parity is Geneformer-specific, not pan-FM.** Closes scFoundation-LoRA from the queue.
+
+D.26 (analysis-only): bootstrap CIs (n=1000) on §31 layer-asymmetry numbers. Output `layer_asymmetry_cis.csv`. Finding: **NK early-layer ΔR robustly excludes zero only on AIDA cross-ancestry** (loco_onek1k+aida CI [+0.055, +0.184]). On OneK1K and Terekhova, ΔR is positive (+0.04, +0.07) but CI includes zero. The "NK at L3.3 across all 3 cohorts" claim has weaker statistical support than the medians suggested. B × Terekhova actually has signal at L9 (R=0.228 CI [0.014, 0.247] excludes zero) — B isn't entirely substrate-empty.
+
+## 2026-04-29 — §35 D.31 + D.32 results (proposed-and-implemented during D.21/D.22 GPU wait)
+
+D.31 (analysis-only): kNN-age correlation per layer per condition. Output `d31_donor_cluster_metrics.csv`. Finding: §31's NK best-layer R advantage does NOT show up in nearest-neighbor donor-age structure. NK × OneK1K kNN-R: L3=0.337 vs L12=0.343 (L12 marginally better). **The early-layer NK ridge signal is dimensional-specific (specific aging-correlated axes), not cluster-structural.** Refines methodology framing to "ridge captures specific aging-axes that kNN doesn't."
+
+D.32 (analysis-only): bootstrap CIs (n=1000) per-seed on rank-16 LoRA layered ridge across 3 seeds × 13 layers × 2 eval cohorts. Output `d32_rank16_3seed_layered_bootstrap_cis.csv`. **NEW HEADLINE**: L11 (not L9, not L12) is the best AIDA layer at rank-16 3-seed mean. R=0.566±0.032, MAE=7.96y±0.42y. Beats L12 (R=0.560/MAE=8.32) and L9 (R=0.520/MAE=8.36). 3-seed std on MAE 0.14-0.42y, well below 2.0y robustness threshold. Anchor-tier finding.
+
+L11 MAE=7.96y is in the 7.5-8.5y "modestly behind, within ~1y, outline (a) hedged" band per decision rules. Outline (a) is supportable independently of D.21's rank-32 verification.
+
+## 2026-04-29 — §36 D.21 partial (2-seed PASS) + D.22 PARTIAL (autonomous session)
+
+D.22 NK frozen 3-seed verification DONE: 2/3 cohorts pass ΔR(L_best vs L12) > +0.05 threshold:
+- loco_onek1k × AIDA cross-ancestry: ΔR=+0.085 PASS
+- loco_onek1k × OneK1K: ΔR=+0.039 FAIL (just below)
+- loco_terekhova × Terekhova: ΔR=+0.079 PASS
+
+Outcome: **PARTIAL support**. NK cell-type-conditional finding survives with cohort-specific caveat: "NK shows robust early-layer advantage on cross-cohort settings (Terekhova chemistry-shift, AIDA cross-ancestry) but not on in-distribution OneK1K." Best-layer per cohort shifted from §31 single-seed (L3/L2/L5) to D.22 3-seed mean (L3/L2/**L6**) — direction holds, specific layer is less stable.
+
+D.21 2-seed partial result (seeds 0+1): **L9 AIDA 2-seed mean MAE = 7.29y ± 0.53y, R = +0.592 ± 0.035**. Decision rule (per §D.21): MAE 7.29y < 7.5y threshold → outline (a) viable, parity headline survives. σ(MAE) << 2.0y robustness threshold. Even at 2-seed, result is in the upper decision band.
+
+## 2026-04-30 — §37 verification gate FINAL (D.21 3-seed done, outline (a) selected)
+
+D.21 final 3-seed result (all 3 seeds): **L9 AIDA 3-seed mean: R=0.594±0.025, MAE=7.33y±0.38y**. Per-seed L9 AIDA MAE: 6.92 / 7.66 / 7.40. Decision rule: PASS (≤7.5y → outline (a) viable, parity headline survives).
+
+Layer profile at 3-seed mean (AIDA): L9 best by MAE (7.33), L11 best by R (0.612). The L11-best-by-R pattern replicates from D.32 rank-16 3-seed.
+
+**Combined verification gate outcome**: outline (a) selected with two cohort-specific caveats (NK methodology cross-cohort only; B substrate-empty not bilateral). Five headline contributions established:
+1. Matched-splits parity (Geneformer-specific) on AIDA cross-ancestry
+2. Cell-type-conditional layer-of-best-readout (cohort-caveated)
+3. Unit-of-analysis × layer interaction (two-axis principle)
+4. Methodology-aware FM-vs-bulk comparison
+5. Capacity ablation (rank-16 vs rank-32 doesn't fix the gap)
+
+## 2026-04-30 — §38 D.37 inner-CV layer selection (deployment-recipe test)
+
+User asked: "How was the right layer selected?" and "Can we run a more rigorous test with cross validation?" Implemented K-fold inner CV on train donors only — picks layer using only training data (no test-set selection bias).
+
+Output: `results/phase3/d37_cv_layer_selection.csv` (16 rows).
+
+**Cross-seed CV-layer stability findings**:
+- **Rank-32 LoRA × CD4+T**: CV picks L12 in all 3 seeds, oracle is L12 in all 3 seeds. **PERFECT — deployment recipe is "use L12"**.
+- **Rank-16 LoRA × CD4+T**: CV picks [6,7,6], oracle [7,6,6]. Within ±1 layer, R penalty ≤0.01. Deployable.
+- **NK frozen × Terekhova**: CV picks [2,3,3], oracle [2,2,2]. Within ±1 layer (early). Deployable directionally.
+- **NK frozen × OneK1K**: CV picks [0,2,3], oracle [3,3,4]. Variable, R penalty up to 0.13. NOT deployable single-seed.
+- **Frozen CD4+T × loco_onek1k**: CV picks L4, oracle L12. Wrong layer, R penalty 0.085. NOT deployable single-seed.
+
+**Two-tier methodology contribution**:
+- Tier 1 (deployable recipe): "LoRA fine-tuning + ridge readout at last (or near-last) layer; CV reliably picks within ±1 layer of oracle"
+- Tier 2 (characterization-only): "Frozen Geneformer per-cell mean-pool layer-of-best-readout is cell-type-conditional directionally but specific layer requires multi-seed ensemble for deployment"
+
+**Updated paper headline**: "Cell-type-conditional layer selection in single-cell foundation model probing; deployment-ready recipes for fine-tuned variants."
+
+This is the strictest methodology test possible from existing data. Result is paper-strengthening.
+
+## 2026-04-30 — §39 D.36 strict MAE CI overlap test on parity claim
+
+D.36 (proposed-and-implemented): bootstrap MAE CI on rank-32 L9 AIDA 3-seed pooled (n=3000) vs gene-EN matched (n=1000).
+
+- rank-32: median MAE 7.38y, 95% CI [6.40, 8.56]
+- gene-EN: median MAE 6.07y, 95% CI [5.28, 6.92]
+- **CI overlap [6.40, 6.92]** (narrow but exists)
+- Mean diff: +1.35y (rank-32 worse)
+- **Mann-Whitney U: p < 0.001** — distributions statistically distinguishable
+
+Refines the §32 parity narrative: "**competitive within seed variance, not strictly tied**." CI-overlap supports "competitive" claim; Mann-Whitney rules out "tied." Both numbers reported in writeup.
+
+The §32 paper-changing narrative still holds in essence: the 0.4 R-units gap was a methodology-mismatch artifact. But the residual ~1.35y MAE gap at matched splits is real and statistically distinguishable.

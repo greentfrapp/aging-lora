@@ -1804,3 +1804,51 @@ These are deferred to future work but flagged as honest limitations.
 The CV experiment is a **substantial paper-strengthening addition**. It moves the methodology contribution from "post-hoc characterization" to "deployment-ready recipe + characterization with limitations." The honest finding is that **fine-tuning + last-layer ridge** is the deployable recipe; **frozen-base layer selection** is characterization-only at single-seed CV.
 
 The user's instinct that this would address an obvious reviewer challenge was correct. The result is a more nuanced and more defensible paper.
+
+## 39. D.36 — strict MAE CI overlap test on rank-32 vs gene-EN parity claim (2026-04-30)
+
+After D.21 landed at L9 AIDA 3-seed MAE=7.33y±0.38y (PASS the ≤7.5y decision band), §36/§37 reported the parity claim as supported. But the decision rule was framed in terms of point estimate MAE, not direct distribution comparison. D.36 closes this gap with the strictest test: do the rank-32 and gene-EN MAE bootstrap distributions overlap directly?
+
+### 39.1 Method
+
+For each method, bootstrap-resample donors (n=1000 per resample) and compute MAE per resample. For rank-32 (3 seeds × 1000 = 3000 bootstrap samples). For gene-EN (1 seed × 1000 bootstraps). Output: `results/phase3/d36_mae_ci_overlap.csv`.
+
+### 39.2 Results
+
+| Method | n_bootstraps | Median MAE | Mean MAE | 95% CI |
+|---|---|---|---|---|
+| **rank-32 L9 LoRA, 3-seed pooled** | 3000 | **7.38y** | 7.37y | **[6.40, 8.56]** |
+| **gene-EN matched** | 1000 | **6.07y** | 6.02y | **[5.28, 6.92]** |
+
+- **CI overlap range: [6.40, 6.92]** — narrow but exists.
+- **Mean MAE difference: +1.35y** (rank-32 worse).
+- **Mann-Whitney U test (rank-32 > gene-EN): p < 0.001** — distributions statistically distinguishable.
+
+### 39.3 Interpretation
+
+The strict reading splits into two findings:
+1. **CI overlap ([6.40, 6.92] band)**: rank-32 MAE *can* equal gene-EN MAE on resampled draws — gene-EN reaches MAE values within the rank-32 distribution and vice versa. This supports a "competitive within seed variance" claim.
+2. **Mann-Whitney p<0.001**: the central tendency difference is statistically significant — rank-32 is *consistently* 1-2y worse on average than gene-EN.
+
+The honest paper framing is therefore:
+
+> "**Rank-32 LoRA + ridge readout achieves competitive performance on AIDA cross-ancestry** (95% CIs overlap with gene-EN matched: rank-32 [6.40, 8.56] vs gene-EN [5.28, 6.92]) but **does not strictly tie gene-EN** (Mann-Whitney p<0.001 with mean MAE 1.35y worse). The FM-vs-bulk gap on this benchmark is **substantially smaller than the 0.4 R-units implied by TF-paper splits** (§34) but **non-zero on strict statistical comparison**."
+
+### 39.4 Implications for the paper headline
+
+This refines the §32 parity narrative. The previous reading ("matched-splits parity") needs hedging: parity-on-CI-overlap holds, but parity-on-distribution does not. The §36 commit message described this as "competitive within seed variance, with mean rank-32 1.35y worse than gene-EN" — that's the right framing.
+
+For the writeup:
+- Report **both** numbers: CI overlap [6.40, 6.92] (supports "competitive"), AND Mann-Whitney p<0.001 (rules out "tied").
+- Frame the contribution as **"FM matched-splits competitiveness"** not **"FM matched-splits parity"**.
+- The §32 paper-changing narrative still holds in essence: the 0.4 R-units gap was an artifact of methodology mismatch. But the residual ~1.35y MAE gap at matched splits is real.
+
+### 39.5 What this changes vs §36 framing
+
+§36 described the result as "outline (a) viable, parity headline survives." That's correct on the decision rule (MAE ≤ 7.5y at point estimate) but understates the strict-distribution finding. The accurate framing is **outline (a) viable on the basis of overlapping CIs, but the headline should say "competitive" not "tied."** Subtle but important for paper-defensibility.
+
+### 39.6 Process notes
+
+D.36 was implemented during the autonomous session (2026-04-29) as a proposed-and-implemented follow-up to the verification gate. Compute: $0 (existing embeddings + sklearn). Wall: ~5 min for the analysis after a small bug fix (gene_symbols → gene_symbol column name).
+
+The Mann-Whitney result is more rigorous than CI-overlap because it tests whether one distribution is stochastically larger than the other, not just whether the central 95% intervals touch. CI-overlap and Mann-Whitney can disagree (they do here: CI overlap suggests "compatible" while Mann-Whitney suggests "different"). The paper should acknowledge both.
