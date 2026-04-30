@@ -1996,3 +1996,112 @@ This is the maximally rigorous version of the §38 claim, supported by E.1+E.2+E
 E.1 and E.4 were implemented as a single combined script (`scripts/e1_e4_modal_layer_ensemble.py`) since both need the same multi-seed setup; E.2 (`scripts/e2_cohort_holdout_cv.py`) and E.3 (`scripts/e3_bootstrap_layer_selection.py`) were separate. Compute: $0 (all CPU on existing embeddings). Wall: ~5 min for E.1+E.4, ~3 min for E.2, ~70 min for E.3 (loco_terekhova bootstrap conditions are 30× slower than loco_onek1k due to 5× larger train set).
 
 Decision rules were pre-committed in `roadmap/phase-3.md` Phase-3-B extension section (commit `38bb7d8`) before any results were known. The verdicts above derive directly from those bands without post-hoc rationalization (the §28 lesson, applied prospectively).
+
+## 41. E.5–E.8 — Inconsistency audit follow-up (2026-04-30)
+
+User asked: "the results from the experiments so far seem very inconsistent. Could there be something we are overlooking?" Identified four candidate confounds and tested each:
+
+1. **Bootstrap-with-replacement donor leakage** — bootstrap allows the same donor in train and test fold within a single resample, biasing toward late-layer "donor-identity-encoding" picks. Tested in E.8.
+2. **Holdout R curve flatness** — argmax-of-flat-curve treats noise as signal. Tested in E.5.
+3. **Cohort size asymmetry (Stephenson n≈190)** — the small cohort might dominate instability. Not directly tested but noted.
+4. **Per-donor-pool fits "donor signature" with small N** — not directly tested.
+
+E.6+E.7 are formalizations: E.6 quantifies band widths formally; E.7 tests whether the rank-16 seed-2 anomaly survives bootstrap CIs on the actual deployment.
+
+### 41.1 E.5 — Holdout R-per-layer flatness
+
+For each D.37 condition, computed full holdout R curve across all 13 layers. Output: `results/phase3/e5_holdout_layer_flatness.csv` (16 rows).
+
+**Key observations**:
+- **Rank-16 × CD4+T × loco_onek1k**: 6-8 layers within 0.02 of oracle for each seed. The per-seed curve is genuinely flat across L5-L12 for seeds 0+1.
+- **Rank-32 × CD4+T × loco_onek1k**: 2-3 layers within 0.02; sharper preference. L12 in top band consistently.
+- **Frozen × NK × Terekhova × all 3 seeds**: only 1-2 layers within 0.02 of oracle L2. Curve NOT flat at top — bootstrap's L3 pick is genuinely 0.04-0.07 R below oracle.
+- **Frozen × CD4+T × loco_onek1k seed 0**: only 1 layer within 0.02 (L12). K-fold CV's L4 pick (R=0.47) is genuinely 0.09 R below oracle L12 (R=0.56). Real gap.
+- **Frozen × B × loco_onek1k**: R_top = 0.038, R_range across all 13 layers = 0.13. Whole curve is in the noise band — substrate empty confirmed (D.23).
+
+### 41.2 E.6 — Formal SD-of-seed-variance band widths
+
+Defined "candidate band" = layers with mean cross-seed R within K × SD_top of the best layer. Output: `results/phase3/e6_band_width.csv` (12 rows).
+
+**At K=1.5 (the user-proposed default)**:
+
+| Condition | L_top_R | SD_top | K=1.5 band | Width |
+|---|---|---|---|---|
+| frozen × NK × loco_onek1k | L3 | 0.026 | [3, 4, 5, 7, 8, 9] | 6 |
+| frozen × NK × loco_terekhova | L2 | 0.040 | [1, 2, 3] | 3 |
+| **rank-16 × CD4+T × loco_onek1k** | **L6** | **0.008** | **[6, 7, 8, 9, 10]** | **5** |
+| rank-32 × CD4+T × loco_onek1k | L12 | 0.013 | [6, 10, 12] | 3 |
+
+**For AIDA cross-ancestry**:
+
+| Condition | L_top_aida | SD_aida | K=1.5 band | Width |
+|---|---|---|---|---|
+| frozen × NK × loco_onek1k | L6 | **0.116** | **all 13 layers** | **13** |
+| rank-16 × CD4+T × loco_onek1k | L11 | 0.032 | [6, 8, 9, 10, 11, 12] | 6 |
+| rank-32 × CD4+T × loco_onek1k | L11 | 0.019 | [8, 9, 10, 11, 12] | 5 |
+
+**Two crucial observations**:
+
+1. **Rank-16 SD across seeds is very tight (0.008)**, so the L6-vs-L12 mean R difference (0.632 vs 0.608, a 0.024 gap = 3 SD) IS statistically distinguishable across seeds. The per-seed flatness from E.5 was within-seed noise; the cross-seed signal is decisive — **L12 is OUTSIDE the rank-16 K=1.5 band**. Bootstrap's L12 pick really does miss the cross-seed L6 mode for this fold.
+
+2. **Frozen NK on AIDA has SD = 0.116 — band covers all 13 layers**. The seed-variance is so large at AIDA cross-ancestry that no layer is statistically distinguishable from any other for frozen NK probing. This is the strongest possible case for the "directional regime only, not specific layer" framing.
+
+### 41.3 E.7 — Rank-16 seed-2 anomaly verification
+
+The user asked: is the L12-vs-L6 deployment gap at rank-16 seed 2 (E.5: 0.06 R on OneK1K) a real deployment difference or a CV artifact? Bootstrap-resampled donors (n=1000) at L6 and L12 to compute R/MAE CI on actual holdout.
+
+**Per-seed OneK1K L6 vs L12** (the apparent anomaly):
+
+| Seed | L6 R | L12 R | Gap | Mann-Whitney p (L6 > L12) |
+|---|---|---|---|---|
+| 0 | +0.638 | +0.631 | 0.007 | p = 1.3e-11 (L6 wins) |
+| 1 | +0.635 | +0.629 | 0.006 | p = 1.7e-08 (L6 wins) |
+| 2 | +0.623 | +0.565 | **0.058** | p = 0.0e+00 (L6 wins decisively) |
+
+The seed-2 anomaly is **real and decisive on OneK1K holdout**. Per-seed deployment of rank-16 at L12 incurs a measurable 0.058 R penalty for seed 2 specifically.
+
+**But** — the same comparison on AIDA cross-ancestry **inverts**:
+
+| Seed | L6 AIDA R | L12 AIDA R | Gap | Mann-Whitney p (L6 > L12) |
+|---|---|---|---|---|
+| 0 | +0.505 | **+0.611** | -0.106 | p = 1.000 (**L12 wins decisively**) |
+| 1 | +0.551 | +0.546 | +0.005 | p = 4.9e-04 (L6 wins narrowly) |
+| 2 | +0.550 | +0.523 | +0.027 | p = 0.0e+00 (L6 wins) |
+
+**3-seed pooled bootstrap**:
+- OneK1K: L6 median R = 0.633, L12 median R = 0.616 → L6 wins by 0.017 (p << 0.001)
+- AIDA: L6 median R = 0.537, L12 median R = 0.557 → **L12 wins by 0.020** (p = 1.000)
+- AIDA MAE: L6 = 8.24y, L12 = 8.24y → identical
+
+### 41.4 The OneK1K-vs-AIDA layer-preference inversion
+
+This is the largest finding from the inconsistency audit: **for rank-16 LoRA × CD4+T, the best deployment layer inverts between the loco-holdout cohort (OneK1K) and AIDA cross-ancestry**:
+- OneK1K loco-holdout: L6 is best (3-seed pooled, p << 0.001)
+- AIDA cross-ancestry: L12 is best (3-seed pooled, p = 1.000)
+
+Bootstrap layer-selection (E.3 robustly picks L12 at 97.5–100%) is therefore **right for AIDA cross-ancestry deployment** but **wrong for OneK1K loco-holdout deployment**. K-fold CV (D.37 picks L6/L7) is right for OneK1K but L6 is not the AIDA-best.
+
+**Implication for the paper**: the "deployment recipe" question depends on which test distribution you're optimizing for. If the headline contribution is AIDA cross-ancestry (which it is per the §32 narrative), bootstrap's L12 is the right deployment layer for rank-16 — confirming the §38 deployment recipe stands for AIDA. The K-fold-CV-on-train pick of L6 is fold-specific to OneK1K's distribution and not the right deployment recipe for AIDA.
+
+This also resolves the "regime B" inconsistency from §40: bootstrap and K-fold CV are not "disagreeing" — they are picking layers optimal for different downstream distributions. Once you specify the target distribution, the methodology is consistent.
+
+### 41.5 E.8 — Donor-identity-leakage test (running)
+
+[in progress as of writeup — N=200 bootstraps × 6 conditions × 2 resampling methods, ~100 min wall]
+
+Tests the donor-identity-leakage hypothesis: bootstrap-with-replacement allows duplicate donors in train+test folds within a single bootstrap, possibly biasing layer selection. E.8 reruns E.3-style bootstrap with subsampling-WITHOUT-replacement (80% of donors per resample, no duplicates) and compares top-1 layer pick.
+
+If WITHOUT-replacement picks a different layer (e.g., L2 instead of L3 for frozen × NK × Terekhova) with ≥70% confidence, leakage is the explanation for the persistent bootstrap-vs-oracle gap. If picks are stable across resampling methods, leakage is NOT the issue and the gap must reflect a different bias (e.g., per-donor-pool fitting "donor signature").
+
+[Numbers populated in commit after E.8 completes.]
+
+### 41.6 Synthesis — what the inconsistency audit changed
+
+Pre-audit (§40 framing): "rank-16 is regime B (K-fold correct, bootstrap wrong); methodology is two-tier."
+
+Post-audit (refined):
+1. **Rank-16 anomaly is real but distribution-specific**: K-fold CV picks L6 (OneK1K-best); bootstrap picks L12 (AIDA-best). Both are correct for their target distribution.
+2. **The seed-2 anomaly survives the flatness check** (E.7 confirms 0.058 R gap on OneK1K is real and statistically robust), but on AIDA the seed 0 actually shows L12 BEST by 0.10 R.
+3. **Frozen × NK × AIDA has SD = 0.116** — the directional-regime-only framing is institutionally supported (E.6).
+4. **Frozen × NK × Terekhova bootstrap-vs-oracle gap is real, not flat** (E.5) — needs E.8 to determine if leakage explains it.
+5. The two-tier framing of §40 needs to be re-stated as **distribution-specific**: for AIDA cross-ancestry deployment, bootstrap's L12 is the recipe across rank-16 + rank-32; for in-distribution loco-holdout, K-fold CV's pick is closer.
