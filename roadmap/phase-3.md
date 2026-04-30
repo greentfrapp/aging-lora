@@ -589,6 +589,50 @@ Reviewer flagged two substantive follow-ups: F.1's borderline +0.298 AIDA compos
 
 **~2 days total, $0.** Analysis-only on existing checkpoints/embeddings. G.1 first (gates paper claim), then G.2 (paper-headline-promoting if it works), then G.3 (packages whatever G.2 returned). F.2 (probe-class sweep, ~1–2 days CPU) is still on the docket but not addressed by this review — defer until after G-series lands since G.1 may change framing in ways that affect what F.2 needs to test.
 
+#### Open follow-ups (proposed 2026-04-30, post-G.1/G.2/G.3 review from `g_expts_review.md`)
+
+Reviewer endorses the G-series outcomes and proposes four follow-ups. Two Tier 1 (must do before lockdown), two Tier 2 (defensive). Two of the four dovetail with already-queued work: H.2 (non-linear probe sweep) is identical in scope to the queued F.2 task — F.2 is now upgraded from "deferred" to Tier 1. New roadmap entries below cover the remaining three (H.1, H.3, H.4).
+
+Subtle new framing observation from the reviewer: G.3's per-condition rank-32 LoRA × CD4+T results sit narrowly *above* gene-EN (+0.011 to +0.033), which slightly weakens D.36's "FM trails gene-EN by 1.35y on average" framing. D.36's bootstrap analysis still applies for the bulk-distribution comparison, but the per-condition picture is a tension worth one sentence in the writeup.
+
+- [ ] **Task H.1 (proposed 2026-04-30, addresses G.2 single-seed limitation): Multi-seed verification of B × Terekhova PC-residual probe.**
+  - **Implementation**: Re-extract frozen Geneformer × B-cell layered embeddings for seeds 1, 2 across all 4 cohorts (onek1k, stephenson, terekhova, aida) — produces `{cohort}_B_frozen_base_seed{1,2}_alllayers.npz`. Then re-run G.2's CV-honest pipeline (`scripts/g2_pc_residual_b_cell.py` adapted to seeds 1, 2 and aggregated to 3-seed mean ± std).
+  - **Decision rule (pre-commit)** — applied to 3-seed mean R on Terekhova holdout (current single-seed R = 0.281, gene-EN R = 0.321):
+    - 3-seed mean R ≥ 0.27 AND σ(R) ≤ 0.05 → MATCHES gene-EN verdict survives multi-seed; cell-type-conditional probing extension claim is robust. Paper headline survives.
+    - 3-seed mean R ≥ 0.27 AND σ(R) > 0.05 → high seed variance; paper reports as "MATCHES on average but with seed-conditional luck of ±X R; recommend ≥3 seeds for deployment."
+    - 3-seed mean R ∈ [0.17, 0.27) → NARROWS GAP downgrade; B-cell parity is "narrowed by 50–70%, not closed."
+    - 3-seed mean R < 0.17 → single-seed luck; B-cell parity claim is dropped, recipe relegated to supplement as "single-seed observation that did not survive multi-seed verification."
+  - **Output**: `results/phase3/h1_b_cell_multi_seed.csv` with rows = (seed × eval_cohort × layer × k_pc), columns = R, MAE, ΔR_vs_full, ΔR_vs_gene_EN; plus 3-seed-aggregated row.
+  - **Compute**: ~$5–10 GPU (frozen Geneformer extraction × 4 cohorts × 2 seeds × B cell-type ≈ 8 extraction passes; per Phase-1 calibration, frozen extraction is ~$0.50–1.50 per cohort×celltype). Plus ~half day CPU for the analysis re-run.
+  - **Why first**: load-bearing for the cell-type-conditional probing extension claim. §28 lesson applies — a single-seed near-headline number is correction-risk. Without multi-seed verification, the B-cell parity claim must be flagged as "single-seed near-headline" in the paper.
+
+- [x] **Task H.2 (proposed 2026-04-30, identical to queued F.2): Per-layer non-linear probe sweep.** *(Subsumed by F.2; promoted from deferred to Tier 1.)*
+  - F.2 already covers the reviewer's "Analysis A" scope: 4 probe classes (ridge, pca_ols, kernel_rbf, mlp_h64) × 13 layers × rank-32 × CD4+T × loco_onek1k × 3 seeds. Two of the four probes (kernel_rbf, mlp_h64) are non-linear, directly answering "do non-linear probes shift the layer ordering or recover signal beyond ridge?"
+  - **Now Tier 1**: determines whether the methodology contribution is "linear-probe layer selection" or "general layer selection." Material to writeup framing.
+
+- [ ] **Task H.3 (proposed 2026-04-30, defensive Tier 2): Donor-deduplication audit.**
+  - **Implementation**: Audit `data/loco_folds.json` train/eval donor-id sets for cross-cohort donor-id collisions; audit `data/aida_split.json` for any overlap with the 3-cohort training donors. For each cell-type h5ad in `data/cohorts/integrated/` and `data/cohorts/aida_eval/`, dump unique donor_ids and check for duplicates across files (a single donor ending up in both train and eval cohorts under different cohort_id labels).
+  - **Decision rule (pre-commit)**:
+    - Zero collisions → attach "donor-deduplication clean-audit" certification to methods section. Defends against an entire reviewer-concern category.
+    - Any collisions → fix the affected fold or AIDA split, re-run all downstream analyses on the fixed splits, document the fix and its impact in the methods section.
+  - **Output**: `results/phase3/h3_donor_dedup_audit.csv` (per donor_id × found-in-cohort matrix) plus a summary in `methods/donor_dedup_audit.md`.
+  - **Compute**: ~$0, ~half day. Pure metadata audit on h5ad obs columns; no FM forward pass.
+  - **Why Tier 2**: cheap insurance. Either silences a concern category entirely (no collisions found, very likely outcome) or surfaces a previously-undetected leakage that needs fixing before lockdown.
+
+- [ ] **Task H.4 (proposed 2026-04-30, defensive Tier 2): F.5 cross-method check on gene-EN feature variance hierarchy.**
+  - **Implementation**: For each cell type ∈ {CD4+T, B, NK} × fold ∈ {loco_onek1k, loco_terekhova}: take the gene-EN HVG-5000 log1p-mean per-donor pseudobulks (already built in `gene_en_matched_splits.py`), compute PCA, project out top-k PCs (k ∈ {5, 10, 25, 50}), refit ElasticNet on residuals. Compare ΔR vs full-feature ElasticNet to F.5's FM result.
+  - **Decision rule (pre-commit)**:
+    - Gene-EN shows the same B-residual / CD4+T-principal pattern (B mean ΔR ≥ +0.05; CD4+T mean ΔR ≤ 0) → BIOLOGICAL: F.5's variance-hierarchy finding is a property of PBMC age signal, not Geneformer's representation. Paper can claim "age signal lives in different positions in the variance hierarchy of PBMC expression, in both gene-EN HVG features and FM embeddings."
+    - Gene-EN does *not* show the pattern (B mean ΔR < +0.05 or CD4+T mean ΔR > +0.05) → REPRESENTATION-SPECIFIC: F.5's finding is a property of Geneformer's embedding geometry. Paper claim narrows to "Geneformer encodes age in a cell-type-conditional position in its embedding-space variance hierarchy."
+    - Mixed (one cell type matches, other doesn't) → report both interpretations and discuss.
+  - **Output**: `results/phase3/h4_gene_en_variance_hierarchy.csv` with rows = (cell_type × fold × k_pc), columns = R_full, R_residual, ΔR.
+  - **Compute**: ~$0, ~half day. Reuses gene-EN per-donor pseudobulk matrices; PCA + ElasticNet refit only.
+  - **Why Tier 2**: strengthens the biological framing of F.5 if the pattern generalizes. If it doesn't, narrows the claim to representation-property — still publishable but less ambitious.
+
+#### Recommended priority order: H.1 → F.2 (H.2) → H.3 → H.4
+
+**Tier 1**: H.1 (~$5–10 GPU + ~half day CPU) and F.2 (~1–2 days CPU). **Tier 2**: H.3 (~half day CPU) and H.4 (~half day CPU). **Total: ~3 days + ~$5–10 GPU.**
+
 ### Phase-3-B priority order — Tier 1 + extensions COMPLETE 2026-04-30
 
 Done in autonomous session 2026-04-29/30:
