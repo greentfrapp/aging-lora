@@ -105,8 +105,11 @@ def main():
     df.to_csv(OUT_CSV, index=False, float_format="%.4f")
     print(f"[I.6] wrote {len(df)} FM-ridge rows to {OUT_CSV}")
 
-    # Best-layer-per-(cap, seed, fold), then 3-seed mean over best-layer R.
-    print("\n=== I.6 FM 3-seed best-layer R per (cap × fold) ===")
+    # PER-LAYER 3-seed mean (the honest readout, per I.4 lesson):
+    # for each layer, compute mean ± SD across seeds; then pick the layer
+    # that wins on per-layer-3-seed-mean. NOT per-seed-argmax (that's
+    # post-hoc layer selection on eval and is what F.3 did wrong).
+    print("\n=== I.6 FM per-layer 3-seed mean per (cap × fold) — best by 3-seed mean ===")
     summary_rows = []
     for fold in ["loco_onek1k", "loco_terekhova"]:
         sub = df[df["fold"] == fold]
@@ -115,20 +118,42 @@ def main():
         print(f"\nFold: {fold}")
         for cap in sorted(sub["cap"].unique()):
             sub2 = sub[sub["cap"] == cap]
-            best_per_seed_holdout = sub2.loc[sub2.groupby("seed")["holdout_R"].idxmax()]
-            R_mean = best_per_seed_holdout["holdout_R"].mean()
-            R_std = best_per_seed_holdout["holdout_R"].std() if len(best_per_seed_holdout) > 1 else 0.0
-            line = f"  cap={cap:5d}: holdout best-layer R = {R_mean:+.3f} ± {R_std:.3f}  (n={len(best_per_seed_holdout)})"
-            row = {"fold": fold, "cap": cap, "method": "FM",
-                   "holdout_R_mean": R_mean, "holdout_R_std": R_std,
-                   "n_seeds": len(best_per_seed_holdout)}
+            n_seeds = sub2["seed"].nunique()
+            # Per-layer 3-seed mean ± SD on holdout
+            per_layer = sub2.groupby("layer")["holdout_R"].agg(["mean", "std"]).reset_index()
+            best_layer_holdout = int(per_layer.loc[per_layer["mean"].idxmax(), "layer"])
+            best_R_holdout = float(per_layer["mean"].max())
+            best_SD_holdout = float(per_layer.loc[per_layer["mean"].idxmax(), "std"])
+            # Lowest-SD layer that has competitive mean (within 0.02 of best mean)
+            competitive = per_layer[per_layer["mean"] >= best_R_holdout - 0.02]
+            stable_layer_holdout = int(competitive.loc[competitive["std"].idxmin(), "layer"])
+            stable_R_holdout = float(competitive.loc[competitive["std"].idxmin(), "mean"])
+            stable_SD_holdout = float(competitive["std"].min())
+
+            line = (f"  cap={cap:5d}: holdout best-by-mean L{best_layer_holdout:2d} = {best_R_holdout:+.3f} ± {best_SD_holdout:.3f}"
+                    f"  | stable L{stable_layer_holdout:2d} = {stable_R_holdout:+.3f} ± {stable_SD_holdout:.3f}  (n_seeds={n_seeds})")
+            row = {"fold": fold, "cap": cap, "method": "FM", "n_seeds": n_seeds,
+                   "best_layer_holdout": best_layer_holdout,
+                   "holdout_R_mean": best_R_holdout, "holdout_R_std": best_SD_holdout,
+                   "stable_layer_holdout": stable_layer_holdout,
+                   "stable_holdout_R_mean": stable_R_holdout, "stable_holdout_R_std": stable_SD_holdout}
             if "aida_R" in sub2.columns and sub2["aida_R"].notna().any():
-                best_per_seed_aida = sub2.loc[sub2.groupby("seed")["aida_R"].idxmax()]
-                aR_mean = best_per_seed_aida["aida_R"].mean()
-                aR_std = best_per_seed_aida["aida_R"].std() if len(best_per_seed_aida) > 1 else 0.0
-                line += f" | AIDA = {aR_mean:+.3f} ± {aR_std:.3f}"
-                row["aida_R_mean"] = aR_mean
-                row["aida_R_std"] = aR_std
+                per_layer_aida = sub2.dropna(subset=["aida_R"]).groupby("layer")["aida_R"].agg(["mean", "std"]).reset_index()
+                best_layer_aida = int(per_layer_aida.loc[per_layer_aida["mean"].idxmax(), "layer"])
+                best_R_aida = float(per_layer_aida["mean"].max())
+                best_SD_aida = float(per_layer_aida.loc[per_layer_aida["mean"].idxmax(), "std"])
+                competitive_a = per_layer_aida[per_layer_aida["mean"] >= best_R_aida - 0.02]
+                stable_layer_aida = int(competitive_a.loc[competitive_a["std"].idxmin(), "layer"])
+                stable_R_aida = float(competitive_a.loc[competitive_a["std"].idxmin(), "mean"])
+                stable_SD_aida = float(competitive_a["std"].min())
+                line += (f"\n         AIDA    best-by-mean L{best_layer_aida:2d} = {best_R_aida:+.3f} ± {best_SD_aida:.3f}"
+                         f"  | stable L{stable_layer_aida:2d} = {stable_R_aida:+.3f} ± {stable_SD_aida:.3f}")
+                row["best_layer_aida"] = best_layer_aida
+                row["aida_R_mean"] = best_R_aida
+                row["aida_R_std"] = best_SD_aida
+                row["stable_layer_aida"] = stable_layer_aida
+                row["stable_aida_R_mean"] = stable_R_aida
+                row["stable_aida_R_std"] = stable_SD_aida
             print(line)
             summary_rows.append(row)
 
