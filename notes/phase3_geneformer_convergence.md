@@ -2190,9 +2190,48 @@ This is itself a novel finding that strengthens the paper. Different cell types 
 
 **Pre-committed decision rule limitation**: F.5's pre-commit was "≥50% IMPROVE → reframe; ≥50% DEGRADE → no reframe; else mixed." The actual answer is cleanly cell-type-conditional, which the rule didn't anticipate. Honest restatement: report per-cell-type verdicts, not a blanket reframe.
 
-### 42.4 F.3 — Cell-count artifact (running on GPU machine)
+### 42.4 F.3 — Cell-count artifact (DONE)
 
-GPU re-extraction of CD4+T frozen-base at cap=5 and cap=100 across 4 cohorts. cap=5 done; cap=100 in progress (~2 hours remaining). Will populate §42.4 once ridge readout completes.
+GPU re-extraction of CD4+T frozen-base at three caps (5 / 20 / 100 cells per donor) × 4 cohorts. Output: `results/phase3/f3_cell_count_layered_ridge.csv` (78 rows). Wall: ~3 hours on A10G.
+
+| Cap | loco_onek1k L_best | R (holdout) | AIDA L_best | AIDA R | loco_terekhova L_best | R |
+|---|---|---|---|---|---|---|
+| 5 | L5 | 0.292 | L7 | 0.383 | L5 | 0.450 |
+| 20 | **L12** | 0.560 | **L12** | 0.527 | L5 | 0.621 |
+| **100** | **L2** | **0.687** | **L2** | **0.706** | **L1** | **0.749** |
+
+**Two major findings**:
+
+**(1) Best layer is non-monotonic in per-donor cell count, NOT pure cell-type biology.** For loco_onek1k CD4+T: cap=5→L5 (mid), cap=20→L12 (late), cap=100→L2 (early). The "CD4+T at L9-L12" framing from §31 was specifically a *cap=20 + OneK1K-distribution* artifact. Even at cap=20, loco_terekhova picks L5 (not L12). At cap=100, both folds pick early layers (L1-L2) consistently across cohorts.
+
+The mechanism appears to be: at moderate cell counts (cap=20), per-donor pseudobulks are noisy enough that late-layer "compute" effectively denoises them, making L12 win. With higher per-donor sample size (cap=100), inputs are clean enough that early-layer features (which preserve more relevant variance directly) outperform. At very low cap=5, even early layers are noisy estimates and mid-layers (L5) emerge as a compromise.
+
+**(2) Higher cell counts substantially improve cross-ancestry R**:
+- AIDA R at cap=20 best layer = **0.527**
+- AIDA R at cap=100 best layer (L2) = **0.706**
+- Δ = **+0.18 R units** at AIDA cross-ancestry
+
+This is a much bigger effect than the LoRA fine-tuning gain (rank-32 LoRA L9 AIDA = 0.594 from D.21, vs cap=100 frozen L2 AIDA = 0.706). **The frozen base at cap=100 BEATS rank-32 LoRA at cap=20.** This dwarfs the FM-vs-bulk parity question and reframes much of the paper.
+
+**Decision-rule outcome**: per the pre-committed rule, cap=5 picks L5 (≤L5) → "asymmetry is SNR-driven → DATA QUALITY." But that interpretation undersells the result. The full reading is:
+- The cell-type-conditional layer asymmetry was a cap=20 + OneK1K-fold-specific artifact.
+- The methodology contribution from §31/§38 needs significant restatement.
+- More importantly: per-donor cell count is the largest single methodological lever we have. cap=100 vs cap=20 yields +0.18 R on AIDA — a paper-changing magnitude.
+
+**Implications for the paper**:
+1. The §31/§38 cell-type-conditional layer methodology contribution needs to be restated carefully. CD4+T's "L9-L12 best" was OneK1K + cap=20 specific. At cap=100 across two folds, CD4+T picks L1-L2.
+2. The §32 matched-splits parity narrative is now in question — the gene-EN matched baseline (which uses log1p-mean pseudobulk, equivalent to "all cells" not capped) was already operating at higher effective per-donor sample size than the cap=20 FM extractions. A fair comparison may be FM-at-cap=100 vs gene-EN-matched, where the FM substantially closes (or exceeds) the gap.
+3. The §38 deployment-recipe finding ("rank-32 LoRA picks L12 with K-fold CV") is fragile to cap. At higher cap, L12 isn't the best layer. The recipe is conditional on the cap.
+4. The headline AIDA R for the paper should likely use cap=100 numbers, which substantially exceed previously-reported figures.
+
+This is the most disruptive single finding from the F.x bundle. Paper restructuring may be required.
+
+**Caveat**: F.3 only tested CD4+T frozen base. Need to confirm:
+- Does the cap=100 effect generalize to NK and B cell types?
+- Does the cap=100 effect hold under fine-tuned LoRA (rank-16, rank-32)? Or is the gain frozen-only?
+- Does cap=200 / cap=500 plateau, or continue improving?
+
+These are natural F.6/F.7 follow-ups (deferred until paper-restructuring decision is made).
 
 ### 42.5 F.2 — Probe-class sweep (deferred)
 
@@ -2209,4 +2248,4 @@ Post-F.1+F.4+F.5: three new refinements:
 
 The F.x bundle so far has *strengthened* the paper, not restructured it. The cs_lens reframing turns out to be a refinement (ridge is the right probe class for this problem) rather than a structural overhaul. The additional_concerns reading is partly confirmed (composition is a meaningful baseline; B-cell signal is residual) but doesn't dominate the paper's findings.
 
-F.2 (probe-class sweep) still pending will be the strongest test of the cs_lens framework. F.3 (cell-count artifact) will resolve whether the cell-type-conditional layer asymmetry is biology or SNR.
+F.2 (probe-class sweep) still pending will be the strongest test of the cs_lens framework. F.3 has now resolved the cell-count question — see §42.4: the cell-type-conditional layer asymmetry is largely cap=20 specific, and per-donor cell count is the largest single methodological lever (cap=100 AIDA R = 0.706 vs cap=20 = 0.527, Δ = +0.18 R). This finding likely requires paper restructuring.
