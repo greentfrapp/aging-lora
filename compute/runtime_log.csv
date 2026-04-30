@@ -16,3 +16,5 @@ geneformer,loco_onek1k,0,B,4576.490091085434,9687,cuda,False,2026-04-28T04:29:20
 geneformer,loco_onek1k,0,NK,4808.559867620468,9709,cuda,False,2026-04-28T05:57:00
 geneformer,loco_terekhova,0,B,16762.91155052185,48875,cuda,False,2026-04-28T10:44:06
 geneformer,loco_onek1k,0,CD4+ T,5990.700713157654,9500,cuda,False,2026-04-29T07:54:58
+geneformer,loco_onek1k,1,CD4+ T,8812.754650354385,9500,cuda,False,2026-04-29T16:35:11
+geneformer,loco_onek1k,2,CD4+ T,5998.611679792404,9500,cuda,False,2026-04-30T00:29:10
