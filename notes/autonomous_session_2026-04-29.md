@@ -83,24 +83,25 @@ L11 MAE=7.96y is in the **7.5y–8.5y "modestly behind, within ~1y, outline (a) 
 
 The early-layer NK ridge advantage is dimensional-specific (specific aging-correlated axes that ridge captures) not cluster-structural (donors of similar age don't cluster more tightly at the best layer). Refines the methodology claim.
 
-## Pending verification (D.21 + D.22)
+## Final verification gate outcome (2026-04-30 01:13 UTC)
 
-Both running on GPU. ETA ~17:00 UTC.
+### D.21 — DONE — DECISION-RULE PASS
+- L9 AIDA 3-seed: R = +0.594 ± 0.025, MAE = **7.33y ± 0.38y**
+- Per-seed L9 AIDA MAE: 6.92 / 7.66 / 7.40 (seed 0/1/2)
+- Decision rule: ≤7.5y → outline (a) viable, parity headline survives
+- L11 best by R (0.612), L9 best by MAE (7.33) — pattern matches D.32 rank-16
 
-### D.21 status
-- Seed 1 finetune: in progress (step ~300/890, epoch 1)
-- Seed 2 finetune: pending
-- Decision rule mapping (per `decision_rules_phase3.md` §D.21):
-  - 3-seed mean MAE ≤ 7.5y → outline (a) viable, parity headline
-  - 7.5y–8.5y → outline (a) hedged, "competitive within ~1y"
-  - >8.5y → outline (b), drop AIDA-parity from headline
+### D.22 — DONE — PARTIAL support
+- NK best-layer ΔR vs L12 at 3-seed mean per cohort:
+  - loco_onek1k × AIDA cross-ancestry: ΔR=+0.085 PASS
+  - loco_onek1k × OneK1K: ΔR=+0.039 FAIL (just below)
+  - loco_terekhova × Terekhova: ΔR=+0.079 PASS
+- 2/3 cohorts pass → cell-type-conditional finding survives with cohort caveat
+- Best-layer shifted from §31 single-seed (L3/L2/L5) to D.22 3-seed (L3/L2/L6)
 
-### D.22 status
-- NK × seeds 1,2 × 4 cohorts (8 extractions): in progress (~1 of 8 cohorts done)
-- Decision rule (per §D.22):
-  - NK ΔR(best vs L12) > +0.05 across all 3 cohorts at 3-seed mean → anchor-ready
-  - 2/3 cohorts → partial support
-  - ≤1/3 cohorts → demote to supplementary
+### Selected outline: (a) METHODOLOGY-LED with two cohort-specific caveats
+1. NK cell-type-conditional: cross-cohort only (Terekhova + AIDA), not in-distribution OneK1K
+2. B substrate-empty: not bilateral (Terekhova chemistry exception, R=0.321)
 
 ## Outline selection decision (deferred to verification gate)
 
