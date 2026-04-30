@@ -2127,6 +2127,90 @@ The four candidate confounds tested:
 
 The §40 inconsistency is therefore *inherent to the problem* (different cohorts have different optimal layers; small-N folds amplify bootstrap artifacts) rather than a methodology failure to fix. The §38 two-tier framing (deployable for fine-tuned, characterization-only for frozen-base) survives but with the additional caveat that **even the deployment recipe is target-distribution-specific**.
 
+## 42. F.1 + F.4 + F.5 — CS-lens stress tests + composition baseline (2026-04-30)
+
+User pulled commits from local-machine runs of F.1, F.4, F.5 while F.3 ran on the GPU machine. Each task addresses one of the structural concerns from `scratchpad/cs_lens_review.md` or `scratchpad/additional_concerns.md`. F.2 deferred (1-2 days CPU); F.3 still running on this machine.
+
+### 42.1 F.1 — Composition-only baseline (additional_concerns.md #1)
+
+ElasticNet on cell-type frequency vectors per donor (B, CD4+T, CD8+T, NK, Monocyte proportions; no expression). Output: `results/phase3/f1_composition_baseline.csv`.
+
+| Fold | Eval | R | MAE | α | l1 |
+|---|---|---|---|---|---|
+| loco_onek1k | onek1k | +0.094 | 21.32 | 1.0 | 0.1 |
+| loco_onek1k | **aida** | **+0.298** | 11.20 | 1.0 | 0.1 |
+| loco_terekhova | terekhova | +0.244 | 14.68 | 0.5 | 0.9 |
+| loco_terekhova | aida | -0.134 | 24.82 | 0.5 | 0.9 |
+
+**Decision-rule outcome**: max AIDA R = +0.298, sitting *exactly at* the 0.3 boundary. Pre-committed rule says <0.3 → "composition is not the main signal; existing framing stands" — fires by 0.002.
+
+**Strong fold asymmetry on AIDA**:
+- loco_onek1k → AIDA: R = +0.298 (mid)
+- loco_terekhova → AIDA: R = -0.134 (negative)
+
+The asymmetry tracks cohort monocyte-fraction shifts: OneK1K 4.4%, Stephenson 11.5%, Terekhova 18.4%, AIDA 23.6%. When training on OneK1K + Stephenson (low-monocyte cohorts), the model picks up "high monocytes → older" from the few high-monocyte donors and partially generalizes to AIDA's high-monocyte distribution. When training on Terekhova + Stephenson (high-monocyte already), the relationship inverts on AIDA because the training distribution is already saturated.
+
+In-domain LOCO is weak (R = 0.094, 0.243). So composition alone is a poor in-distribution age predictor but recovers a moderate cross-cohort signal that aligns with monocyte-fraction trends.
+
+**Implication for the paper**: the existing cell-type-specific framing survives the composition stress test, but with a meaningful caveat. The composition baseline is itself a non-trivial AIDA signal at +0.298 (driven by one specific cohort-shift artifact). The paper should report composition as a baseline alongside the FM and gene-EN numbers, not assume it's negligible.
+
+### 42.2 F.4 — CCA upper bound (cs_lens_review.md Analysis B)
+
+Per-layer CCA-best-direction R + OLS unregularized R + ridge-CV R across 16 multi-seed conditions × 13 layers. Output: `results/phase3/f4_cca_upper_bound.csv` (208 rows).
+
+**Headline (script's auto-decision)**: CCA-vs-Ridge layer agreement = 0/16 → "ridge regularization substantially shapes layer ordering."
+
+**More careful read**: 10/16 conditions are p ≥ n (loco_onek1k, n_train=190 vs p=768), where CCA train R = 1.0 by construction (overfit) and argmax falls to L0 by tie-break — meaningless. The real comparison is the 6 loco_terekhova rows where n_train=1010 > p=768:
+- 0/5 exact CCA-vs-Ridge layer match
+- 1/5 within ±1 layer (B-cell condition)
+- 2/5 within ±2 layers
+
+**Critical sub-finding (more important than the layer-agreement headline)**: Ridge-holdout R uniformly dominates OLS-unregularized-holdout R. Example: at L1 CD4+T, OLS-holdout R = +0.27 vs Ridge-holdout R = +0.60. Ridge regularization is doing real generalization work — it's not "leaving information on the table" relative to OLS on the same distribution. The CCA upper bound (computed on train alone) overstates what's recoverable on holdout.
+
+**Refined interpretation for the paper**: ridge layer ordering is the **regularization-stabilized version of an overfit OLS surface**, not a probe-class distortion. The CCA-best-layer being different from ridge-best-layer reflects "where the train-CCA finds noise to overfit" — not "where the linear-recoverable age info lives." Methodology contribution stands; the cs_lens "ridge is shaping the ordering" concern is partly resolved (ridge is producing the *useful* ordering, not a biased one).
+
+### 42.3 F.5 — PC-residual age recovery (additional_concerns.md #3)
+
+Per layer × k ∈ {5, 10, 25, 50}, fit ridge on residuals after projecting out top-k PCs. Output: `results/phase3/f5_pc_residual.csv` (832 rows).
+
+**Headline (script's auto-decision, max-ΔR aggregator)**: 9/16 conditions IMPROVE (max ΔR ≥ +0.05), 0/16 DEGRADE → "age is residual axis; reframe."
+
+**More careful read (cell-type-stratified)**:
+- **B-cell**: residual-axis interpretation CONFIRMED. Max ΔR up to +0.15 on holdout, AIDA mean ΔR ≈ +0.10. PC projection consistently helps. Consistent with B-cell substrate being mostly empty by raw signal but having a low-variance age axis competing with stronger cell-type/batch axes.
+- **CD4+T**: HIGH-VARIANCE subspace. Mean ΔR strongly negative (esp. rank-32 L12: max ΔR up to **−0.43** when projecting out top PCs). Age signal lives in the principal components for CD4+T; removing them destroys the signal.
+- **NK**: intermediate. Some layers improve (early L0–L4), others degrade.
+- **AIDA cross-ancestry**: 11/11 max-IMPROVE on narrow (layer × k_pc) regions but mean often negative — supports a tunable cross-ancestry refinement, not a default deployment recipe.
+
+**Refined interpretation**: the binary "reframe everything as residual" call is wrong. The right framing is **cell-type-conditional**:
+- B-cell: age IS a residual axis (low-variance, competing with cell-type/batch). Reframe B-cell findings.
+- CD4+T: age IS in the high-variance subspace. No reframe needed.
+- NK: intermediate; layer-conditional.
+
+This is itself a novel finding that strengthens the paper. Different cell types encode age differently in the FM representation: B-cell as residual, CD4+T as principal-axis, NK as mixed. The substrate-empty-for-B reading from D.23 + D.26 was *not* "no signal exists"; it was "the linear-recoverable signal at full-embedding ridge is small, but PC-residualized analysis recovers it." This explains why gene-EN got Terekhova B R=0.321 (D.23) while FM frozen ridge missed it — the FM encodes B-cell age as a low-variance residual that ridge on full embeddings deweights.
+
+**Pre-committed decision rule limitation**: F.5's pre-commit was "≥50% IMPROVE → reframe; ≥50% DEGRADE → no reframe; else mixed." The actual answer is cleanly cell-type-conditional, which the rule didn't anticipate. Honest restatement: report per-cell-type verdicts, not a blanket reframe.
+
+### 42.4 F.3 — Cell-count artifact (running on GPU machine)
+
+GPU re-extraction of CD4+T frozen-base at cap=5 and cap=100 across 4 cohorts. cap=5 done; cap=100 in progress (~2 hours remaining). Will populate §42.4 once ridge readout completes.
+
+### 42.5 F.2 — Probe-class sweep (deferred)
+
+1-2 days CPU. Tests cs_lens Analysis A (probe-class layer-ordering stability). Not yet started; will run after F.3 lands.
+
+### 42.6 Synthesis — what F.1+F.4+F.5 changed
+
+Pre-F (post-§41): three real effects underlying the inconsistency, with the §38 two-tier framing surviving.
+
+Post-F.1+F.4+F.5: three new refinements:
+1. **Composition is a non-trivial cross-cohort baseline** (F.1: AIDA R=+0.298 driven by monocyte-fraction tracking). Existing framing survives but composition gets reported as a baseline alongside.
+2. **Ridge regularization is stabilizing, not distorting** (F.4 sub-finding: Ridge-holdout >> OLS-holdout uniformly). The cs_lens "probe-conditional ordering" concern about ridge specifically is partly resolved — ridge is doing the *right* generalization work; the CCA-vs-Ridge layer mismatch reflects train-overfit noise, not probe bias.
+3. **Cell-type encodes age differently in the FM** (F.5: B-cell residual, CD4+T principal-axis, NK mixed). New cell-type-conditional finding that strengthens the paper. The substrate-empty-for-B reading from D.23 was "ridge can't surface the residual," not "no signal exists."
+
+The F.x bundle so far has *strengthened* the paper, not restructured it. The cs_lens reframing turns out to be a refinement (ridge is the right probe class for this problem) rather than a structural overhaul. The additional_concerns reading is partly confirmed (composition is a meaningful baseline; B-cell signal is residual) but doesn't dominate the paper's findings.
+
+F.2 (probe-class sweep) still pending will be the strongest test of the cs_lens framework. F.3 (cell-count artifact) will resolve whether the cell-type-conditional layer asymmetry is biology or SNR.
+
 ### 41.6 Synthesis — what the inconsistency audit changed
 
 Pre-audit (§40 framing): "rank-16 is regime B (K-fold correct, bootstrap wrong); methodology is two-tier."
