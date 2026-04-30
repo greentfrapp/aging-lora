@@ -1,0 +1,11 @@
+method,eval,n_train,n_eval,R_alone,MAE_alone,R_concat,MAE_concat,deltaR,deltaMAE,fold,cell_type,seed
+gene-EN_loco_onek1k,onek1k_holdout,190,981,0.6118,14.1882,0.6144,14.3707,0.0026,0.1824,loco_onek1k,CD4+ T,0
+gene-EN_loco_onek1k,aida,190,293,0.6156,6.4210,0.6152,6.2476,-0.0004,-0.1734,loco_onek1k,CD4+ T,0
+gene-EN_loco_terekhova,terekhova_holdout,1005,166,0.7757,10.5241,0.7822,10.3135,0.0064,-0.2106,loco_terekhova,CD4+ T,0
+gene-EN_loco_terekhova,aida,1005,293,0.6507,6.6644,0.6543,6.9815,0.0037,0.3171,loco_terekhova,CD4+ T,0
+FM-rank32-L12_loco_onek1k_seed0,onek1k_holdout,190,981,0.6331,11.9411,0.6413,12.4883,0.0082,0.5471,loco_onek1k,CD4+ T,0
+FM-rank32-L12_loco_onek1k_seed0,aida,190,293,0.6048,8.1291,0.6018,8.0772,-0.0030,-0.0519,loco_onek1k,CD4+ T,0
+FM-rank32-L12_loco_onek1k_seed1,onek1k_holdout,190,981,0.6438,14.6424,0.6509,15.2727,0.0071,0.6303,loco_onek1k,CD4+ T,1
+FM-rank32-L12_loco_onek1k_seed1,aida,190,293,0.5761,8.2668,0.5731,7.9683,-0.0030,-0.2984,loco_onek1k,CD4+ T,1
+FM-rank32-L12_loco_onek1k_seed2,onek1k_holdout,190,981,0.6179,11.9012,0.6264,12.6570,0.0085,0.7558,loco_onek1k,CD4+ T,2
+FM-rank32-L12_loco_onek1k_seed2,aida,190,293,0.5862,8.0007,0.5825,8.2631,-0.0037,0.2625,loco_onek1k,CD4+ T,2
