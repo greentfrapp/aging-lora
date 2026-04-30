@@ -2522,9 +2522,27 @@ Diminishing returns clearly set in beyond cap=500. cap=500 → cap=1000 gives on
 
 The "FM has matched-cap advantage at cap=100" claim is **layer-dependent** and at most +0.02 R, not the +0.09 R F.3 implied.
 
-### 47.5 Open questions still to resolve (FM matrix in progress)
+### 47.5 Interim FM cap=50 + cap=100 matched-cap result (both folds, 2026-04-30 ~19:30 UTC)
 
-- FM cap=50 3-seed: NPZs are extracted; ridge readout pending.
-- FM cap=500 3-seed: in extraction (Phase B started ~17:22, ~40h to completion).
-- FM cap=1000 1-seed: in extraction queue (Phase C, ~18h after Phase B).
-- Final combined ridge readout will fire when all extractions land (~3 days from launch).
+Ran `i6_combined_ridge.py` with cap=50 (12 NPZs done) and cap=100 (15 NPZs done = F.3 seed=0 + I.4 seeds 1, 2). After fixing the script to also evaluate AIDA from loco_terekhova fold (gene-EN already had this; FM was missing it):
+
+| Cap | Fold | FM AIDA (best-by-mean) | gene-EN AIDA | Gap (FM − gene-EN) |
+|---|---|---|---|---|
+| 50 | loco_onek1k | L3 = 0.598 ± 0.025 | 0.517 ± 0.072 | **+0.081** (~3 SD) |
+| 50 | loco_terekhova | L12 = 0.657 ± 0.010 | 0.570 ± 0.052 | **+0.087** (~6 SD) |
+| 100 | loco_onek1k | L3 = 0.665 ± 0.035 | 0.648 ± 0.030 | +0.017 (<1 SD) |
+| 100 | loco_terekhova | L12 = 0.663 ± 0.017 | 0.671 ± 0.042 | **−0.008** (gene-EN slightly ahead) |
+
+**The matched-cap FM advantage shrinks/inverts across cap=50 → 100 in both folds.** At loco_terekhova cap=100, gene-EN is already nominally ahead. cap=500 and cap=1000 (still extracting) will likely show the gap continuing to favor gene-EN.
+
+Cross-fold note: FM's best AIDA layer differs by fold direction:
+- loco_onek1k → AIDA: L3 (consistent across cap=50 and cap=100).
+- loco_terekhova → AIDA: L12 (consistent across cap=50 and cap=100).
+
+Same FM weights, different training-cohort composition (981-donor onek1k vs 166-donor terekhova), different ridge layer preference. This is consistent with the §40 (E.1-E.4) finding that ridge layer selection is sensitive to training data.
+
+### 47.6 Open questions still to resolve (FM matrix in progress)
+
+- FM cap=500 3-seed: 3/12 NPZs done (stephenson + terekhova + aida seed=0); onek1k seed=0 + 8 more pending. ~37h to Phase B completion.
+- FM cap=1000 1-seed: 0/4 NPZs done (Phase C, ~18h after Phase B).
+- Final combined ridge readout will re-fire automatically at end of `i6_fm_extractions.sh`.
