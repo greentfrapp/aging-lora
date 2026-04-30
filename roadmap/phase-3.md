@@ -423,7 +423,7 @@ Pre-committed decision rules baked into each task description (the §28 lesson, 
   - **Compute**: ~$0, ~half day. Reuses existing per-cell embeddings (need to re-aggregate to pseudobulk under different per-donor count budgets).
   - **Why third**: If F.3 shows artifact, we lose a methodology contribution but gain a clearer story (FM probing reveals what data quality allows). Either result reshapes the paper's biology framing.
 
-- [ ] **Task F.4 (proposed 2026-04-30, addresses cs_lens_review.md Analysis B): CCA upper bound on per-layer linear age info.**
+- [x] **Task F.4 (proposed 2026-04-30, addresses cs_lens_review.md Analysis B): CCA upper bound on per-layer linear age info.** *(Done 2026-04-30.)*
   - **Implementation**: At each layer in each multi-seed condition, compute the first canonical correlation between embedding and age (closed-form for 1-D target). Where n_donors > embedding_dim (per-donor pseudobulk level, n=981 for OneK1K with 768-d emb), also compute OLS unregularized R² as a tighter bound. Compare CCA-best-layer + OLS-best-layer to existing ridge-CV-best-layer.
   - **Decision rule (pre-commit)**:
     - CCA-best-layer matches ridge-best in ≥75% of conditions → ridge recovers near-maximal linearly accessible information; methodology robust to regularization choices.
@@ -432,8 +432,25 @@ Pre-committed decision rules baked into each task description (the §28 lesson, 
   - **Output**: `results/phase3/f4_cca_upper_bound.csv` with rows = (condition × layer × seed), columns = cca_R, ols_unreg_R (where defined), ridge_cv_R, deltas.
   - **Compute**: ~$0, ~half day. Closed-form linear algebra on existing embeddings.
   - **Why fourth**: Useful complement to F.2. Confirms whether ridge probe is doing its job at the linear envelope.
+  - **Result (2026-04-30)**: 208 rows × 16 conditions written to `results/phase3/f4_cca_upper_bound.csv`. Strict CCA-best-layer vs Ridge-best-layer agreement = **0/16 (0%)** → decision rule fires "ridge regularization substantially shapes layer ordering."
 
-- [ ] **Task F.5 (proposed 2026-04-30, addresses concern #3 in additional_concerns.md): PC-residual age recovery per layer.**
+    **Important methodological caveat — the headline 0/16 overstates the disagreement.** When `p ≥ n` (embedding_dim ≥ n_donors), the CCA closed-form returns the degenerate fallback `cca_train_R = 1.0` (perfect overfit by construction). 10/16 conditions are p≥n (all loco_onek1k folds: n_train ≈ 190–195 < p = 768), so their CCA argmax falls back to L0 by tie-breaking — trivially mismatching ridge's L6–L12 picks. The interpretable comparison is the **6 loco_terekhova conditions** where n=1005–1010 > p=768:
+
+    | condition | Ridge-best | CCA-best | gap |
+    |---|---|---|---|
+    | frozen × CD4+T | L5 | L7 | 2 |
+    | frozen × B | L9 | L10 | **1** |
+    | frozen × NK seed0 | L2 | L9 | 7 |
+    | frozen × NK seed1 | L2 | L4 | 2 |
+    | frozen × NK seed2 | L1 | L5 | 4 |
+
+    Among non-degenerate conditions: 0/5 exact match, 1/5 within ±1 layer (B-cell), 2/5 within ±2 layers — still well below the 75% threshold but a more honest reading is "moderate-to-substantial regularization shaping," not "ridge picks orthogonal layers."
+
+    **Sub-finding worth keeping (OLS-holdout vs Ridge-holdout on n>p conditions)**: Ridge dominates unregularized OLS by a wide margin at every layer. E.g. loco_terekhova × CD4+T × L1: OLS-holdout=+0.27, Ridge-holdout=+0.60; same layer L5: OLS=+0.19, Ridge=+0.60. Regularization is doing real generalization work — the layer ordering ridge converges on is not "distorted away from a better linear envelope," it is the regularization-stabilized version of a heavily-overfit OLS surface.
+
+    **Honest reframe for the paper**: ridge-CV-best-layer ≠ CCA-best-layer, but ridge-CV-best-layer >> OLS-best-layer in holdout R. Layer ordering depends on the regularization regime; report ridge as the deployment recipe and acknowledge in methodology that "best layer" is a property of the (ridge-CV) probe, consistent with F.2's setup. Decision rule restatement: methodology recommendation stays ridge-conditional, which it already was.
+
+- [x] **Task F.5 (proposed 2026-04-30, addresses concern #3 in additional_concerns.md): PC-residual age recovery per layer.** *(Done 2026-04-30.)*
   - **Implementation**: At each layer in each multi-seed condition, project out top-k principal components (k ∈ {5, 10, 25, 50}; fitted on training pseudobulks). Refit ridge on the residual subspace. Test whether age recovery (R, MAE) improves vs full embedding.
   - **Decision rule (pre-commit)**:
     - Improves substantially (ΔR ≥ 0.05 after PC projection) on >50% of conditions → age is a low-variance residual axis competing with cell-type/batch axes; reframe as "FM age signal lives in residual subspace."
@@ -442,6 +459,26 @@ Pre-committed decision rules baked into each task description (the §28 lesson, 
   - **Output**: `results/phase3/f5_pc_residual.csv` with rows = (condition × layer × k_PC × seed), columns = R, MAE, ΔR vs full-embed.
   - **Compute**: ~$0, ~half day. PCA + ridge on existing embeddings.
   - **Why last**: Mechanism, not decision-changing. Useful for paper interpretation but doesn't change methodology recommendation.
+  - **Result (2026-04-30)**: 832 rows × 16 conditions written to `results/phase3/f5_pc_residual.csv`. Decision rule fires by max-ΔR-per-condition aggregator: holdout **9/16 IMPROVE**, 7/16 no_change, 0/16 DEGRADE → "age is residual axis; reframe."
+
+    **But the headline-level "reframe" verdict is the wrong call once you look per cell type — the pattern is strongly cell-type-conditional**, and the "max ΔR ≥ 0.05" criterion is lenient (it counts a condition as IMPROVE if *any single* layer × k combination clears +0.05, even when the mean is strongly negative).
+
+    | condition | holdout max ΔR | holdout mean ΔR | AIDA max ΔR | AIDA mean ΔR | reading |
+    |---|---|---|---|---|---|
+    | frozen × B (loco_onek1k, terekhova) | +0.144 to +0.153 | −0.017 / +0.025 | **+0.272** | **+0.104** | residual axis confirmed |
+    | frozen × NK (3 seeds × 2 folds) | +0.053 to +0.139 | −0.067 to −0.124 | +0.187 to +0.256 | −0.027 to +0.030 | weak signal, marginal residual gain |
+    | frozen × CD4+T | +0.023 | −0.176 | +0.083 | −0.185 | high-variance subspace |
+    | rank-16 LoRA × CD4+T (3 seeds) | +0.014 | **−0.375 to −0.429** | +0.073 to +0.089 | **−0.258 to −0.284** | strongly high-variance |
+    | rank-32 LoRA × CD4+T (3 seeds) | +0.024 to +0.055 | **−0.273 to −0.318** | +0.124 to +0.183 | **−0.223 to −0.268** | strongly high-variance |
+
+    **Honest reframe (cell-type-conditional, not blanket)**:
+    - **B-cell**: PC-residualization genuinely helps — holdout max ΔR up to +0.15, AIDA mean ΔR positive (+0.10). Age signal in B-cells *is* a low-variance residual axis competing with stronger nuisance axes. Consistent with the very weak baseline B-cell ridge R (~0 holdout) — most of the embedding variance is non-age, and projecting it out unmasks the small age signal.
+    - **CD4+T**: PC-residualization mostly *hurts* (mean ΔR strongly negative, especially after fine-tuning where best layers shift to L10–L12 and projecting out top PCs catastrophically degrades R, e.g. rank-32 L12 ΔR up to −0.43). Age in CD4+T is in the high-variance subspace, especially post-LoRA. The "max ΔR" tag of IMPROVE on rank-32 seed 2 is borderline (+0.055) and is overridden by the consistent strong negative-mean signal.
+    - **NK**: intermediate — small holdout improvements on max-ΔR but negative mean; AIDA max +0.20 with near-zero mean. Reads as "weak baseline, weakly residual-conditional."
+
+    **AIDA cross-ancestry pattern**: 11/11 IMPROVE on max-ΔR — every condition where AIDA was evaluated has at least one (layer × k_pc) combo where PC-residualization gains ≥+0.05. Even where mean-ΔR is strongly negative (CD4+T), the max is positive. This suggests the top PCs partially encode train-cohort-specific batch/ancestry variation that does not transfer to AIDA, so projecting them out yields cross-ancestry generalization gains in narrow regions of (layer, k_pc) space — but the gains are not robust across the layer × k surface. **Not load-bearing for a deployment recipe**, but supports a sentence in the discussion that "PC-residualization can be a tool for cross-ancestry transfer when the deployment regime is cell-type-conditional and tunable."
+
+    **Decision-rule restatement (overriding the binary verdict)**: the pre-committed rule is a single global criterion that does not capture the cell-type asymmetry. Paper should report (a) full F.5 table, (b) cell-type-conditional verdict (B residual / CD4+T high-variance / NK intermediate), (c) AIDA pattern as a tunable cross-ancestry refinement rather than a default.
 
 #### Recommended bundle (F.1 + F.3 + F.2)
 
