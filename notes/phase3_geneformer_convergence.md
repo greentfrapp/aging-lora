@@ -2474,3 +2474,57 @@ cap=200 was dropped vs the original I.3 plan; cap=50/100/500 are the trajectory 
 - I.4 (FM cap=100 3-seed verification) still extracting aida seed=2 at launch time; ETA ~12 min then auto-fires `i4_3seed_ridge.py`.
 - Both processes orphaned to init (PPID=1) so they survive Claude session swaps and SSH disconnects.
 - User offline 12h; expect partial results visible at return, full FM matrix not finishing until ~3 days later.
+
+## 47. I.6 — gene-EN 3-seed cap-trajectory DONE (2026-04-30 ~19:17 UTC)
+
+gene-EN side of I.6 finished (~6h CPU). 48 rows in `results/phase3/i6_gene_en_3seed_caps.csv` (3 seeds × 4 caps × 2 folds × 2 evals = 48).
+
+### 47.1 3-seed mean AIDA R per (cap × fold)
+
+| Cap | loco_onek1k → AIDA | loco_terekhova → AIDA |
+|---|---|---|
+| 50 | 0.517 ± 0.072 | 0.570 ± 0.052 |
+| 100 | **0.648 ± 0.030** | 0.671 ± 0.042 |
+| 500 | 0.697 ± 0.034 | **0.722 ± 0.015** |
+| 1000 | **0.716 ± 0.044** | 0.720 ± 0.006 |
+
+### 47.2 Headline corrections to §43 / I.1 single-seed numbers
+
+| Quantity | Single-seed (I.1, seed=0) | 3-seed mean (I.6) | Δ |
+|---|---|---|---|
+| AIDA loco_onek1k cap=100 | 0.616 | 0.648 | +0.032 |
+| AIDA loco_onek1k cap=500 | **0.733** | **0.697** | **−0.036** |
+| AIDA loco_terekhova cap=500 | 0.733 | 0.722 | −0.011 |
+| AIDA loco_onek1k cap=1000 | 0.670 | **0.716** | **+0.046** |
+| AIDA loco_terekhova cap=1000 | 0.721 | 0.720 | −0.001 |
+
+The "gene-EN cap=500 = 0.733" peak from I.1 was the lucky seed-0 number. 3-seed mean is 0.697-0.722. Conversely, the "gene-EN cap=1000 = 0.670 < cap=500" worry from §43.4 was the unlucky seed-0 number — at 3-seed mean cap=1000 ≈ 0.716-0.720, **slightly higher** than cap=500.
+
+### 47.3 Trajectory shape (3-seed mean, AIDA loco_onek1k)
+
+cap=50: 0.517 → cap=100: 0.648 (+0.131) → cap=500: 0.697 (+0.049) → cap=1000: 0.716 (+0.019)
+
+Diminishing returns clearly set in beyond cap=500. cap=500 → cap=1000 gives only +0.02 R despite 2× more cells (and ~2× more compute for FM).
+
+### 47.4 Matched-cap matched-seed comparison at cap=100 (the only cap where FM has 3-seed data so far)
+
+| Method/layer | 3-seed mean AIDA R | SD |
+|---|---|---|
+| FM L2 (F.3's claimed best) | 0.609 | 0.119 |
+| FM L3 (best by 3-seed mean) | **0.665** | 0.035 |
+| FM L12 (most stable) | 0.647 | 0.015 |
+| **gene-EN** | **0.648** | 0.030 |
+
+**Verdict at cap=100, matched seeds**:
+- FM-best-layer (L3) ahead of gene-EN by +0.017 — **smaller than 1 SD**, not significant.
+- FM-stable-layer (L12) tied with gene-EN (0.647 vs 0.648 — +0.001 difference).
+- FM-claimed-layer (L2) behind gene-EN by 0.039 — but L2 has SD 0.119, so this is dominated by F.3's lucky seed.
+
+The "FM has matched-cap advantage at cap=100" claim is **layer-dependent** and at most +0.02 R, not the +0.09 R F.3 implied.
+
+### 47.5 Open questions still to resolve (FM matrix in progress)
+
+- FM cap=50 3-seed: NPZs are extracted; ridge readout pending.
+- FM cap=500 3-seed: in extraction (Phase B started ~17:22, ~40h to completion).
+- FM cap=1000 1-seed: in extraction queue (Phase C, ~18h after Phase B).
+- Final combined ridge readout will fire when all extractions land (~3 days from launch).
