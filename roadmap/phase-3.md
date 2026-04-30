@@ -633,6 +633,72 @@ Subtle new framing observation from the reviewer: G.3's per-condition rank-32 Lo
 
 **Tier 1**: H.1 (~$5–10 GPU + ~half day CPU) and F.2 (~1–2 days CPU). **Tier 2**: H.3 (~half day CPU) and H.4 (~half day CPU). **Total: ~3 days + ~$5–10 GPU.**
 
+#### Phase-3-B I.1–I.5: F.3 cell-count follow-ups (proposed 2026-04-30, post-F.3)
+
+F.3 found cell-count is the largest single methodological lever (cap=20 → cap=100 yields +0.18 R on AIDA cross-ancestry, larger than LoRA fine-tuning gain). I.1–I.5 generalize and verify: gene-EN-cap-comparison (I.1), NK + B generalization (I.2), plateau test (I.3), §28-style multi-seed verification (I.4), LoRA-at-high-cap headline test (I.5).
+
+Decision rules pre-committed for each task. Recommended order: **I.1 → I.4 → I.2 → I.3 → I.5** (I.1 cheapest and most decision-changing; I.5 most expensive, conditional on I.1 outcome).
+
+- [ ] **Task I.1 (proposed 2026-04-30, addresses f3_review.md "gene-EN at matched cap"): Gene-EN cap-sweep on CD4+T.**
+  - **Implementation**: Re-run `gene_en_matched_splits.py`-style ElasticNet on CD4+T with three caps (20, 100, full), evaluating on AIDA cross-ancestry + holdout. Existing gene-EN matched-splits already runs at cap=100 (R=0.616 AIDA loco_onek1k, R=0.651 AIDA loco_terekhova) — I.1 adds cap=20 and cap=full to characterize the gene-EN cap-trajectory.
+  - **Decision rule (pre-commit)**:
+    - Gene-EN at cap=20 R ≈ 0.55–0.60 on AIDA → bulk also benefits substantially from higher cap; FM cap=100 advantage shrinks (FM 0.71 - gene-EN 0.62 = +0.09 R, modest).
+    - Gene-EN at cap=20 R ≈ 0.40–0.50 on AIDA → bulk also gains from cap but FM gains more; FM-vs-bulk gap widens at cap=100; FM headline configuration is supported.
+    - Gene-EN at full-cap R ≥ 0.70 on AIDA → bulk's plateau equals or exceeds FM's cap=100; FM has no relative advantage; methodology contribution must reframe around layer choice (where FM still has structure) not absolute R.
+  - **Output**: `results/phase3/i1_gene_en_cap_sweep.csv` with rows = (fold × eval_cohort × cap), columns = R, MAE, alpha, l1_ratio, n_train, n_eval.
+  - **Compute**: ~$0, ~30 min CPU.
+  - **Why first**: Cheapest, most decision-changing for paper-restructuring question.
+
+- [ ] **Task I.2 (proposed 2026-04-30, addresses f3_review.md "generalization to NK and B"): Cap=100 frozen NK + B.**
+  - **Implementation**: GPU-extract frozen Geneformer at cap=100 for NK and B cell types × 4 cohorts (onek1k, stephenson, terekhova, aida). Compare best-layer per (cell × cap × fold) to existing cap=20 picks. Tests whether the cap=100 layer-shift (CD4+T cap=20 L12 → cap=100 L2) generalizes to other cell types.
+  - **Decision rule (pre-commit)**:
+    - Both NK and B at cap=100 also pick early layers (L1-L4) → cap is a universal lever; cell-type-conditional layer asymmetry from §31 dissolves cleanly at cap=100.
+    - Only one of NK/B shifts → mixed; cell-type-conditional asymmetry partially survives.
+    - Neither shifts (NK still picks L3, B still picks L7) → cap-effect is CD4+T-specific; F.3's headline narrows substantially.
+  - **Output**: `results/phase3/i2_nk_b_cap100_layered_ridge.csv` plus 8 NPZ extractions in `results/phase3/embeddings_layered/`.
+  - **Compute**: ~$1-2 GPU (A10G spot), ~3h wall.
+  - **Why second**: Decides whether F.3 generalizes or is CD4+T-specific. Paper restructuring depends on this.
+
+- [ ] **Task I.3 (proposed 2026-04-30, addresses f3_review.md "plateau test"): Cap-trajectory plateau on CD4+T.**
+  - **Implementation**: GPU-extract CD4+T frozen at cap=50, cap=200, cap=500 × 4 cohorts. Combined with existing cap=5/20/100 results, gives a 6-point trajectory. Tests whether the cap=20 → cap=100 R gain plateaus at cap=200 or continues climbing.
+  - **Decision rule (pre-commit)**:
+    - cap=200 AIDA R ≈ 0.71 (≤ cap=100 + 0.01) → plateau reached; cap=100 is the recipe.
+    - cap=200 AIDA R ≥ 0.74 → not plateaued; need cap=500 result to decide where to stop. If cap=500 R ≥ 0.78, the trajectory keeps climbing and the recipe is "as many cells as possible."
+    - cap=200 R drops below cap=100 → unexpected; investigate (probably indicates a noise or tokenization issue).
+  - **Output**: `results/phase3/i3_cap_trajectory.csv` plus 12 NPZ extractions.
+  - **Compute**: ~$3-5 GPU, ~6-8h wall (cap=500 onek1k will be the biggest extraction yet, ~490k cells).
+  - **Why third**: Establishes whether cap=100 is itself the answer or a way-point on a longer curve.
+
+- [ ] **Task I.4 (proposed 2026-04-30, addresses §28-lesson + f3_review.md single-seed caveat): 3-seed verification of cap=100 CD4+T frozen.**
+  - **Implementation**: Re-extract CD4+T frozen at cap=100 × 4 cohorts × cell-sampling seed=1 and seed=2. Combined with existing seed=0 (F.3), gives 3-seed mean ± SD per layer. Tests whether F.3's headline R=0.706 (single seed) holds at 3-seed mean (the §28 lesson: single-seed near-headlines often drop ~0.05-0.08 R at 3-seed).
+  - **Decision rule (pre-commit)**:
+    - 3-seed mean AIDA R at L2 ≥ 0.65 → cap=100 effect is robust; F.3 headline holds.
+    - 0.55 ≤ 3-seed mean R < 0.65 → cap effect is real but smaller than single-seed implied; report 3-seed mean as headline.
+    - 3-seed mean R < 0.55 → single-seed F.3 was a fluke; cap effect is much smaller than +0.18 R; reframe.
+  - **Output**: `results/phase3/i4_cap100_3seed_layered_ridge.csv` plus 8 NPZ extractions (seed=1 + seed=2 × 4 cohorts).
+  - **Compute**: ~$1-2 GPU, ~3h wall.
+  - **Why fourth**: Single-seed risk hedge before committing to paper restructuring around cap=100.
+
+- [ ] **Task I.5 (proposed 2026-04-30, addresses f3_review.md "LoRA at cap=100"): Cap=100 LoRA fine-tuning.**
+  - **Implementation**: Train rank-32 LoRA at cap=100 on CD4+T loco_onek1k single-seed, extract layered embeddings, ridge readout. Compare to cap=20 rank-32 LoRA (D.21 R=0.594 AIDA) and to cap=100 frozen (F.3 R=0.706 AIDA). Tests whether LoRA productively interacts with higher cap or whether the §27/§28 destruction mechanism is worse at clean inputs.
+  - **Decision rule (pre-commit)**:
+    - LoRA cap=100 AIDA R ≥ 0.72 → LoRA + cap=100 is the headline configuration.
+    - 0.65 ≤ LoRA cap=100 R < 0.72 → LoRA at cap=100 is competitive but doesn't beat frozen; recommend frozen cap=100 as headline.
+    - LoRA cap=100 R < 0.65 → LoRA at cap=100 underperforms frozen; the §27/§28 destruction mechanism worsens at higher cap; "more cells doesn't help LoRA" finding.
+  - **Output**: `results/phase3/i5_lora_cap100.csv` + LoRA checkpoint + extraction NPZs.
+  - **Compute**: ~$15-20 GPU (rank-32 LoRA at cap=100 = ~5× longer than cap=20 = ~30h wall).
+  - **Why last**: Most expensive; conditional on I.1-I.4 outcomes (if I.1 shows gene-EN matches FM at cap=100, I.5 becomes much less interesting).
+
+#### I.1–I.5 recommended bundle and execution
+
+**Order**: I.1 (CPU, 30 min) → I.4 + I.2 in parallel (~3-4h GPU) → I.3 (~6-8h GPU) → I.5 (~30h GPU, conditional).
+
+**Total bundle**: ~$20-30 GPU, ~2-3 days wall (mostly I.5).
+
+**Tier 1 (must run before paper restructuring decision)**: I.1 + I.4 + I.2.
+**Tier 2 (informative but not blocking)**: I.3.
+**Tier 3 (conditional)**: I.5.
+
 ### Phase-3-B priority order — Tier 1 + extensions COMPLETE 2026-04-30
 
 Done in autonomous session 2026-04-29/30:
