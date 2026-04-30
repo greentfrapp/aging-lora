@@ -2274,29 +2274,40 @@ User asked to run f3_review.md follow-ups (I.1-I.5) autonomously. I.1 (gene-EN a
 
 **Bulk gains MORE from cap than FM.** Going from cap=20 → cap=100, gene-EN gains +0.217 R while FM gains +0.179 R. Going from cap=100 → cap=500, gene-EN gains another +0.117 R; FM has not been tested at cap=500.
 
-### 43.3 Decision-rule outcome (pre-committed)
+### 43.3 Decision-rule outcome (pre-committed) — overstated; walked back 2026-04-30
 
 Per the I.1 pre-commit:
 > "Gene-EN at cap=full R ≥ 0.70 on AIDA → bulk's plateau equals or exceeds FM's cap=100; FM has no relative advantage; methodology contribution must reframe around layer choice (where FM still has structure) not absolute R."
 
-**Triggered at cap=500.** Gene-EN cap=500 → AIDA R = 0.733 ≥ 0.70, AND exceeds FM cap=100 (0.706) by +0.027 R. Cap=5000 will only make this stronger.
+I initially read this as "TRIGGERED" because gene-EN cap=500 = 0.733 ≥ 0.70 AND > FM cap=100 = 0.706. **That comparison is unfair**: it pits gene-EN's high-cap ceiling against FM's cap=100 number, baking in the assumption (untested) that FM cap=100 is FM's plateau. We have no FM cap=500 measurement — F.3 killed cap=5000 for compute and never ran cap=500.
 
-### 43.4 Implications for the paper
+**Honest matched-cap reading**:
+- cap=20: FM 0.527 vs gene-EN 0.399 → FM ahead by +0.128 R.
+- cap=100: FM 0.706 vs gene-EN 0.616 → FM ahead by +0.090 R.
+- cap=500: FM unknown vs gene-EN 0.733 → cannot compare.
 
-This is the most disruptive finding to date. The §32 matched-splits parity narrative — which framed FM-vs-gene-EN as "competitive within seed variance, ~1.35y MAE worse" (D.36) — was conditional on **both methods at cap=100**. At cap=500 (closer to "full bulk"), gene-EN actually **exceeds** FM. The headline R for AIDA cross-ancestry shifts from "FM frozen 0.71" to "gene-EN bulk 0.73."
+The decision rule was poorly worded — it conflated "bulk's ceiling vs FM's cap=100" with "FM has no relative advantage." Those are different claims. The latter requires FM cap=500 (or wherever FM plateaus) to be measured. **I.3 is the experiment that resolves this question**, not I.1 alone.
 
-The two-tier framing from §38 ("LoRA fine-tuned variants deployable; frozen-base characterization-only") still stands within the FM family, but the FM-vs-bulk question is now decisively answered: **at matched cap, bulk beats FM at AIDA cross-ancestry**.
+### 43.4 Implications for the paper (revised)
 
-This doesn't kill the paper — it reframes the contribution. The methodology contributions that survive:
+What I.1 *does* establish on its own:
+1. **Bulk has much more cap-headroom than the cap=20 numbers suggested.** Gene-EN AIDA R climbs +0.334 from cap=20 to cap=500 (0.399 → 0.733). The Phase-2 baselines (LASSO/Pasta-REG at standard cap) likely under-represent what bulk can achieve.
+2. **Bulk's marginal gain from cap is currently larger than FM's**, in the range we have data for: cap=20→100 gives +0.217 R for gene-EN vs +0.179 R for FM. Whether bulk sustains that lead at cap=500 vs FM cap=500 is unknown.
+3. **The §32 matched-splits parity narrative needs a footnote**: D.36 "FM-vs-gene-EN within seed variance, ~1.35y MAE worse" was at cap=100. The framing should explicitly note "at cap=100 matched"; conclusions about higher caps await I.3.
+
+What I.1 does **not** establish:
+- "FM has no relative advantage" — we have no FM cap=500 number.
+- "Methodology contribution must reframe around layer choice not absolute R" — premature; the matched-cap FM advantage at cap=100 (+0.09 R) is real.
+- "At matched cap, bulk beats FM at AIDA cross-ancestry" — the opposite is true at every matched cap we have data for.
+
+The methodology contributions that survive I.1 unchanged:
 1. Cell-type-conditional layer-of-readout (frozen-base, cap=20 specific, but real and non-trivial).
 2. Per-donor cell-count as the largest methodological lever for both bulk and FM (F.3 + I.1).
 3. Bootstrap layer-selection stability + small-N artifacts (E.5–E.8).
 4. PC-residual cell-type-conditional encoding (F.5).
 5. Composition baseline at cross-cohort (F.1: monocyte-fraction tracking).
 
-What changes:
-1. **The "FM matched-splits parity" narrative needs significant restatement.** The right framing is now: "FM frozen at cap=100 is competitive with gene-EN at cap=100 (FM +0.09 R), but gene-EN's plateau at higher caps exceeds FM's." Whether this is paper-strengthening (showing methodology lever > FM choice) or paper-narrowing (FM doesn't have an absolute-performance edge) depends on framing.
-2. **The §32 paper-changing insight (TF's R=0.83 was methodology-mismatch, not FM advantage) holds even more strongly** — both bulk and FM benefit from cap; both methods' "best" R depends on cap, not on choice between FM and bulk.
+The "FM-vs-bulk ceiling" question is genuinely open until I.3 produces FM cap=500.
 
 ### 43.5 Caveats and what I.1 doesn't answer
 
