@@ -1,0 +1,13 @@
+method,fold,cell_type,seed,n_donors_train,resample_method,n_boot,top1_layer,top1_win_rate,top2_layer,top2_win_rate,win_rates_per_layer
+geneformer_frozen_seed0,loco_terekhova,NK,0,1010,with_repl,200,3,0.9050,2,0.0950,"[0.0, 0.0, 0.095, 0.905, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+geneformer_frozen_seed0,loco_terekhova,NK,0,1010,without_repl,200,3,1.0000,0,0.0000,"[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+geneformer_frozen_seed1,loco_terekhova,NK,1,1010,with_repl,200,3,0.9850,2,0.0150,"[0.0, 0.0, 0.015, 0.985, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+geneformer_frozen_seed1,loco_terekhova,NK,1,1010,without_repl,200,3,1.0000,0,0.0000,"[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+geneformer_frozen_seed2,loco_terekhova,NK,2,1010,with_repl,200,3,0.9900,2,0.0100,"[0.0, 0.0, 0.01, 0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+geneformer_frozen_seed2,loco_terekhova,NK,2,1010,without_repl,200,3,1.0000,0,0.0000,"[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+geneformer_frozen_seed0,loco_onek1k,NK,0,195,with_repl,200,3,0.3700,2,0.3450,"[0.0, 0.0, 0.345, 0.37, 0.005, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.275]"
+geneformer_frozen_seed0,loco_onek1k,NK,0,195,without_repl,200,12,0.4950,3,0.2650,"[0.0, 0.0, 0.165, 0.265, 0.0, 0.07, 0.0, 0.005, 0.0, 0.0, 0.0, 0.0, 0.495]"
+geneformer_frozen_seed1,loco_onek1k,NK,1,195,with_repl,200,2,0.5050,12,0.4100,"[0.0, 0.0, 0.505, 0.075, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.41]"
+geneformer_frozen_seed1,loco_onek1k,NK,1,195,without_repl,200,12,0.6800,2,0.2300,"[0.0, 0.03, 0.23, 0.01, 0.005, 0.035, 0.005, 0.005, 0.0, 0.0, 0.0, 0.0, 0.68]"
+geneformer_frozen_seed2,loco_onek1k,NK,2,195,with_repl,200,12,0.6300,3,0.2300,"[0.0, 0.005, 0.125, 0.23, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.63]"
+geneformer_frozen_seed2,loco_onek1k,NK,2,195,without_repl,200,12,0.9500,3,0.0250,"[0.0, 0.0, 0.01, 0.025, 0.0, 0.015, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.95]"
