@@ -682,7 +682,7 @@ F.3 found cell-count is the largest single methodological lever (cap=20 → cap=
 
 Decision rules pre-committed for each task. Recommended order: **I.1 → I.4 → I.2 → I.3 → I.5** (I.1 cheapest and most decision-changing; I.5 most expensive, conditional on I.1 outcome).
 
-- [ ] **Task I.1 (proposed 2026-04-30, addresses f3_review.md "gene-EN at matched cap"): Gene-EN cap-sweep on CD4+T.**
+- [x] **Task I.1 (DONE 2026-04-30, see §43; addresses f3_review.md "gene-EN at matched cap"): Gene-EN cap-sweep on CD4+T.** Decision rule TRIGGERED at cap=500: gene-EN AIDA R=0.733 ≥ 0.70 AND exceeds FM cap=100 (R=0.706) by +0.027. Bulk gains MORE from cap than FM (+0.217 vs +0.179 from cap=20→100). cap=5000 phase killed for time budget; results sufficient at cap=500. Methodology contribution must reframe around layer choice + cell-count, not absolute FM-vs-bulk performance.
   - **Implementation**: Re-run `gene_en_matched_splits.py`-style ElasticNet on CD4+T with three caps (20, 100, full), evaluating on AIDA cross-ancestry + holdout. Existing gene-EN matched-splits already runs at cap=100 (R=0.616 AIDA loco_onek1k, R=0.651 AIDA loco_terekhova) — I.1 adds cap=20 and cap=full to characterize the gene-EN cap-trajectory.
   - **Decision rule (pre-commit)**:
     - Gene-EN at cap=20 R ≈ 0.55–0.60 on AIDA → bulk also benefits substantially from higher cap; FM cap=100 advantage shrinks (FM 0.71 - gene-EN 0.62 = +0.09 R, modest).
@@ -692,7 +692,7 @@ Decision rules pre-committed for each task. Recommended order: **I.1 → I.4 →
   - **Compute**: ~$0, ~30 min CPU.
   - **Why first**: Cheapest, most decision-changing for paper-restructuring question.
 
-- [ ] **Task I.2 (proposed 2026-04-30, addresses f3_review.md "generalization to NK and B"): Cap=100 frozen NK + B.**
+- [x] **Task I.2 (DONE 2026-04-30, see §44; addresses f3_review.md "generalization to NK and B"): Cap=100 frozen NK + B.** NK fully generalizes (cap=100 picks L4/L2 best vs cap=20 L7/L11 — early-layer shift confirmed; AIDA R 0.398→0.553, +0.155). B mixed (cap=100 picks L9/L7 — late-layer; AIDA R 0.413→0.499, +0.086, weaker substrate). All three cell types benefit from cap=20→100 on AIDA (CD4+T +0.179, NK +0.155, B +0.086). Cap-effect is universal in magnitude direction, but layer-shift pattern is cell-type-conditional.
   - **Implementation**: GPU-extract frozen Geneformer at cap=100 for NK and B cell types × 4 cohorts (onek1k, stephenson, terekhova, aida). Compare best-layer per (cell × cap × fold) to existing cap=20 picks. Tests whether the cap=100 layer-shift (CD4+T cap=20 L12 → cap=100 L2) generalizes to other cell types.
   - **Decision rule (pre-commit)**:
     - Both NK and B at cap=100 also pick early layers (L1-L4) → cap is a universal lever; cell-type-conditional layer asymmetry from §31 dissolves cleanly at cap=100.
