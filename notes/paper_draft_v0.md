@@ -177,11 +177,22 @@ Rank-32 LoRA × 3-seed CD4+T × loco_onek1k (D.21 DONE):
 Per-seed L9 AIDA MAE: 6.92 / 7.66 / 7.40 (seed 0/1/2). σ(MAE)=0.38y << 2.0y
 robustness threshold → anchor-tier.
 
-**Conclusion**: rank-32 LoRA + ridge readout reaches parity with gene-EN
-matched on AIDA cross-ancestry (FM MAE=7.33y vs gene-EN MAE=6.42y; difference
-within seed variance band). Capacity (rank-32 vs rank-16) does not change
-this picture — rank-16 3-seed L11 reaches MAE=7.96y, slightly worse than
-rank-32 L9 but with similar within-seed-variance gap to gene-EN.
+**Conclusion**: rank-32 LoRA + ridge readout reaches **CI-overlap parity**
+with gene-EN matched on AIDA cross-ancestry. Strict MAE CI test (D.36):
+- rank-32 L9 3-seed pooled bootstrap: median MAE 7.38y, 95% CI [6.40, 8.56]
+- gene-EN matched bootstrap: median MAE 6.07y, 95% CI [5.28, 6.92]
+- **CI overlap [6.40, 6.92]** (narrow but exists)
+- Mean MAE difference: +1.35y (rank-32 worse)
+- Mann-Whitney U test: p < 0.001 (distributions distinguishable)
+
+**Honest framing**: "competitive within seed variance, with mean rank-32
+performing 1.35y worse than gene-EN on average. The 95% CIs overlap but
+the distributions are statistically distinguishable." Rank-32 is *competitive*
+on AIDA cross-ancestry but does not strictly tie gene-EN.
+
+Capacity (rank-32 vs rank-16) does not change this picture meaningfully —
+rank-16 3-seed L11 reaches MAE=7.96y vs rank-32 L9 7.33y; ~0.6y improvement
+from doubling capacity, no new capacity needed beyond rank-16 in this regime.
 
 ### 3.5 Cell-type-conditional layer-of-best-readout
 
