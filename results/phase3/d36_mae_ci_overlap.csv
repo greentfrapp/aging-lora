@@ -1,0 +1,3 @@
+method,n_bootstrap,median_mae,mean_mae,ci_lo_2.5,ci_hi_97.5,ci_overlap
+rank32_l9_3seed_pooled,3000,7.3752,7.3709,6.4007,8.5637,True
+gene_en_matched,1000,6.0705,6.0223,5.2771,6.9240,True
