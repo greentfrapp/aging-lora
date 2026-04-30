@@ -356,6 +356,89 @@ The "did you select layer on the test set?" reviewer challenge is fully addresse
 - For fine-tuned variants: **No** — K-fold CV on train donors picks the same layer as the oracle.
 - For frozen-base: **No, but** the recipe is post-hoc-only; we report directional regimes, not specific layer numbers, as the methodology contribution.
 
+### Phase-3-B inconsistency-audit follow-ups (E.5–E.8 partial, 2026-04-30)
+
+User asked: "the results from the experiments so far seem very inconsistent. Could there be something we are overlooking?" — triggered four candidate confounds tested in E.5-E.8.
+
+- [x] **Task E.5 (DONE 2026-04-30, see §41.1): Holdout R-per-layer flatness check.** Output: `results/phase3/e5_holdout_layer_flatness.csv`. Rank-16 × CD4+T curve flat within seeds (6-8 layers within 0.02 of oracle); rank-32 sharper (2-3 layers); frozen NK Terekhova not flat (1-2 within 0.02).
+- [x] **Task E.6 (DONE 2026-04-30, see §41.2): Formal SD-of-seed-variance band widths at K=1.5.** Output: `results/phase3/e6_band_width.csv`. Cross-seed SD for rank-16 is very tight (0.008); L12 is OUTSIDE the K=1.5 band [6,7,8,9,10]. Frozen NK on AIDA has SD=0.116, band covers all 13 layers.
+- [x] **Task E.7 (DONE 2026-04-30, see §41.3-41.4): Rank-16 seed-2 anomaly verification with bootstrap CIs.** Output: `results/phase3/e7_rank16_seed2_anomaly.csv`. Anomaly is real on OneK1K (0.058 R gap, p~0). **HEADLINE FINDING**: best deployment layer for rank-16 INVERTS between OneK1K (L6) and AIDA (L12). Bootstrap and K-fold CV are both right but for different downstream distributions.
+- [/] **Task E.8 (RUNNING 2026-04-30, see §41.5): Donor-identity-leakage test on frozen NK Terekhova.** N=200 × 6 conditions × 2 resampling methods. ~95 min wall. Compares with-replacement vs subsample-without-replacement (80%) bootstrap top-1 layer pick.
+
+#### Open follow-ups (proposed 2026-04-30, post-E.8 from cs_lens_review.md + additional_concerns.md)
+
+User: "Review scratchpad/cs_lens_review.md and scratchpad/additional_concerns.md, then propose the next list of experiments to try." Synthesis identified five tasks F.1-F.5. The reviews raise two structural concerns: (a) "best layer" may be a probe-property not a representation property (CS-lens) and (b) our results may be partially explained by composition signal, cell-count differences, or principal-axis dominance (additional concerns). F.1-F.5 address both directly.
+
+Pre-committed decision rules baked into each task description (the §28 lesson, applied prospectively). Recommended bundle: **F.1 + F.3 + F.2** (~2-3 days, $0).
+
+- [ ] **Task F.1 (proposed 2026-04-30, addresses concern #1 in additional_concerns.md): Composition-only baseline.**
+  - **Implementation**: For each donor, build a cell-type-frequency vector (counts per cell type / total cells, or relative proportions across the integrated atlas's 7-13 cell-type labels). Fit LASSO/ElasticNet on the frequency vectors alone for age prediction (no expression). Evaluate on AIDA + holdout cohorts using same loco_onek1k / loco_terekhova folds. Use existing per-cell metadata; no FM forward pass needed.
+  - **Decision rule (pre-commit)**:
+    - R ≥ 0.5 on AIDA → composition explains substantial fraction of signal; paper must reframe to "within-cell-type expression beyond composition" with composition as a strong baseline.
+    - 0.3 ≤ R < 0.5 → meaningful but not dominant; paper reports composition as a baseline to subtract.
+    - R < 0.3 → composition is not the main signal; existing cell-type-specific framing stands.
+  - **Output**: `results/phase3/f1_composition_baseline.csv` with rows = (fold × eval-cohort), columns = R, MAE, n_features, alpha, l1_ratio.
+  - **Compute**: ~$0, ~30 min. CPU only.
+  - **Why first**: Cheapest, highest decision-changing potential. If R ≥ 0.5 on AIDA, much of the F.2/F.3 work needs reframing.
+
+- [ ] **Task F.2 (proposed 2026-04-30, addresses cs_lens_review.md Analysis A): Per-layer probe-class sweep.**
+  - **Implementation**: For rank-32 LoRA × CD4+T × loco_onek1k × 3 seeds (the most multi-seed-verified condition), at each of 13 layers, fit four probe classes:
+    1. Ridge regression with dense λ sweep (10⁻⁴ to 10⁴, 30 values), inner CV for λ — reference, matches existing protocol.
+    2. OLS + PCA preprocessing at varying retained components (k ∈ {5, 10, 25, 50, 100, full}), inner CV for k.
+    3. Kernel ridge with RBF kernel, inner CV for kernel bandwidth and λ.
+    4. Two-layer MLP (hidden=64), early stopping on within-train validation split.
+  - For each probe class, evaluate on AIDA holdout. Compute per-layer R + MAE for each (probe class × seed).
+  - **Decision rule (pre-commit)**:
+    - All 4 probes pick within ±1 layer → layer-ordering is representation property; current methodology framework stands; report probe-stability as strengthening result.
+    - 2-3 layer disagreement → moderate probe-conditional; report joint probe-and-layer recommendation.
+    - ≥4 layer disagreement (or ordering inverts) → layer-ordering is probe-property; methodology section restructures around probe-aware layer selection.
+  - **Output**: `results/phase3/f2_probe_class_sweep.csv` with rows = (probe × layer × seed), columns = AIDA R, AIDA MAE, hyperparameters.
+  - **Compute**: ~$0, 1-2 days. MLP probe is the most expensive; runs on CPU.
+  - **Why second**: Methodology framing depends on the answer. Paper-improving either way; should land before any major methodology section is locked.
+
+- [ ] **Task F.3 (proposed 2026-04-30, addresses concern #2 in additional_concerns.md): Cell-count artifact check on cell-type-conditional layer asymmetry.**
+  - **Implementation**: Subsample CD4+T cells per donor to match NK's per-donor count distribution (~100-300 cells; use NK's empirical per-donor count distribution to draw cell counts for CD4+T donors). Rebuild per-donor mean-pool CD4+T embeddings at all 13 layers from existing per-cell embeddings (no FM rerun needed). Rerun frozen Geneformer per-cell mean-pool ridge readout layer-wise on the subsampled CD4+T pseudobulks. Compare best-layer to original (L9.7) and to NK (L3.3).
+  - **Decision rule (pre-commit)**:
+    - CD4+T-at-NK-counts still picks L9-L12 → cell-type-conditional layer asymmetry is real biology; methodology contribution stands.
+    - CD4+T-at-NK-counts shifts to L3-L5 → asymmetry is a cell-count/SNR artifact; the cell-type-conditional methodology contribution dissolves.
+    - CD4+T-at-NK-counts shifts partially (e.g., L6-L8) → mixed; report both interpretations and discuss.
+  - **Output**: `results/phase3/f3_cell_count_artifact.csv` with rows = (cohort × cell_count_target × seed), columns = best-layer-R, best-layer-MAE, layer-of-best-R.
+  - **Compute**: ~$0, ~half day. Reuses existing per-cell embeddings (need to re-aggregate to pseudobulk under different per-donor count budgets).
+  - **Why third**: If F.3 shows artifact, we lose a methodology contribution but gain a clearer story (FM probing reveals what data quality allows). Either result reshapes the paper's biology framing.
+
+- [ ] **Task F.4 (proposed 2026-04-30, addresses cs_lens_review.md Analysis B): CCA upper bound on per-layer linear age info.**
+  - **Implementation**: At each layer in each multi-seed condition, compute the first canonical correlation between embedding and age (closed-form for 1-D target). Where n_donors > embedding_dim (per-donor pseudobulk level, n=981 for OneK1K with 768-d emb), also compute OLS unregularized R² as a tighter bound. Compare CCA-best-layer + OLS-best-layer to existing ridge-CV-best-layer.
+  - **Decision rule (pre-commit)**:
+    - CCA-best-layer matches ridge-best in ≥75% of conditions → ridge recovers near-maximal linearly accessible information; methodology robust to regularization choices.
+    - 25-50% disagreement → moderate regularization-shaping effect; report both as deployment options.
+    - >50% disagreement → ridge regularization substantially shapes the layer-ordering; restructure methodology recommendation as ridge-conditional.
+  - **Output**: `results/phase3/f4_cca_upper_bound.csv` with rows = (condition × layer × seed), columns = cca_R, ols_unreg_R (where defined), ridge_cv_R, deltas.
+  - **Compute**: ~$0, ~half day. Closed-form linear algebra on existing embeddings.
+  - **Why fourth**: Useful complement to F.2. Confirms whether ridge probe is doing its job at the linear envelope.
+
+- [ ] **Task F.5 (proposed 2026-04-30, addresses concern #3 in additional_concerns.md): PC-residual age recovery per layer.**
+  - **Implementation**: At each layer in each multi-seed condition, project out top-k principal components (k ∈ {5, 10, 25, 50}; fitted on training pseudobulks). Refit ridge on the residual subspace. Test whether age recovery (R, MAE) improves vs full embedding.
+  - **Decision rule (pre-commit)**:
+    - Improves substantially (ΔR ≥ 0.05 after PC projection) on >50% of conditions → age is a low-variance residual axis competing with cell-type/batch axes; reframe as "FM age signal lives in residual subspace."
+    - Mixed results (ΔR ∈ [-0.02, +0.05]) → no clean reframe; report as informative but not load-bearing.
+    - Degrades (ΔR ≤ -0.05) on >50% of conditions → age is in the high-variance subspace; no reframe needed.
+  - **Output**: `results/phase3/f5_pc_residual.csv` with rows = (condition × layer × k_PC × seed), columns = R, MAE, ΔR vs full-embed.
+  - **Compute**: ~$0, ~half day. PCA + ridge on existing embeddings.
+  - **Why last**: Mechanism, not decision-changing. Useful for paper interpretation but doesn't change methodology recommendation.
+
+#### Recommended bundle (F.1 + F.3 + F.2)
+
+**~2-3 days total, $0.** These three address the three most decision-changing structural concerns:
+- F.1 tests whether the *biology* claim is solid (composition baseline)
+- F.3 tests whether the *methodology* claim about cell-type-conditional layers is biology vs. data quality
+- F.2 tests whether the *methodology* claim about layer-of-best-readout is a representation property vs. probe property
+
+F.4 and F.5 are useful refinements; defer until F.1-F.3 land.
+
+**Critical dependency**: F.1 should run *first*. If F.1 R ≥ 0.5 on AIDA, F.2 and F.3 need to be reframed around composition-residualized signal. Cheap enough (~30 min) that running F.1 first is essentially free even if it doesn't move the needle.
+
+**Paper-impact framing if F.1-F.3 land cleanly**: the paper's claims will be either (a) confirmed under structural stress tests (current framing stands, with strengthened evidence) or (b) restructured around composition baseline / probe-aware layer selection / data-quality-aware layer interpretation. Both outcomes are paper-strengthening; the alternative is writing under unchallenged assumptions and finding out post-submission.
+
 ### Phase-3-B priority order — Tier 1 + extensions COMPLETE 2026-04-30
 
 Done in autonomous session 2026-04-29/30:

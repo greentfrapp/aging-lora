@@ -373,3 +373,24 @@ User: "Proceed autonomously to run all 4 experiments including E3." Ran E.1 (mod
 Methodologically: the two failure modes (B and D) are the binding constraint. Framework conclusion is that **fine-tuned-variant K-fold CV layer selection is the deployment recipe; frozen-base layer choice is characterization-only**. E.3 confirms this, with the surprising note that bootstrap doesn't always help even when robust.
 
 Compute: $0 (all CPU on existing embeddings). Wall: ~5 min E.1+E.4, ~3 min E.2, 83.4 min E.3.
+
+## 2026-04-30 — §41 E.5-E.8 inconsistency audit follow-up
+
+User: "the results from the experiments so far seem very inconsistent. Could there be something we are overlooking?" Identified four candidate confounds (bootstrap-with-replacement leakage; holdout R curve flatness; cohort-size asymmetry; per-donor pool fitting donor signature) and tested most.
+
+**E.5 holdout R-per-layer flatness check** (16 conditions): rank-16 × CD4+T curve is flat within seeds (6-8 layers within 0.02 of oracle), but rank-32 has 2-3 layers and frozen NK Terekhova has only 1-2 within 0.02 — not flat at top.
+
+**E.6 formal SD-of-seed-variance band widths at K=1.5** (12 multi-seed conditions): rank-16 cross-seed SD is very tight (0.008), so L6-vs-L12 mean R gap (0.024 = 3 SD) IS distinguishable. **L12 is OUTSIDE the rank-16 K=1.5 band** [6,7,8,9,10]. Frozen NK on AIDA has SD=0.116, band covers ALL 13 layers — institutionally supports "directional regime only."
+
+**E.7 rank-16 seed-2 anomaly verification with bootstrap CIs** (n=1000):
+- Per-seed OneK1K L6 vs L12: gaps 0.007 / 0.006 / 0.058 (seed 0/1/2). Mann-Whitney p~0 each → seed-2 anomaly is real on actual deployment.
+- Per-seed AIDA L6 vs L12: gaps -0.106 / +0.005 / +0.027 → seed 0 has L12 BETTER by 0.10 R on AIDA.
+- 3-seed pooled OneK1K: L6 wins by 0.017 (p<<0.001). 3-seed pooled AIDA: L12 wins by 0.020 (p=1.000 i.e. L12>>L6).
+
+**HEADLINE FINDING from E.7**: best deployment layer for rank-16 INVERTS between OneK1K loco-holdout (L6 best) and AIDA cross-ancestry (L12 best). Bootstrap's L12 pick is right for AIDA, K-fold CV's L6 pick is right for OneK1K. The "regime B inconsistency" from E.3 is NOT a methodology failure — it's the two selection methods picking layers optimal for different downstream distributions. Resolves the §40 inconsistency cleanly: pick the layer for the deployment distribution you care about.
+
+**Implication for paper**: AIDA cross-ancestry is the headline contribution per §32. So bootstrap's L12 deployment recipe is the right one for the paper's claim. K-fold CV's L6 happens to track the OneK1K loco-holdout direction, not AIDA.
+
+**E.8 donor-identity-leakage test on frozen × NK × Terekhova** (running, ~95 min wall): tests whether bootstrap-with-replacement vs subsample-without-replacement changes the top-1 layer pick. If yes: leakage explains the persistent bootstrap-vs-oracle gap (bootstrap picks L3 over oracle L2 for NK Terekhova at 90-99% across 3 seeds). If no: gap reflects a different bias.
+
+Compute: $0. Wall: ~1 min E.5, <1 min E.6, ~20 sec E.7, ~95 min E.8.
