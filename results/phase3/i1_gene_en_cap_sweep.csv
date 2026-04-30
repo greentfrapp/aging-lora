@@ -1,0 +1,13 @@
+cap,fold,eval_cohort,n_train,n_eval,alpha,l1_ratio,n_nonzero_genes,R,MAE,R_ci_lo,R_ci_hi
+20,loco_onek1k,onek1k,195,981,,,,0.4370,19.9700,0.3850,0.4840
+20,loco_onek1k,aida,195,307,,,,0.3990,8.6000,0.3070,0.4830
+20,loco_terekhova,terekhova,1010,166,,,,0.5260,12.0900,0.4250,0.6270
+20,loco_terekhova,aida,1010,307,,,,0.4020,8.8100,0.3040,0.4990
+100,loco_onek1k,onek1k,195,981,,,,0.6120,14.1900,0.5640,0.6510
+100,loco_onek1k,aida,195,307,,,,0.6160,6.4200,0.5440,0.6790
+100,loco_terekhova,terekhova,1010,166,,,,0.7760,10.5200,0.7070,0.8380
+100,loco_terekhova,aida,1010,307,,,,0.6510,6.6600,0.5810,0.7120
+500,loco_onek1k,onek1k,195,981,,,,0.6790,17.3600,0.6400,0.7130
+500,loco_onek1k,aida,195,307,,,,0.7330,8.9300,0.6770,0.7880
+500,loco_terekhova,terekhova,1010,166,,,,0.8480,12.7200,0.7990,0.8910
+500,loco_terekhova,aida,1010,307,,,,0.7330,9.5700,0.6730,0.7830
