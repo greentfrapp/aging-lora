@@ -1,0 +1,5 @@
+fold,eval_cohort,n_train,n_eval,R,MAE,alpha,l1_ratio
+loco_onek1k,onek1k,195,981,0.0944,21.3203,1.0000,0.1000
+loco_onek1k,aida,195,307,0.2981,11.2014,1.0000,0.1000
+loco_terekhova,terekhova,1010,166,0.2435,14.6824,0.5000,0.9000
+loco_terekhova,aida,1010,307,-0.1335,24.8221,0.5000,0.9000

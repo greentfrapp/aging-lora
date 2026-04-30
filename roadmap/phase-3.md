@@ -371,7 +371,7 @@ User: "Review scratchpad/cs_lens_review.md and scratchpad/additional_concerns.md
 
 Pre-committed decision rules baked into each task description (the §28 lesson, applied prospectively). Recommended bundle: **F.1 + F.3 + F.2** (~2-3 days, $0).
 
-- [ ] **Task F.1 (proposed 2026-04-30, addresses concern #1 in additional_concerns.md): Composition-only baseline.**
+- [x] **Task F.1 (proposed 2026-04-30, addresses concern #1 in additional_concerns.md): Composition-only baseline.** *(Done 2026-04-30.)*
   - **Implementation**: For each donor, build a cell-type-frequency vector (counts per cell type / total cells, or relative proportions across the integrated atlas's 7-13 cell-type labels). Fit LASSO/ElasticNet on the frequency vectors alone for age prediction (no expression). Evaluate on AIDA + holdout cohorts using same loco_onek1k / loco_terekhova folds. Use existing per-cell metadata; no FM forward pass needed.
   - **Decision rule (pre-commit)**:
     - R ≥ 0.5 on AIDA → composition explains substantial fraction of signal; paper must reframe to "within-cell-type expression beyond composition" with composition as a strong baseline.
@@ -380,6 +380,23 @@ Pre-committed decision rules baked into each task description (the §28 lesson, 
   - **Output**: `results/phase3/f1_composition_baseline.csv` with rows = (fold × eval-cohort), columns = R, MAE, n_features, alpha, l1_ratio.
   - **Compute**: ~$0, ~30 min. CPU only.
   - **Why first**: Cheapest, highest decision-changing potential. If R ≥ 0.5 on AIDA, much of the F.2/F.3 work needs reframing.
+  - **Result (2026-04-30)**: 4 rows written to `results/phase3/f1_composition_baseline.csv`.
+
+    | fold | eval_cohort | n_train | n_eval | R | MAE | alpha | l1 |
+    |---|---|---|---|---|---|---|---|
+    | loco_onek1k | onek1k | 195 | 981 | +0.094 | 21.3 | 1.00 | 0.10 |
+    | loco_onek1k | aida | 195 | 307 | **+0.298** | 11.2 | 1.00 | 0.10 |
+    | loco_terekhova | terekhova | 1010 | 166 | +0.243 | 14.7 | 0.50 | 0.90 |
+    | loco_terekhova | aida | 1010 | 307 | −0.134 | 24.8 | 0.50 | 0.90 |
+
+    **Decision rule fires:** Max AIDA R = +0.298 < 0.3 → existing cell-type-specific framing stands; composition is not the main signal. Paper does not need to be reframed around composition residualization.
+
+    **Caveats worth flagging in the writeup:**
+    1. **AIDA R = +0.298 is right at the 0.3 edge** — the rule passes, but reviewers will read this as borderline. Report as "composition contributes a small, sub-threshold signal on cross-ancestry," not "composition is irrelevant."
+    2. **Strong fold-asymmetry on AIDA**: training on OneK1K+Stephenson (n=195, low-mono cohorts) → AIDA R=+0.298, but training on Terekhova+Stephenson (n=1010, higher-mono) → AIDA R=−0.134. Cohort Mono fractions: OneK1K 4.4%, Stephenson 11.5%, Terekhova 18.4%, AIDA 23.6%. Composition→age relationships are cohort-conditional, not universal — which fold's mono profile is "closer" to AIDA flips the sign of the cross-ancestry transfer.
+    3. **In-domain LOCO is weak** (onek1k 0.094, terekhova 0.243) — composition alone is not a strong age predictor on matched-splits, corroborating "expression contributes most of the signal."
+    4. **Aggregator choice matters**: decision rule used `max R across (fold × eval_cohort)`; if instead reported as `median across the 2 AIDA rows` the value is +0.082 (well below threshold). Pre-committed `max` aggregator is the conservative choice — if it can't clear 0.3, neither can median.
+    5. **Implementation note**: script needed two small fixes — `groupby("donor_id", observed=True)` to skip empty categorical groups (commit follow-up), and `PYTHONIOENCODING=utf-8` to handle Windows console arrow chars. ElasticNet `ConvergenceWarning`s in inner CV are cosmetic; final model fits use fresh estimators on the whole train set.
 
 - [ ] **Task F.2 (proposed 2026-04-30, addresses cs_lens_review.md Analysis A): Per-layer probe-class sweep.**
   - **Implementation**: For rank-32 LoRA × CD4+T × loco_onek1k × 3 seeds (the most multi-seed-verified condition), at each of 13 layers, fit four probe classes:

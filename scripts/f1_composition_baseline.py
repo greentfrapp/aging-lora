@@ -74,7 +74,9 @@ def _build_composition_matrix(cohort: str):
         else:
             mask = obs["cohort_id"] == cohort
         sub = obs[mask]
-        for d, sub_d in sub.groupby("donor_id"):
+        for d, sub_d in sub.groupby("donor_id", observed=True):
+            if len(sub_d) == 0:
+                continue
             d_str = str(d)
             if d_str not in donor_counts:
                 donor_counts[d_str] = {ct: 0 for ct in CELL_TYPE_FILES}
