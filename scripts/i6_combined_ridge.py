@@ -59,10 +59,12 @@ def main():
     cap_seed_pairs = [
         (1, 0), (1, 1), (1, 2),
         (5, 0), (5, 1), (5, 2),
+        (10, 0), (10, 1), (10, 2),
+        (20, 0), (20, 1), (20, 2),
         (50, 0), (50, 1), (50, 2),
         (100, 0), (100, 1), (100, 2),
         (500, 0), (500, 1), (500, 2),
-        (1000, 0),
+        (1000, 0), (1000, 1), (1000, 2),
     ]
 
     rows = []
@@ -182,7 +184,8 @@ def main():
     # Cross-method (FM vs gene-EN) summary if gene-EN CSV exists.
     # Concatenate I.6 (caps 50/100/500/1000) and I.7 (caps 1, 5) gene-EN runs.
     gene_csvs = [Path("results/phase3/i6_gene_en_3seed_caps.csv"),
-                 Path("results/phase3/i7_gene_en_low_cap.csv")]
+                 Path("results/phase3/i7_gene_en_low_cap.csv"),
+                 Path("results/phase3/i8_gene_en_fillers.csv")]
     gene_dfs = [pd.read_csv(p) for p in gene_csvs if p.exists()]
     if gene_dfs:
         gdf = pd.concat(gene_dfs, ignore_index=True)
@@ -210,7 +213,7 @@ def main():
         print("\n=== I.6 Matched-cap FM-vs-gene-EN gap (3-seed mean AIDA R) ===")
         for fold in ["loco_onek1k", "loco_terekhova"]:
             print(f"\nFold: {fold}")
-            for cap in sorted({1, 5, 50, 100, 500, 1000}):
+            for cap in sorted({1, 5, 10, 20, 50, 100, 500, 1000}):
                 fm_row = next((r for r in summary_rows if r["fold"] == fold and r["cap"] == cap and r["method"] == "FM"), None)
                 gen_row = next((r for r in summary_rows if r["fold"] == fold and r["cap"] == cap and r["method"] == "gene-EN"), None)
                 if fm_row and gen_row and "aida_R_mean" in fm_row and "aida_R_mean" in gen_row:
