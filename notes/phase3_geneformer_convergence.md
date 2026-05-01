@@ -2546,3 +2546,70 @@ Same FM weights, different training-cohort composition (981-donor onek1k vs 166-
 - FM cap=500 3-seed: 3/12 NPZs done (stephenson + terekhova + aida seed=0); onek1k seed=0 + 8 more pending. ~37h to Phase B completion.
 - FM cap=1000 1-seed: 0/4 NPZs done (Phase C, ~18h after Phase B).
 - Final combined ridge readout will re-fire automatically at end of `i6_fm_extractions.sh`.
+
+## 48. I.6 — DONE (2026-05-01 ~15:25 UTC)
+
+Phase B (cap=500) and Phase C (cap=1000) complete after the May 1 01:23 UTC instance reboot. The reboot occurred during the original onek1k cap=500 seed=0 extraction; root-cause was the buffered cell-embedding accumulator in `extract_embeddings_layered.py` (~17 GB for 455k cells × 13 × 768 × 4 bytes on a 15 GB-RAM host). Streaming-aggregation fix landed in commit 4613816 (bit-for-bit identical output verified on stephenson cap=100). User authorized skipping all onek1k cap=500/1000 to compress the rerun from ~46h to ~14h.
+
+### 48.1 Final matched-cap matched-seed AIDA trajectory (loco_onek1k → AIDA)
+
+| Cap | FM (best layer by 3-seed mean) | gene-EN (3-seed mean) | Gap (FM − gene-EN) |
+|---|---|---|---|
+| 50 | L3: 0.598 ± 0.025 | 0.517 ± 0.072 | **+0.081** |
+| 100 | L3: 0.665 ± 0.035 | 0.648 ± 0.030 | +0.017 |
+| 500 | L1: 0.694 ± 0.038 | 0.697 ± 0.034 | **−0.002** |
+| 1000 | L1: 0.710 (1-seed) | 0.716 ± 0.044 | **−0.005** |
+
+**The matched-cap FM advantage shrinks monotonically and is gone by cap=500.** At cap=500 the gap is −0.002 (FM 0.694 vs gene-EN 0.697); at cap=1000 single-seed it's −0.005. Both are well within seed noise.
+
+### 48.2 Second-fold direction (loco_terekhova → AIDA, only at cap=50/100)
+
+| Cap | FM (best layer) | gene-EN | Gap |
+|---|---|---|---|
+| 50 | L12: 0.657 ± 0.010 | 0.570 ± 0.052 | +0.087 |
+| 100 | L12: 0.663 ± 0.017 | 0.671 ± 0.042 | **−0.008** |
+
+The cross-over to gene-EN-favorable already happens at cap=100 in this direction. Cross-fold consistency check at cap=500/1000 was sacrificed (~32h of GPU saved by skipping onek1k extractions).
+
+### 48.3 FM AIDA layer choice drifts earlier with cap (loco_onek1k → AIDA)
+
+| Cap | best-by-mean | best mean R |
+|---|---|---|
+| 50 | L3 | 0.598 |
+| 100 | L3 | 0.665 |
+| 500 | L1 | 0.694 |
+| 1000 | L1 | 0.710 |
+
+This is consistent with the §44 finding that cap shifts the cell-type-conditional layer asymmetry to early layers. CD4+T at cap=20 picked L9-L12 (deep). At cap=100 best-by-mean is L3. At cap≥500 it's L1. The "denoising-by-late-layers" mechanism is a low-cap compensator; at high cap, the input directly carries the age signal.
+
+### 48.4 Walk-back chain summary
+
+| Stage | FM cap=100 AIDA headline | Source |
+|---|---|---|
+| F.3 (single seed, single layer-pick) | R=0.706 at L2 | §32 |
+| §43.3 walk-back | R=0.706 conflated ceiling-vs-cap=100 with matched-cap | §43 |
+| I.4 (3-seed at L2) | R=0.609 ± 0.119 (F.3 was the lucky high seed) | §45 |
+| I.4 (best 3-seed mean layer) | R=0.665 ± 0.035 at L3 | §45 |
+| I.6 (matched-seed gene-EN) | gene-EN 0.648 ± 0.030 at cap=100; FM "advantage" at cap=100 = +0.017 (within 1 SD) | §47 |
+| I.6 (matched-seed cap=500) | FM 0.694 ± 0.038 vs gene-EN 0.697 ± 0.034; **gap = −0.002 (tied)** | this section |
+| I.6 (cap=1000 single-seed FM) | FM 0.710 vs gene-EN 0.716 ± 0.044; gap = −0.005 (tied) | this section |
+
+### 48.5 Implications for paper narrative
+
+1. **The "FM beats bulk on AIDA cross-ancestry" story does not survive 3-seed verification at cap≥500.** At cap=100 it's marginal (within 1 SD); at cap=500/1000 it's tied. The defensible claim is "FM matches bulk at high cap" — not "FM beats bulk."
+
+2. **FM has a real but small matched-cap advantage at low cap (cap=50, +0.08 R).** This is methodologically interesting: when cell counts per donor are low (rare cell types, low-throughput cohorts), FM extracts more age signal per cell than bulk. Useful for chemistry-shift / few-shot scenarios.
+
+3. **Per-donor cell-count is the dominant axis.** Both FM and gene-EN gain more from cap than from method choice. The paper should reframe: "cell-count is the lever; FM has a small advantage at low cap that disappears at high cap."
+
+4. **Honest 3-seed ridge readout matters.** Single-seed F.3 at L2 inflated by ~0.10 R. Per-layer 3-seed mean is the right reporting unit.
+
+5. **Layer-of-readout is cap-dependent within a cell type.** CD4+T cap=20→L9-L12, cap=100→L3, cap=500/1000→L1. Late-layer denoising compensates for low cap.
+
+### 48.6 What I.6 did NOT do (open questions)
+
+- **loco_terekhova → AIDA at cap=500/1000**: skipped to save ~32h GPU. Could be added later if the loco_onek1k single-fold result at high cap looks borderline (it doesn't — the cap=500/1000 gap is clearly tied, and the cap=100 second-fold direction already showed gene-EN nominally ahead). Cost to add: ~24h GPU (3× onek1k cap=500) + ~10h GPU (1× onek1k cap=1000).
+- **NK and B at cap=500/1000**: I.2 stopped at cap=100 for non-CD4+T. Question of whether the matched-cap convergence holds for other cell types is open.
+- **LoRA at cap=100/500**: I.5 deferred. The cap=500 frozen-FM result (which doesn't beat gene-EN) shrinks the case for I.5: if frozen FM matches bulk at high cap, LoRA's role is unclear.
+
+Compute spent: ~$15 GPU for all I.x extractions through I.6 (under the original $50 estimate, thanks to skipping onek1k cap=500/1000). gene-EN was free CPU.

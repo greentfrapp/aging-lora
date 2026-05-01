@@ -728,7 +728,7 @@ Decision rules pre-committed for each task. Recommended order: **I.1 → I.4 →
   - **Compute**: ~$15-20 GPU (rank-32 LoRA at cap=100 = ~5× longer than cap=20 = ~30h wall).
   - **Why last**: Most expensive; conditional on I.1-I.4 outcomes (if I.1 shows gene-EN matches FM at cap=100, I.5 becomes much less interesting).
 
-- [ ] **Task I.6 (proposed 2026-04-30, supersedes I.3; addresses matched-cap matched-seed gap exposed by I.1 walk-back): 3-seed cap-matrix for FM and gene-EN.**
+- [x] **Task I.6 (DONE 2026-05-01, see §48; supersedes I.3): 3-seed cap-matrix for FM and gene-EN.** Final matched-cap matched-seed AIDA gap (loco_onek1k → AIDA, FM best-by-3-seed-mean layer): cap=50 +0.081 (FM ahead, ~3 SD), cap=100 +0.017 (within 1 SD), cap=500 **−0.002 (tied)**, cap=1000 single-seed −0.005 (tied). **The FM matched-cap advantage shrinks monotonically and disappears at cap=500.** F.3's "FM beats bulk on AIDA" headline does not survive 3-seed verification at cap≥500. Defensible claim: FM matches bulk at high cap, with small advantage (+0.08 R) at low cap (cap=50). Onek1k cap=500/1000 extractions skipped (~32h GPU saved); cross-fold robustness at high cap left as future work. May 1 instance reboot + streaming-aggregation fix in extract_embeddings_layered.py committed (4613816). Total compute: ~$15 GPU for the full I.x suite.
   - **Implementation**:
     - **gene-EN**: 3 seeds × caps {50, 100, 500, 1000} × 2 folds × eval (holdout + AIDA). Same matched-splits ElasticNet pipeline as I.1 but parameterized over seed. Script: `scripts/i6_gene_en_3seed.py`.
     - **FM 3-seed**: re-extract CD4+T frozen at cap=50 (× 3 seeds × 4 cohorts) and cap=500 (× 3 seeds × 4 cohorts). cap=100 is already covered by F.3 (seed=0) + I.4 (seeds 1, 2).

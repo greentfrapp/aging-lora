@@ -153,11 +153,19 @@ def main():
                 per_layer_aida = sub2.dropna(subset=["aida_R"]).groupby("layer")["aida_R"].agg(["mean", "std"]).reset_index()
                 best_layer_aida = int(per_layer_aida.loc[per_layer_aida["mean"].idxmax(), "layer"])
                 best_R_aida = float(per_layer_aida["mean"].max())
-                best_SD_aida = float(per_layer_aida.loc[per_layer_aida["mean"].idxmax(), "std"])
-                competitive_a = per_layer_aida[per_layer_aida["mean"] >= best_R_aida - 0.02]
-                stable_layer_aida = int(competitive_a.loc[competitive_a["std"].idxmin(), "layer"])
-                stable_R_aida = float(competitive_a.loc[competitive_a["std"].idxmin(), "mean"])
-                stable_SD_aida = float(competitive_a["std"].min())
+                best_SD_aida_raw = per_layer_aida.loc[per_layer_aida["mean"].idxmax(), "std"]
+                best_SD_aida = float(best_SD_aida_raw) if pd.notna(best_SD_aida_raw) else float("nan")
+                # Single-seed case (cap=1000): std is all-NaN; skip the
+                # "stable" pick and use best-by-mean as the only layer.
+                if per_layer_aida["std"].notna().any():
+                    competitive_a = per_layer_aida[per_layer_aida["mean"] >= best_R_aida - 0.02]
+                    stable_layer_aida = int(competitive_a.loc[competitive_a["std"].idxmin(), "layer"])
+                    stable_R_aida = float(competitive_a.loc[competitive_a["std"].idxmin(), "mean"])
+                    stable_SD_aida = float(competitive_a["std"].min())
+                else:
+                    stable_layer_aida = best_layer_aida
+                    stable_R_aida = best_R_aida
+                    stable_SD_aida = float("nan")
                 line += (f"\n         AIDA    best-by-mean L{best_layer_aida:2d} = {best_R_aida:+.3f} ± {best_SD_aida:.3f}"
                          f"  | stable L{stable_layer_aida:2d} = {stable_R_aida:+.3f} ± {stable_SD_aida:.3f}")
                 row["best_layer_aida"] = best_layer_aida
