@@ -755,7 +755,32 @@ Decision rules pre-committed for each task. Recommended order: **I.1 → I.4 →
   - **Compute**: ~1h GPU + ~20 min CPU. Cheap; runs in parallel.
   - **Why**: Closes out the low-cap end. Makes the trajectory plot complete from cap=1 to cap=1000.
 
-#### I.1–I.7 recommended bundle and execution
+- [ ] **Task I.8 (proposed 2026-05-01; manuscript-grade R-vs-cap curve completion): full 3-seed coverage at cap = {1, 5, 10, 20, 50, 100, 500, 1000} × {FM, gene-EN} × all 4 cohorts.** Goal: produce the headline manuscript figure (R-vs-cell-count curve for FM and gene-EN, both fold directions, with 3-seed mean ± SD error bars) at 8 cap points. Existing data covers cap = {1, 5, 50, 100, 500, 1000} fully or partially; I.8 fills the remaining gaps and upgrades single-seed points to 3 seeds.
+
+  - **Coverage gaps to fill** (32 FM extractions; ~30 min CPU for gene-EN):
+    | Phase | What's missing | NPZs | Compute |
+    |---|---|---|---|
+    | A — low-cap fillers | FM cap=10 × 3 seeds × 4 cohorts; FM cap=20 × seeds {1, 2} × 4 cohorts; gene-EN cap=10, 20 × 3 seeds × 2 folds | 20 | ~2h GPU + ~30 min CPU |
+    | B — onek1k cap=500 (the May 1 OOM-victims; streaming-aggregation fix in 4613816) | FM cap=500 × 3 seeds × onek1k | 3 | ~24h GPU |
+    | C — cap=1000 multi-seed expansion | FM cap=1000 × seed 0 × onek1k; FM cap=1000 × seeds {1, 2} × all 4 cohorts | 9 | ~47h GPU |
+
+  - **Implementation**:
+    - **FM Phase A**: new `scripts/i8a_low_cap_fillers.sh` (cap=10 × 3 seeds + cap=20 × seeds 1, 2 × 4 cohorts).
+    - **FM Phase B**: extend `scripts/i6_fm_extractions.sh` with onek1k restored at cap=500 only (or new `i8b_onek1k_cap500.sh`).
+    - **FM Phase C**: new `scripts/i8c_cap1000_full.sh` (cap=1000 × seed 0 × onek1k + seeds 1, 2 × 4 cohorts).
+    - **gene-EN**: `scripts/i8_gene_en_fillers.py` runs ElasticNetCV at cap=10, 20 × 3 seeds × 2 folds. Includes the `pred.std() > 1e-3` + `np.isfinite(r)` guard from the I.7 NaN fix to handle ElasticNet collapse at small N.
+    - **Readout**: extend `i6_combined_ridge.py` cap_seed_pairs to include cap=10 and cap=20.
+  - **Decision rule (pre-commit)**:
+    - Curve shape: at 3-seed mean, FM-minus-gene-EN AIDA gap should descend monotonically from cap=5 peak (~+0.22) through cap=1000 (~0). Any cap point that breaks monotonicity by >+0.05 R is suspicious — investigate.
+    - cap=20 3-seed mean (loco_onek1k → AIDA): if ≥+0.10 R gap, peak window is "cap=5 to cap=20"; if <+0.05 R gap, peak is "cap=5 specifically" with rapid decay by cap=20.
+    - cap=10 fills the location-of-peak question. If cap=10 gap > cap=5 gap, peak shifts to cap=10. If cap=10 gap < cap=5 gap, peak is at cap=5.
+    - cap=500 onek1k seed=0/1/2 confirms the I.6 single-fold result (loco_onek1k → AIDA only). For loco_terekhova fold, cap=500 unlocks. The new finding to test: is the loco_terekhova → AIDA gap at cap=500 also tied (≈ −0.01) or different?
+    - cap=1000 3-seed: confirms or refutes the single-seed I.6 finding that FM and gene-EN are tied at cap=1000. If 3-seed gap is ≥+0.05, the single-seed cap=1000 was an unlucky-FM-seed; the true gap might still favor FM slightly.
+  - **Output**: 32 new NPZs in `results/phase3/embeddings_layered/`; new gene-EN CSV `results/phase3/i8_gene_en_fillers.csv`; updated `i6_fm_ridge_caps.csv` and `i6_summary.csv`. Memo §50 with the final 8-point curve.
+  - **Compute**: ~73h GPU (~$36 spot) + ~30 min CPU. ~3 days wall sequential.
+  - **Why**: This is the manuscript-grade R-vs-cap figure. Without uniform 3-seed coverage at all 8 caps, error bars are inconsistent across the curve and reviewers will flag it. Phase A is cheap and decision-changing for the cap=5 peak shape; Phase B+C are the long pole but well-defined and resumable via skip-existing logic.
+
+#### I.1–I.8 recommended bundle and execution
 
 **Order**: I.1 (CPU, 30 min, DONE) → I.2 + I.4 in parallel (~3-4h GPU, DONE/IN-PROGRESS) → I.6 (~70h GPU + ~9h CPU; gene-EN side runs in parallel with FM extractions) → I.5 (~30h GPU, deferred; conditional on I.6 outcome).
 
