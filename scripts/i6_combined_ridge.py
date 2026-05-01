@@ -83,18 +83,23 @@ def main():
             train_y = np.concatenate(train_y_all)
 
             eval_ret = _load(f["holdout_cohort"], cap, seed)
-            if eval_ret is None:
-                continue
-            _, eval_y, eval_X_layered = eval_ret
             # AIDA eval for both folds (matched comparison with gene-EN, which
             # also evaluated AIDA for both fold directions).
             aida_ret = _load("aida", cap, seed)
-            n_layers = eval_X_layered.shape[0]
+            # Skip only if BOTH holdout and AIDA are missing (no eval data at all).
+            # When onek1k cap=500/1000 is intentionally skipped, holdout is None
+            # but AIDA-only eval should still proceed for loco_onek1k fold.
+            if eval_ret is None and aida_ret is None:
+                continue
+            n_layers = (eval_ret[2] if eval_ret is not None else aida_ret[2]).shape[0]
 
             for layer in range(n_layers):
-                r, mae = _fit(train_X_layered[layer], train_y, eval_X_layered[layer], eval_y)
-                row = {"cap": cap, "seed": seed, "fold": fold_id, "layer": layer,
-                       "holdout_R": r, "holdout_MAE": mae}
+                row = {"cap": cap, "seed": seed, "fold": fold_id, "layer": layer}
+                if eval_ret is not None:
+                    _, eval_y, eval_X_layered = eval_ret
+                    r, mae = _fit(train_X_layered[layer], train_y, eval_X_layered[layer], eval_y)
+                    row["holdout_R"] = r
+                    row["holdout_MAE"] = mae
                 if aida_ret:
                     _, aida_y, aida_X = aida_ret
                     ar, amae = _fit(train_X_layered[layer], train_y, aida_X[layer], aida_y)
@@ -121,24 +126,29 @@ def main():
         for cap in sorted(sub["cap"].unique()):
             sub2 = sub[sub["cap"] == cap]
             n_seeds = sub2["seed"].nunique()
-            # Per-layer 3-seed mean ± SD on holdout
-            per_layer = sub2.groupby("layer")["holdout_R"].agg(["mean", "std"]).reset_index()
-            best_layer_holdout = int(per_layer.loc[per_layer["mean"].idxmax(), "layer"])
-            best_R_holdout = float(per_layer["mean"].max())
-            best_SD_holdout = float(per_layer.loc[per_layer["mean"].idxmax(), "std"])
-            # Lowest-SD layer that has competitive mean (within 0.02 of best mean)
-            competitive = per_layer[per_layer["mean"] >= best_R_holdout - 0.02]
-            stable_layer_holdout = int(competitive.loc[competitive["std"].idxmin(), "layer"])
-            stable_R_holdout = float(competitive.loc[competitive["std"].idxmin(), "mean"])
-            stable_SD_holdout = float(competitive["std"].min())
-
-            line = (f"  cap={cap:5d}: holdout best-by-mean L{best_layer_holdout:2d} = {best_R_holdout:+.3f} ± {best_SD_holdout:.3f}"
-                    f"  | stable L{stable_layer_holdout:2d} = {stable_R_holdout:+.3f} ± {stable_SD_holdout:.3f}  (n_seeds={n_seeds})")
-            row = {"fold": fold, "cap": cap, "method": "FM", "n_seeds": n_seeds,
-                   "best_layer_holdout": best_layer_holdout,
-                   "holdout_R_mean": best_R_holdout, "holdout_R_std": best_SD_holdout,
-                   "stable_layer_holdout": stable_layer_holdout,
-                   "stable_holdout_R_mean": stable_R_holdout, "stable_holdout_R_std": stable_SD_holdout}
+            row = {"fold": fold, "cap": cap, "method": "FM", "n_seeds": n_seeds}
+            line = f"  cap={cap:5d}:"
+            # Holdout: only if any holdout_R is non-NaN (skipped when onek1k
+            # extractions are absent and onek1k is the holdout cohort).
+            has_holdout = "holdout_R" in sub2.columns and sub2["holdout_R"].notna().any()
+            if has_holdout:
+                per_layer = sub2.dropna(subset=["holdout_R"]).groupby("layer")["holdout_R"].agg(["mean", "std"]).reset_index()
+                best_layer_holdout = int(per_layer.loc[per_layer["mean"].idxmax(), "layer"])
+                best_R_holdout = float(per_layer["mean"].max())
+                best_SD_holdout = float(per_layer.loc[per_layer["mean"].idxmax(), "std"])
+                competitive = per_layer[per_layer["mean"] >= best_R_holdout - 0.02]
+                stable_layer_holdout = int(competitive.loc[competitive["std"].idxmin(), "layer"])
+                stable_R_holdout = float(competitive.loc[competitive["std"].idxmin(), "mean"])
+                stable_SD_holdout = float(competitive["std"].min())
+                line += (f" holdout best-by-mean L{best_layer_holdout:2d} = {best_R_holdout:+.3f} ± {best_SD_holdout:.3f}"
+                         f"  | stable L{stable_layer_holdout:2d} = {stable_R_holdout:+.3f} ± {stable_SD_holdout:.3f}  (n_seeds={n_seeds})")
+                row.update({"best_layer_holdout": best_layer_holdout,
+                            "holdout_R_mean": best_R_holdout, "holdout_R_std": best_SD_holdout,
+                            "stable_layer_holdout": stable_layer_holdout,
+                            "stable_holdout_R_mean": stable_R_holdout,
+                            "stable_holdout_R_std": stable_SD_holdout})
+            else:
+                line += f" holdout SKIPPED (no holdout NPZs)  (n_seeds={n_seeds})"
             if "aida_R" in sub2.columns and sub2["aida_R"].notna().any():
                 per_layer_aida = sub2.dropna(subset=["aida_R"]).groupby("layer")["aida_R"].agg(["mean", "std"]).reset_index()
                 best_layer_aida = int(per_layer_aida.loc[per_layer_aida["mean"].idxmax(), "layer"])
