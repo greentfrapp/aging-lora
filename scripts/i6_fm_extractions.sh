@@ -13,7 +13,17 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PYTHON=.venv/bin/python
-COHORTS=("stephenson" "terekhova" "aida" "onek1k")  # smaller cohorts first
+# Two cohort lists:
+#   COHORTS_CAP50: cap=50 includes onek1k (already complete on disk; skip-existing
+#     covers it cheaply on rerun).
+#   COHORTS_HIGHCAP: cap=500 and cap=1000 SKIP onek1k. The onek1k cap=500/1000
+#     extractions are the long pole (~24h + ~10h) and not needed for the
+#     loco_onek1k → AIDA matched-cap trajectory (which uses stephenson +
+#     terekhova as train, aida as eval). Without onek1k we lose only the
+#     loco_terekhova fold direction at cap=500/1000 (and the within-distribution
+#     onek1k holdout, which is secondary).
+COHORTS_CAP50=("stephenson" "terekhova" "aida" "onek1k")
+COHORTS_HIGHCAP=("stephenson" "terekhova" "aida")
 
 run_one() {
   local cohort=$1 cap=$2 seed=$3
@@ -39,25 +49,25 @@ run_one() {
     2>&1 | tail -3
 }
 
-# Phase A: cap=50 × 3 seeds (~4.5h GPU)
+# Phase A: cap=50 × 3 seeds (~4.5h GPU; all done on disk, skip-existing handles it)
 echo "[I.6] === Phase A: FM cap=50 × 3 seeds ==="
 for seed in 0 1 2; do
-  for cohort in "${COHORTS[@]}"; do
+  for cohort in "${COHORTS_CAP50[@]}"; do
     run_one "$cohort" 50 "$seed"
   done
 done
 
-# Phase B: cap=500 × 3 seeds (~40h GPU)
-echo "[I.6] === Phase B: FM cap=500 × 3 seeds ==="
+# Phase B: cap=500 × 3 seeds, NO ONEK1K (~5h GPU)
+echo "[I.6] === Phase B: FM cap=500 × 3 seeds (skipping onek1k) ==="
 for seed in 0 1 2; do
-  for cohort in "${COHORTS[@]}"; do
+  for cohort in "${COHORTS_HIGHCAP[@]}"; do
     run_one "$cohort" 500 "$seed"
   done
 done
 
-# Phase C: cap=1000 × seed 0 only (~18.5h GPU; pause for review after)
-echo "[I.6] === Phase C: FM cap=1000 × seed 0 (review gate after) ==="
-for cohort in "${COHORTS[@]}"; do
+# Phase C: cap=1000 × seed 0, NO ONEK1K (~8.5h GPU; pause for review after)
+echo "[I.6] === Phase C: FM cap=1000 × seed 0 (skipping onek1k; review gate after) ==="
+for cohort in "${COHORTS_HIGHCAP[@]}"; do
   run_one "$cohort" 1000 0
 done
 
