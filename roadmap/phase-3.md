@@ -780,7 +780,30 @@ Decision rules pre-committed for each task. Recommended order: **I.1 → I.4 →
   - **Compute**: ~73h GPU (~$36 spot) + ~30 min CPU. ~3 days wall sequential.
   - **Why**: This is the manuscript-grade R-vs-cap figure. Without uniform 3-seed coverage at all 8 caps, error bars are inconsistent across the curve and reviewers will flag it. Phase A is cheap and decision-changing for the cap=5 peak shape; Phase B+C are the long pole but well-defined and resumable via skip-existing logic.
 
-#### I.1–I.8 recommended bundle and execution
+- [ ] **Task I.9 (proposed 2026-05-01; extends I.8 to cross-cell-type curves): full 3-seed coverage at cap = {1, 5, 10, 20, 50, 100, 500, 1000} × {FM, gene-EN} × all 4 cohorts × {NK, B}.** Goal: parallel manuscript figure for NK and B cell types showing the same R-vs-cap curve. NK and B are smaller substrates than CD4+T (NK total cells ~172k onek1k vs CD4+T's 612k; B total ~129k onek1k), so per-cell-type compute is ~60-70% of CD4+T's. Tests whether the FM-as-low-cap-rescuer story (peak at cap=5) generalizes — §44 (I.2) showed the cap-effect direction is universal but with cell-type-conditional layer-shift patterns.
+  - **Existing data (from F.3 + I.2)**:
+    - NK cap=20 × seed=0 × 4 cohorts (4 NPZs); cap=100 × seed=0 × 4 cohorts (4 NPZs from I.2).
+    - B same: cap=20 + cap=100 at seed=0.
+    - All other (cap × seed × cohort × cell_type) combinations: NEW.
+  - **Pending extractions** (192 NPZs total = 8 caps × 3 seeds × 4 cohorts × 2 cell types − 16 already done):
+    - NK: 8 × 3 × 4 − 8 = 88 NPZs (~63h GPU)
+    - B:  8 × 3 × 4 − 8 = 88 NPZs (~43h GPU)
+  - **Implementation**:
+    - **FM**: `scripts/i9_extractions.sh` mirrors `i8_extractions.sh` but loops over `CELL_TYPES=(NK B)` and uses the cell-type-aware filename slug (`NK`, `B` vs `CD4p_T`). Skip-existing logic preserves I.2's cap=100 seed=0 NPZs.
+    - **gene-EN**: `scripts/i9_gene_en_full.py` runs ElasticNetCV at all 8 caps × 3 seeds × 2 folds × 2 cell types. ~1h CPU total. Includes the I.7 NaN guard.
+    - **Readout**: `scripts/i9_combined_ridge.py` is the cell-type-parameterized sibling of `i6_combined_ridge.py`. Emits per-cell-type summary CSVs. NK and B layer choices may differ from CD4+T (per §44.1: NK shifts L3 → L2/L4; B picks L0/L7-L10).
+    - **Within-cohort holdout coverage**: gene-EN and FM ridge scripts already collect *both* the LOCO holdout R (e.g., loco_onek1k → onek1k = chemistry/pipeline shift) AND AIDA cross-ancestry R per (cap × seed × fold). `i6_combined_ridge.py` and `i9_combined_ridge.py` now print matched-cap gap tables for both eval directions, so the trajectory is reported on cross-ancestry AND within-distribution. Showing it holds on both makes the FM-as-low-cap-rescuer story generalize beyond ancestry shift.
+  - **Decision rule (pre-commit)**:
+    - cap=5 NK FM-vs-gene-EN gap > +0.10 R → "FM-as-low-cap-rescuer" generalizes to NK; one cell-type confirmation.
+    - cap=5 B gap > +0.10 R → generalizes to B too; substrate-weak-but-FM-still-helps story.
+    - Either gap < +0.05 R at cap=5 → CD4+T-specific peak; methodology angle narrows.
+    - cap=500/1000 convergence to ~0 in NK or B → confirms gene-EN catches up at high cap regardless of cell type.
+  - **Output**: 176 new NPZs (88 NK + 88 B); `results/phase3/i9_gene_en_full.csv`; `results/phase3/i9_summary.csv` (per-cell-type matched-cap gap tables). Memo §51 with cross-cell-type curves.
+  - **Compute**: ~106h GPU (~$53 spot) + ~1h CPU. ~4-5 days wall sequential.
+  - **Why**: Manuscript reviewers will ask "does this generalize beyond CD4+T?" Without NK + B curves at the same cap-trajectory, the FM-as-low-cap-rescuer story is single-cell-type. NK is the cleanest test (substrate-strong: §44 cap=100 R≈0.55); B is the harder test (substrate-weak: R≈0.18-0.31).
+  - **Sequencing**: chain after I.8 completes. Parallel with I.8 was considered but rejected because two simultaneous FM extractions cause ~25% GPU slowdown each, eliminating most of the parallel-time benefit.
+
+#### I.1–I.9 recommended bundle and execution
 
 **Order**: I.1 (CPU, 30 min, DONE) → I.2 + I.4 in parallel (~3-4h GPU, DONE/IN-PROGRESS) → I.6 (~70h GPU + ~9h CPU; gene-EN side runs in parallel with FM extractions) → I.5 (~30h GPU, deferred; conditional on I.6 outcome).
 

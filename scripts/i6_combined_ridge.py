@@ -209,8 +209,8 @@ def main():
                 print(line)
                 summary_rows.append(row)
 
-        # Matched-cap matched-method comparison (both folds)
-        print("\n=== I.6 Matched-cap FM-vs-gene-EN gap (3-seed mean AIDA R) ===")
+        # Matched-cap matched-method comparison (both folds, AIDA cross-ancestry)
+        print("\n=== I.6 Matched-cap FM-vs-gene-EN gap — AIDA cross-ancestry (3-seed mean) ===")
         for fold in ["loco_onek1k", "loco_terekhova"]:
             print(f"\nFold: {fold}")
             for cap in sorted({1, 5, 10, 20, 50, 100, 500, 1000}):
@@ -221,6 +221,23 @@ def main():
                     print(f"  cap={cap:5d}: FM AIDA R = {fm_row['aida_R_mean']:+.3f} ± {fm_row['aida_R_std']:.3f}  "
                           f"vs gene-EN = {gen_row['aida_R_mean']:+.3f} ± {gen_row['aida_R_std']:.3f}  "
                           f"→ gap = {gap:+.3f}")
+
+        # Same comparison for within-LOCO-fold holdout (chemistry / pipeline shift,
+        # not ancestry). Confirms the FM-vs-gene-EN trajectory generalizes beyond
+        # cross-ancestry transfer.
+        print("\n=== I.6 Matched-cap FM-vs-gene-EN gap — LOCO holdout (3-seed mean) ===")
+        for fold in ["loco_onek1k", "loco_terekhova"]:
+            print(f"\nFold: {fold}")
+            for cap in sorted({1, 5, 10, 20, 50, 100, 500, 1000}):
+                fm_row = next((r for r in summary_rows if r["fold"] == fold and r["cap"] == cap and r["method"] == "FM"), None)
+                gen_row = next((r for r in summary_rows if r["fold"] == fold and r["cap"] == cap and r["method"] == "gene-EN"), None)
+                if fm_row and gen_row and "holdout_R_mean" in fm_row and "holdout_R_mean" in gen_row:
+                    fm_R, fm_SD = fm_row["holdout_R_mean"], fm_row["holdout_R_std"]
+                    gen_R, gen_SD = gen_row["holdout_R_mean"], gen_row["holdout_R_std"]
+                    if pd.notna(fm_R) and pd.notna(gen_R):
+                        gap = fm_R - gen_R
+                        print(f"  cap={cap:5d}: FM holdout R = {fm_R:+.3f} ± {fm_SD:.3f}  "
+                              f"vs gene-EN = {gen_R:+.3f} ± {gen_SD:.3f}  → gap = {gap:+.3f}")
 
     sdf = pd.DataFrame(summary_rows)
     sdf.to_csv(SUMMARY_CSV, index=False, float_format="%.4f")
