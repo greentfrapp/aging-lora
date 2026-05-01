@@ -161,8 +161,14 @@ def main():
                 n_nz = int(np.sum(final.coef_ != 0))
 
                 pred = final.predict(eval_X_s)
-                if pred.std() > 0 and eval_y.std() > 0:
+                # Robust against ElasticNet collapsing to all-zero coefs at
+                # heavy regularization (predictions become near-constant; std
+                # is ~1e-6, technically >0 but pearsonr returns NaN). Treat
+                # as R=0 (model couldn't learn).
+                if pred.std() > 1e-3 and eval_y.std() > 0:
                     r, _ = pearsonr(pred, eval_y)
+                    if not np.isfinite(r):
+                        r = 0.0
                 else:
                     r = 0.0
                 mae = float(np.median(np.abs(pred - eval_y)))
@@ -182,8 +188,10 @@ def main():
                 aida_X = aida_X[:, top_idx]
                 aida_X_s = scaler.transform(aida_X).astype(np.float32)
                 apred = final.predict(aida_X_s)
-                if apred.std() > 0 and aida_y.std() > 0:
+                if apred.std() > 1e-3 and aida_y.std() > 0:
                     ar, _ = pearsonr(apred, aida_y)
+                    if not np.isfinite(ar):
+                        ar = 0.0
                 else:
                     ar = 0.0
                 amae = float(np.median(np.abs(apred - aida_y)))

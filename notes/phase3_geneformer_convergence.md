@@ -2635,11 +2635,13 @@ User asked: "How much time would it take to run cap=1 and cap=5 at 3-seed for bo
 | Cap | FM (best layer) | FM SD | gene-EN | gene-EN SD | Gap (FM − gene-EN) |
 |---|---|---|---|---|---|
 | 1 | L8: 0.123 | 0.202 | -0.001 | 0.065 | +0.124 |
-| 5 | L7: 0.335 | 0.061 | 0.167 | 0.129 | **+0.168** ★ peak |
+| 5 | L7: 0.335 | 0.061 | 0.111 | 0.133 | **+0.223** ★ peak |
 | 50 | L3: 0.598 | 0.025 | 0.517 | 0.072 | +0.081 |
 | 100 | L3: 0.665 | 0.035 | 0.648 | 0.030 | +0.017 |
 | 500 | L1: 0.694 | 0.038 | 0.697 | 0.034 | −0.002 (tied) |
 | 1000 | L1: 0.710 | (1-seed) | 0.716 | 0.044 | −0.005 (tied) |
+
+(gene-EN cap=5 mean increased seed=0 NaN → 0 fix; see §49.5)
 
 **loco_terekhova → AIDA**:
 
@@ -2671,9 +2673,22 @@ This is a real, defensible scientific contribution — distinct from "FM beats b
 - **Low-throughput cohorts**: clinical samples, FACS-sorted populations, single-cell technologies with low recovery.
 - **Chemistry-shift recovery**: B and NK cells on Terekhova 5' chemistry (Phase-1 Task 1f) drop in cell counts. FM may rescue these.
 
-### 49.5 The cap=5 number — surprises and one note on noise
+### 49.5 The cap=5 NaN — root cause and correction
 
-The cap=5 onek1k→AIDA seed=0 gene-EN result was NaN in the script output (numerical issue at small N; ElasticNet probably produced inf-containing predictions on a degenerate fold). Mean of valid seeds = (0.258 + 0.076)/2 = 0.167. The script-printed mean = 0.167 with SD 0.129 (excluding NaN). This doesn't change the headline (gap = +0.168 in this fold).
+Initial script output showed gene-EN seed=0 cap=5 loco_onek1k → AIDA = NaN. Root-cause investigation: ElasticNetCV at this seed × cap × fold picked alpha=5.0, l1_ratio=0.9 (the heaviest regularization in the grid), which collapsed all coefficients to zero. Predictions became constant = intercept = 48.98 for all 293 AIDA donors; pred.std() = 4e-6, technically > 0 but pearsonr on near-constant returns NaN.
+
+**This is a real model failure, not a numerical artifact**: with 190 train donors × 5000 HVGs at cap=5, ElasticNetCV's inner CV chose the strongest regularization because that minimized the within-fold MAE (the model genuinely couldn't learn). The honest representation is **R = 0** (model failed → no signal extracted), not "skip this seed."
+
+Fixed `i7_gene_en_low_cap.py` with `pred.std() > 1e-3` threshold + `np.isfinite(r)` post-check. Re-ran (~10 min CPU). Corrected 3-seed values:
+
+| Fold | Eval | seed=0 | seed=1 | seed=2 | 3-seed mean ± SD |
+|---|---|---|---|---|---|
+| loco_onek1k | onek1k holdout | 0.000 | 0.171 | 0.121 | 0.097 ± 0.088 |
+| loco_onek1k | aida | 0.000 | 0.258 | 0.076 | **0.111 ± 0.133** |
+| loco_terekhova | terekhova | 0.209 | (already finite) | 0.230 | 0.243 ± 0.043 |
+| loco_terekhova | aida | 0.224 | 0.198 | 0.194 | 0.205 ± 0.016 |
+
+The corrected loco_onek1k → AIDA gene-EN cap=5 mean = 0.111 (was 0.167 with NaN-excluded). Updated matched-cap gap: FM 0.335 − gene-EN 0.111 = **+0.223** (was +0.168). Headline gets stronger — honest 3-seed averaging shows a wider FM advantage at cap=5 because 1-in-3 seeds fails entirely on the bulk side.
 
 ### 49.6 Output
 
