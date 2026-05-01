@@ -138,33 +138,46 @@ def main():
     model.to(device).eval()
 
     t0 = time.time()
-    all_emb_per_layer: list[np.ndarray] = []  # each: (L, batch, H)
-    all_donors: list[str] = []
-    all_ages: list[float] = []
+    # Streaming per-donor aggregation. We pre-compute the donor index from
+    # select_indices' output (donors array) so memory stays O(n_donors × L × H)
+    # instead of O(n_cells × L × H). cap=500 onek1k = 455k cells would be 17 GB
+    # at float32; on 15 GB RAM that OOMs and the previous (May 1 01:23) crash
+    # was on this code path.
+    unique_donors = np.unique(donors)
+    n_d = len(unique_donors)
+    donor_to_idx = {d: i for i, d in enumerate(unique_donors)}
+    # donor → first-seen age (donors are constant within a donor)
+    first_age_by_donor: dict[str, float] = {}
+    for d, a in zip(donors, ages):
+        if d not in first_age_by_donor:
+            first_age_by_donor[d] = float(a)
+
+    donor_emb_sum: np.ndarray | None = None  # lazy-init on first batch (need L, H)
+    donor_count = np.zeros(n_d, dtype=np.int64)
     n_layers = None
+    H: int | None = None
     for batch in loader:
         ids = batch["input_ids"].to(device, non_blocking=True)
         mask = batch["attention_mask"].to(device, non_blocking=True)
         feat_lbh = _pool_all_layers(model, ids, mask, args.bf16, device)  # (L, B, H)
-        all_emb_per_layer.append(feat_lbh.cpu().numpy())
-        all_donors.extend(list(batch["donor"]))
-        all_ages.extend(batch["age"].numpy().tolist())
-        if n_layers is None:
-            n_layers = feat_lbh.shape[0]
+        feat_np = feat_lbh.cpu().numpy().astype(np.float32, copy=False)
+        if donor_emb_sum is None:
+            n_layers = feat_np.shape[0]
+            H = feat_np.shape[2]
+            donor_emb_sum = np.zeros((n_layers, n_d, H), dtype=np.float32)
+        # Map this batch's donors to indices, then scatter-add per layer.
+        batch_donor_idx = np.array([donor_to_idx[d] for d in batch["donor"]], dtype=np.int64)
+        # np.add.at is unbuffered scatter-add; safe even when same donor_idx
+        # appears multiple times in a batch.
+        for L in range(n_layers):
+            np.add.at(donor_emb_sum[L], batch_donor_idx, feat_np[L])
+        np.add.at(donor_count, batch_donor_idx, 1)
 
-    cell_emb = np.concatenate(all_emb_per_layer, axis=1)  # (L, n_cells, H)
-    cell_donors = np.asarray(all_donors)
-    cell_ages = np.asarray(all_ages)
-
-    unique_donors = np.unique(cell_donors)
-    n_d = len(unique_donors)
-    H = cell_emb.shape[2]
-    donor_emb = np.zeros((n_layers, n_d, H), dtype=np.float32)
-    donor_age = np.zeros(n_d, dtype=np.float32)
-    for i, d in enumerate(unique_donors):
-        m = cell_donors == d
-        donor_emb[:, i, :] = cell_emb[:, m, :].mean(axis=1)
-        donor_age[i] = cell_ages[m][0]
+    if donor_emb_sum is None:
+        raise SystemExit("[extract-L] no batches produced; nothing to aggregate")
+    safe_count = np.where(donor_count > 0, donor_count, 1).astype(np.float32)
+    donor_emb = donor_emb_sum / safe_count[None, :, None]
+    donor_age = np.array([first_age_by_donor[d] for d in unique_donors], dtype=np.float32)
 
     elapsed = time.time() - t0
     print(f"[extract-L] aggregated {n_d} donors × {n_layers} layers × {H}-dim in {elapsed:.1f}s")
