@@ -742,7 +742,20 @@ Decision rules pre-committed for each task. Recommended order: **I.1 → I.4 →
   - **Compute**: ~$32 GPU (~63h wall sequential A10G) + ~6-9h CPU. cap=1000 onek1k single extraction is the longest single GPU run yet (~10h).
   - **Why**: This is now the headline experiment for the matched-cap FM-vs-bulk question. I.1 alone could not answer it.
 
-#### I.1–I.6 recommended bundle and execution
+- [ ] **Task I.7 (proposed 2026-05-01, extends I.6 to extreme low-cap): cap=1 and cap=5 × 3 seeds × {FM, gene-EN}.** Closes out the low-cap end of the matched-cap trajectory. I.6 found the FM advantage at cap=50 (+0.08 R AIDA) and cap=100 (+0.02 R), tied at cap=500/1000. Extending downward tests where the FM per-cell-efficiency advantage maxes out — and whether cap=1 is degenerate (1 cell per donor → noisy embeddings).
+  - **Implementation**:
+    - **FM**: `scripts/i7_low_cap_extractions.sh` runs cap=1 and cap=5 × 3 seeds × 4 cohorts (small enough that onek1k is included for free; gives both fold directions). Reuses `extract_embeddings_layered.py` with the streaming-aggregation fix from 4613816. Note: cap=5 seed=0 NPZs already exist from F.3 (4 cohorts × 1 seed); only seeds 1, 2 are new.
+    - **gene-EN**: `scripts/i7_gene_en_low_cap.py` runs ElasticNetCV pseudobulk at caps {1, 5} × 3 seeds × 2 folds × {holdout, AIDA}.
+    - Combined readout via the existing `scripts/i6_combined_ridge.py` after extending its `cap_seed_pairs` to include (1, 0/1/2) and (5, 0/1/2).
+  - **Decision rule (pre-commit)**:
+    - cap=1 R < 0.30 for both methods → 1 cell/donor is too noisy; record as "lower bound of cap-range," exclude from headline trajectory.
+    - cap=5 FM-vs-gene-EN gap > +0.10 R on AIDA → FM per-cell efficiency advantage peaks at very low cap; methodology angle: "FM-as-low-cap-rescuer" for rare cell types or low-throughput cohorts.
+    - cap=5 gap ≈ cap=50 gap (+0.08 R) → FM advantage is constant across the low-cap regime; not a sharp peak.
+  - **Output**: `results/phase3/i7_gene_en_low_cap.csv` plus 20 new NPZs (12 cap=1 + 8 cap=5 seeds 1/2). Combined readout updates `i6_fm_ridge_caps.csv` and `i6_summary.csv` with new cap rows.
+  - **Compute**: ~1h GPU + ~20 min CPU. Cheap; runs in parallel.
+  - **Why**: Closes out the low-cap end. Makes the trajectory plot complete from cap=1 to cap=1000.
+
+#### I.1–I.7 recommended bundle and execution
 
 **Order**: I.1 (CPU, 30 min, DONE) → I.2 + I.4 in parallel (~3-4h GPU, DONE/IN-PROGRESS) → I.6 (~70h GPU + ~9h CPU; gene-EN side runs in parallel with FM extractions) → I.5 (~30h GPU, deferred; conditional on I.6 outcome).
 
