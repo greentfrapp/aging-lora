@@ -15,5 +15,8 @@ while pgrep -f "i6_combined_ridge.py" > /dev/null 2>&1; do
   sleep 30
 done
 
-echo "[chain $(date -Iseconds)] I.8 done; launching I.9 FM extractions"
+echo "[chain $(date -Iseconds)] I.8 done; running Phase D gap-fill (cap=20 seed=0)..."
+bash scripts/i8_phase_d_gap_fill.sh
+
+echo "[chain $(date -Iseconds)] Phase D done; launching I.9 FM extractions"
 exec bash scripts/i9_extractions.sh
